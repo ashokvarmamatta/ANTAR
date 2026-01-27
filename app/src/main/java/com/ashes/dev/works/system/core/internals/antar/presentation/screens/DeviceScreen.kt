@@ -82,12 +82,3 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
         }
     }
 }
-
-@Composable
-fun InfoRow(label: String, value: String, singleLine: Boolean = true) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, maxLines = if(singleLine) 1 else Int.MAX_VALUE)
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-}

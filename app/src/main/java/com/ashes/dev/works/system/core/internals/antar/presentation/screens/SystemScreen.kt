@@ -86,7 +86,7 @@ fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
                     InfoRow("Kernel version", system.kernelVersion, singleLine = false)
                     InfoRow("OpenGL ES", system.openGlEs)
                     InfoRow("SELinux", system.selinux)
-                    InfoRow("OpenSSL Version", system.openSslVersion)
+                    InfoRow("OpenSSL Version", system.openSslVersion, singleLine = false)
                 }
             }
         }

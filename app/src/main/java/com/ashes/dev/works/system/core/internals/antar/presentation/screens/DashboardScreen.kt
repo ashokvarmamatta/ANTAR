@@ -79,7 +79,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 ) {
                     Text(text = "RAM Usage", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(16.dp))
-                    RamGauge(percentage = dashboard.ramUsagePercentage.replace("%", "").toFloat() / 100)
+                    RamGauge(percentage = dashboard.ramUsagePercentage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(text = "${dashboard.usedMemory} / ${dashboard.totalMemory}")
                 }
@@ -100,7 +100,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         style = MaterialTheme.typography.titleMedium
                     )
                     LinearProgressIndicator(
-                        progress = dashboard.internalStorageUsage.replace("%", "").toFloat() / 100,
+                        progress = dashboard.internalStorageUsage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                     )
                     Text(
@@ -143,22 +143,6 @@ fun RamGauge(percentage: Float) {
         Text(
             text = "${(percentage * 100).toInt()}%",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-fun InfoRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold
         )
     }
