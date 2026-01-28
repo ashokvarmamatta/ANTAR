@@ -10,6 +10,11 @@ data class Battery(
     val powerSource: String,
     val technology: String,
     val voltage: String,
-    val capacity: String,
-    val dualCellDevice: String
+    val designCapacity: String,
+    val estimatedMaxCapacity: String,
+    val remainingCapacity: String,
+    val chargeCycles: String,
+    val dualCellDevice: String,
+    val drainedCapacity: String,
+    val batteryHealthStatus: String
 )
