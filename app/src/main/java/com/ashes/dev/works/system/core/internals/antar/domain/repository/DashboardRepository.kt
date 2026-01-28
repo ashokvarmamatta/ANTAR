@@ -1,7 +1,8 @@
 package com.ashes.dev.works.system.core.internals.antar.domain.repository
 
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
+import kotlinx.coroutines.flow.Flow
 
 interface DashboardRepository {
-    fun getDashboard(): Dashboard
+    fun getDashboardInfo(): Flow<Dashboard>
 }

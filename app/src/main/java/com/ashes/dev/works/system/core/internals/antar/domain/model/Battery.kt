@@ -1,20 +1,19 @@
 package com.ashes.dev.works.system.core.internals.antar.domain.model
 
 data class Battery(
-    val batteryLevel: String,
-    val status: String,
-    val current: String,
-    val power: String,
-    val temperature: String,
+    val batteryLevel: Int,
+    val isCharging: Boolean,
+    val current: Int,
+    val power: Double,
+    val temperature: Int,
     val health: String,
-    val powerSource: String,
+    val chargerType: String,
     val technology: String,
-    val voltage: String,
-    val designCapacity: String,
-    val estimatedMaxCapacity: String,
-    val remainingCapacity: String,
-    val chargeCycles: String,
-    val dualCellDevice: String,
-    val drainedCapacity: String,
-    val batteryHealthStatus: String
+    val voltage: Double,
+    val designCapacity: Int,
+    val estimatedMaxCapacity: Int,
+    val remainingCapacity: Int,
+    val chargeCycles: Int,
+    val batteryHealthStatus: String,
+    val currentHistory: List<Int> = emptyList()
 )

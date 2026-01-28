@@ -17,6 +17,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,89 +31,91 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
-    val dashboard = viewModel.getDashboard()
+    val dashboard by viewModel.dashboardInfo.collectAsState()
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item {
-            // Header Summaries
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Card(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Device Model",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = dashboard.deviceModel,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                Card(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "OS Version",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = dashboard.osVersion,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            // RAM Gauge
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+    dashboard?.let {
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            item {
+                // Header Summaries
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(text = "RAM Usage", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    RamGauge(percentage = dashboard.ramUsagePercentage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "${dashboard.usedMemory} / ${dashboard.totalMemory}")
+                    Card(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Device Model",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = it.deviceModel,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Card(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "OS Version",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = it.osVersion,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
-        }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
-        item {
-            // Quick Summaries
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Quick Summaries", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(16.dp))
+            item {
+                // RAM Gauge
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "RAM Usage", style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        RamGauge(percentage = it.ramUsagePercentage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "${it.usedMemory} / ${it.totalMemory}")
+                    }
+                }
+            }
 
-                    Text(
-                        text = "Internal Storage",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    LinearProgressIndicator(
-                        progress = dashboard.internalStorageUsage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                    )
-                    Text(
-                        text = dashboard.storageAnalysisMessage,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+            item {
+                // Quick Summaries
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Quick Summaries", style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    InfoRow(label = "Battery", value = "${dashboard.batteryStatus}, ${dashboard.batteryVoltage}, ${dashboard.batteryTemp}")
-                    InfoRow(label = "Sensors", value = "${dashboard.sensorCount} available")
-                    InfoRow(label = "Apps", value = "${dashboard.appCount} installed")
+                        Text(
+                            text = "Internal Storage",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        LinearProgressIndicator(
+                            progress = it.internalStorageUsage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                        )
+                        Text(
+                            text = it.storageAnalysisMessage,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        InfoRow(label = "Battery", value = "${it.batteryStatus}, ${it.batteryVoltage}, ${it.batteryTemp}")
+                        InfoRow(label = "Sensors", value = "${it.sensorCount} available")
+                        InfoRow(label = "Apps", value = "${it.appCount} installed")
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -7,84 +8,86 @@ import android.os.BatteryManager
 import android.os.Build
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import java.io.File
 import java.io.IOException
 import java.util.Locale
 
 class BatteryRepositoryImpl(private val context: Context) : BatteryRepository {
-    override fun getBattery(): Battery {
-        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val batteryIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-        val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-        val batteryPct = if (scale > 0) level / scale.toFloat() else 0.0f
+    override fun getBatteryInfo(): Flow<Battery> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
-        val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+                val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                val batteryPct = if (scale > 0) (level * 100 / scale) else 0
 
-        val health = batteryIntent?.getIntExtra(BatteryManager.EXTRA_HEALTH, -1) ?: -1
-        val voltage = batteryIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
-        val temperature = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: -1
-        val technology = batteryIntent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "- - -"
+                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
 
-        val remainingCapacityUah = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER).toLong()
-        val currentNowUa = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-        val powerWatt = (currentNowUa / 1_000_000.0) * (voltage / 1000.0)
+                val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)
+                val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
+                val temperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+                val technology = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "- - -"
 
-        val designCapacity = getDesignCapacity(context)
-        val estimatedMaxCapacity = estimateMaxCapacity(context)
-        val chargeCycles = getBatteryCycleCount(context)
+                val remainingCapacityUah = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                val currentNowUa = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                val powerWatt = (currentNowUa / 1_000_000.0) * (voltage / 1000.0)
 
-        val drainedCapacity = if (designCapacity != -1.0 && estimatedMaxCapacity != -1) {
-            (designCapacity - estimatedMaxCapacity).toInt()
-        } else {
-            -1
-        }
+                val designCapacity = getDesignCapacity(context)
+                val estimatedMaxCapacity = estimateMaxCapacity(context)
+                val chargeCycles = getBatteryCycleCount(context)
 
-        val batteryHealthStatus = if (designCapacity != -1.0 && estimatedMaxCapacity != -1) {
-            val percentage = (estimatedMaxCapacity.toDouble() / designCapacity * 100).toInt()
-            when {
-                percentage > 95 -> "Excellent ($percentage%)"
-                percentage > 90 -> "Very Good ($percentage%)"
-                percentage > 85 -> "Good ($percentage%)"
-                else -> "Fair ($percentage%)"
+                val batteryHealthStatus = if (designCapacity != -1.0 && estimatedMaxCapacity != -1) {
+                    val percentage = (estimatedMaxCapacity.toDouble() / designCapacity * 100).toInt()
+                    when {
+                        percentage > 95 -> "Excellent ($percentage%)"
+                        percentage > 90 -> "Very Good ($percentage%)"
+                        percentage > 85 -> "Good ($percentage%)"
+                        else -> "Fair ($percentage%)"
+                    }
+                } else {
+                    "- - -"
+                }
+
+                val battery = Battery(
+                    batteryLevel = batteryPct,
+                    isCharging = isCharging,
+                    current = currentNowUa,
+                    power = powerWatt,
+                    temperature = temperature,
+                    health = when (health) {
+                        BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
+                        BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
+                        BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
+                        BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
+                        BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Unspecified Failure"
+                        else -> "Unknown"
+                    },
+                    chargerType = getChargerType(intent),
+                    technology = technology,
+                    voltage = voltage / 1000.0,
+                    designCapacity = designCapacity.toInt(),
+                    estimatedMaxCapacity = estimatedMaxCapacity,
+                    remainingCapacity = remainingCapacityUah / 1000,
+                    chargeCycles = chargeCycles,
+                    batteryHealthStatus = batteryHealthStatus
+                )
+                trySend(battery)
             }
-        } else {
-            "- - -"
         }
 
-        return Battery(
-            batteryLevel = "${(batteryPct * 100).toInt()}%",
-            status = if (isCharging) "Charging" else "Discharging",
-            current = "$currentNowUa μA",
-            power = String.format(Locale.getDefault(), "%.2f W", powerWatt),
-            temperature = "${temperature / 10f}°C",
-            health = when (health) {
-                BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-                BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-                BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-                BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-                BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Unspecified Failure"
-                else -> "Unknown"
-            },
-            powerSource = getChargerType(context),
-            technology = technology,
-            voltage = "${voltage / 1000f}V",
-            designCapacity = if (designCapacity != -1.0) "${designCapacity.toInt()} mAh" else "- - -",
-            estimatedMaxCapacity = if (estimatedMaxCapacity != -1) "$estimatedMaxCapacity mAh" else "- - -",
-            remainingCapacity = "${remainingCapacityUah / 1000} mAh",
-            chargeCycles = if (chargeCycles != -1) chargeCycles.toString() else "- - -",
-            drainedCapacity = if (drainedCapacity != -1) "$drainedCapacity mAh" else "- - -",
-            batteryHealthStatus = batteryHealthStatus,
-            dualCellDevice = "No"
-        )
+        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
+        awaitClose { context.unregisterReceiver(receiver) }
     }
 
-    private fun getChargerType(context: Context): String {
-        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val plugged = intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
-
+    private fun getChargerType(intent: Intent): String {
+        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
         return when (plugged) {
             BatteryManager.BATTERY_PLUGGED_AC -> "AC Charger (Wall)"
             BatteryManager.BATTERY_PLUGGED_USB -> "USB Port (Slow)"
