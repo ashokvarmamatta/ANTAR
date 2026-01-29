@@ -14,7 +14,7 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
     override fun getDevice(): Device {
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         val adbEnabled = try { Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) } catch (e: Exception) { 0 }
-        
+
         return Device(
             deviceName = Build.MODEL,
             model = Build.MODEL,

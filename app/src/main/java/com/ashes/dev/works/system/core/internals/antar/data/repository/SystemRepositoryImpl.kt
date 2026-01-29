@@ -22,7 +22,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
     override fun getSystem(): System {
         val drmInfo = getWidevineInfo()
         val uptimeMillis = SystemClock.elapsedRealtime()
-        
+
         return System(
             androidVersion = Build.VERSION.RELEASE,
             codename = Build.VERSION.CODENAME,

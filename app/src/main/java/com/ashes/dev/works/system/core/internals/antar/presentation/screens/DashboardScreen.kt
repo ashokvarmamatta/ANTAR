@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,54 +41,32 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     dashboard?.let {
         LazyColumn(modifier = Modifier.padding(16.dp)) {
             item {
-                // Header Summaries
+                // Header Chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Card(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Device Model",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = it.deviceModel,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    Card(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "OS Version",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = it.osVersion,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    Chip(text = it.deviceModel)
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Chip(text = "Android ${it.osVersion}")
                 }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
-                // RAM Gauge
+                // RAM Utilization
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "RAM Usage", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        RamGauge(percentage = it.ramUsagePercentage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "${it.usedMemory} / ${it.totalMemory}")
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "RAM Utilization", style = MaterialTheme.typography.titleLarge)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            RamGauge(percentage = it.ramUsagePercentage.toFloat() / 100)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(text = "${it.usedMemory} / ${it.totalMemory}")
+                            Text(text = "Status: ${it.ramStatus}", color = Color.Green)
+                        }
+                        Icon(Icons.Default.List, contentDescription = null)
                     }
                 }
             }
@@ -91,30 +74,55 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
-                // Quick Summaries
+                // Internal Storage
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Quick Summaries", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Internal Storage",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Row {
+                            Text(text = "${it.internalStoragePercentage}% Full", style = MaterialTheme.typography.titleLarge)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(text = "INTERNAL STORAGE", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "${it.usedStorage} / ${it.totalStorage} used")
+                        Spacer(modifier = Modifier.height(8.dp))
                         LinearProgressIndicator(
-                            progress = it.internalStorageUsage.replace("%", "").toFloatOrNull()?.div(100) ?: 0f,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            progress = it.internalStoragePercentage.toFloat() / 100,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        Text(
-                            text = it.storageAnalysisMessage,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    }
+                }
+            }
 
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                // Battery
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.padding(16.dp)) {
+                        BatteryIcon(isCharging = it.batteryStatus == "Charging")
+                        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                        Column {
+                            Text(text = "POWER SOURCE", style = MaterialTheme.typography.labelSmall)
+                            Text(text = it.batteryStatus, style = MaterialTheme.typography.titleLarge)
+                            Text(text = "${it.batteryTemp} • ${it.batteryVoltage}")
+                        }
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        SmallInfoCard(title = "PROCESSOR", value = it.processorName, subtitle = it.processorDetails)
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        InfoRow(label = "Battery", value = "${it.batteryStatus}, ${it.batteryVoltage}, ${it.batteryTemp}")
-                        InfoRow(label = "Sensors", value = "${it.sensorCount} available")
-                        InfoRow(label = "Apps", value = "${it.appCount} installed")
+                        SmallInfoCard(title = "APPLICATIONS", value = "${it.appCount} Installed", subtitle = "12 System Updates")
+                    }
+                    Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                        SmallInfoCard(title = "SENSORS", value = "${it.sensorCount} Available", subtitle = "")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SmallInfoCard(title = "SYS HEALTH", value = it.sysHealth, subtitle = "Uptime: ${it.uptime}")
                     }
                 }
             }
@@ -123,30 +131,90 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
 }
 
 @Composable
+fun Chip(text: String) {
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+        Text(text = text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    }
+}
+
+@Composable
 fun RamGauge(percentage: Float) {
     val animatedPercentage by animateFloatAsState(targetValue = percentage, label = "ram_gauge")
-    val stroke = Stroke(width = 20f, cap = StrokeCap.Round)
-    Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.size(150.dp)) {
+    val stroke = Stroke(width = 16f, cap = StrokeCap.Round)
+    Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.size(120.dp)) {
             drawArc(
-                color = Color.LightGray,
+                color = Color(0xFF383838),
                 startAngle = -215f,
                 sweepAngle = 250f,
                 useCenter = false,
                 style = stroke
             )
             drawArc(
-                color = Color.Green,
+                color = Color(0xFF00C853),
                 startAngle = -215f,
                 sweepAngle = 250f * animatedPercentage,
                 useCenter = false,
                 style = stroke
             )
         }
-        Text(
-            text = "${(percentage * 100).toInt()}%",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${(percentage * 100).toInt()}%",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(text = "ACTIVE", style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+fun SmallInfoCard(title: String, value: String, subtitle: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = title, style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = value, style = MaterialTheme.typography.titleMedium)
+            if (subtitle.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+@Composable
+fun BatteryIcon(isCharging: Boolean) {
+    val color = if (isCharging) Color.Green else Color.White
+    Canvas(modifier = Modifier.size(width = 36.dp, height = 48.dp)) {        val strokeWidth = 4f
+        val cornerRadius = 4f
+
+        // Battery outline
+        drawRoundRect(
+            color = color,
+            size = size,
+            style = Stroke(width = strokeWidth),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
+        )
+
+        // Battery level
+        val levelHeight = size.height * 0.6f
+        val levelWidth = size.width - (strokeWidth * 2) - 4.dp.toPx()
+        val levelTop = size.height - levelHeight - strokeWidth - 2.dp.toPx()
+        drawRect(
+            color = color,
+            topLeft = androidx.compose.ui.geometry.Offset(strokeWidth + 2.dp.toPx(), levelTop),
+            size = androidx.compose.ui.geometry.Size(levelWidth, levelHeight)
+        )
+
+        // Battery terminal
+        val terminalWidth = size.width * 0.4f
+        val terminalHeight = strokeWidth
+        drawRect(
+            color = color,
+            topLeft = androidx.compose.ui.geometry.Offset(size.width / 2 - terminalWidth / 2, 0f),
+            size = androidx.compose.ui.geometry.Size(terminalWidth, terminalHeight)
         )
     }
 }

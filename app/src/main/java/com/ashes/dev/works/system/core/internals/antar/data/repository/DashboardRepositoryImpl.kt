@@ -37,23 +37,30 @@ class DashboardRepositoryImpl(
             val usedRam = if (ramUsageParts.isNotEmpty()) ramUsageParts[0] else "- - -"
             val totalRam = if (ramUsageParts.size > 1) ramUsageParts[1] else "- - -"
 
+            val storageUsageParts = storage.usedTotalFreeInternal.split(" / ")
+            val usedStorage = if (storageUsageParts.isNotEmpty()) storageUsageParts[0] else "- - -"
+            val totalStorage = if (storageUsageParts.size > 1) storageUsageParts[1] else "- - -"
+
+
             Dashboard(
                 deviceModel = device.model,
                 osVersion = system.androidVersion,
-                ramUsage = storage.usedTotalMemory,
-                ramUsagePercentage = storage.usagePercentageRam,
+                ramUsagePercentage = storage.usagePercentageRam.replace("%", ""),
                 usedMemory = usedRam,
                 totalMemory = totalRam,
-                freeMemory = storage.freeMemory,
-                socName = cpu.socName,
-                coreFrequencies = emptyList(),
-                storageAnalysisMessage = storage.usedTotalFreeInternal,
-                internalStorageUsage = storage.usagePercentageInternal,
+                ramStatus = "Optimized",
+                internalStoragePercentage = storage.usagePercentageInternal.replace("%", ""),
+                usedStorage = usedStorage,
+                totalStorage = totalStorage,
                 batteryStatus = if (battery.isCharging) "Charging" else "Discharging",
-                batteryVoltage = "${battery.voltage} V",
                 batteryTemp = "${battery.temperature / 10f}°C",
-                sensorCount = sensors.sensorCountMessage,
-                appCount = apps.appCount
+                batteryVoltage = "${battery.voltage} V",
+                processorName = cpu.socName,
+                processorDetails = "Octa-core ${cpu.frequency}",
+                sensorCount = sensors.sensorCountMessage.replace(" available", ""),
+                appCount = apps.appCount.replace(" installed", ""),
+                sysHealth = "Excellent",
+                uptime = system.systemUptime
             )
         }
     }

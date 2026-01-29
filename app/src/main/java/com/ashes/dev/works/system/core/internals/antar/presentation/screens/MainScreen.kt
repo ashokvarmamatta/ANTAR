@@ -44,7 +44,7 @@ fun MainScreen(navController: NavController) {
                 screens.forEachIndexed { index, screen ->
                     Tab(
                         selected = selectedTabIndex == index,
-                        onClick = { 
+                        onClick = {
                             selectedTabIndex = index
                             pagerNavController.navigate(screen.route) {
                                 popUpTo(pagerNavController.graph.startDestinationId)

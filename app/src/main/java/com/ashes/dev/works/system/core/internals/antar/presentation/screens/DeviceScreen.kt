@@ -55,7 +55,7 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
                 }
             }
         }
-        
+
         item { Spacer(modifier = Modifier.height(16.dp)) }
 
         item {
