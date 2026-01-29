@@ -24,9 +24,9 @@ class DashboardRepositoryImpl(
 
     override fun getDashboardInfo(): Flow<Dashboard> {
         return combine(
+            deviceRepository.getDeviceFlow(),
             batteryRepository.getBatteryInfo()
-        ) { (battery) ->
-            val device = deviceRepository.getDevice()
+        ) { device, battery ->
             val system = systemRepository.getSystem()
             val storage = storageRepository.getStorage()
             val sensors = sensorsRepository.getSensors()
@@ -44,6 +44,7 @@ class DashboardRepositoryImpl(
 
             Dashboard(
                 deviceModel = device.model,
+                deviceName = device.deviceName,
                 osVersion = system.androidVersion,
                 ramUsagePercentage = storage.usagePercentageRam.replace("%", ""),
                 usedMemory = usedRam,

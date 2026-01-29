@@ -1,20 +1,24 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(navController: NavController) {
     val screens = listOf(
@@ -31,24 +35,22 @@ fun MainScreen(navController: NavController) {
         Screen.Apps,
         Screen.Camera
     )
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val pagerNavController = rememberNavController()
+    val pagerState = rememberPagerState(pageCount = { screens.size })
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold {
         innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             ScrollableTabRow(
-                selectedTabIndex = selectedTabIndex,
+                selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 screens.forEachIndexed { index, screen ->
                     Tab(
-                        selected = selectedTabIndex == index,
-                        onClick = {
-                            selectedTabIndex = index
-                            pagerNavController.navigate(screen.route) {
-                                popUpTo(pagerNavController.graph.startDestinationId)
-                                launchSingleTop = true
+                        selected = pagerState.currentPage == index,
+                        onClick = { 
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
                             }
                         },
                         text = { Text(text = screen.title) }
@@ -56,19 +58,24 @@ fun MainScreen(navController: NavController) {
                 }
             }
 
-            NavHost(navController = pagerNavController, startDestination = Screen.Dashboard.route) {
-                composable(Screen.Dashboard.route) { DashboardScreen() }
-                composable(Screen.Device.route) { DeviceScreen() }
-                composable(Screen.System.route) { SystemScreen() }
-                composable(Screen.Cpu.route) { CpuScreen() }
-                composable(Screen.Location.route) { LocationScreen() }
-                composable(Screen.Network.route) { NetworkScreen() }
-                composable(Screen.Storage.route) { StorageScreen() }
-                composable(Screen.Battery.route) { BatteryScreen() }
-                composable(Screen.Display.route) { DisplayScreen() }
-                composable(Screen.Sensors.route) { SensorsScreen() }
-                composable(Screen.Apps.route) { AppsScreen() }
-                composable(Screen.Camera.route) { CameraScreen() }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (screens[page]) {
+                    Screen.Dashboard -> DashboardScreen()
+                    Screen.Device -> DeviceScreen()
+                    Screen.System -> SystemScreen()
+                    Screen.Cpu -> CpuScreen()
+                    Screen.Location -> LocationScreen()
+                    Screen.Network -> NetworkScreen()
+                    Screen.Storage -> StorageScreen()
+                    Screen.Battery -> BatteryScreen()
+                    Screen.Display -> DisplayScreen()
+                    Screen.Sensors -> SensorsScreen()
+                    Screen.Apps -> AppsScreen()
+                    Screen.Camera -> CameraScreen()
+                }
             }
         }
     }

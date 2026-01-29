@@ -9,6 +9,8 @@ import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Device
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DeviceRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
     override fun getDevice(): Device {
@@ -34,6 +36,10 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             bluetoothMacAddress = "- - -",
             usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled"
         )
+    }
+
+    override fun getDeviceFlow(): Flow<Device> = flow {
+        emit(getDevice())
     }
 
     private fun getNetworkType(): String {

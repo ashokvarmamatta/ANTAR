@@ -2,6 +2,7 @@ package com.ashes.dev.works.system.core.internals.antar.domain.model
 
 data class Dashboard(
     val deviceModel: String,
+    val deviceName: String,
     val osVersion: String,
     val ramUsagePercentage: String,
     val usedMemory: String,

@@ -11,10 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -29,7 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -77,10 +85,12 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 // Internal Storage
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Row {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "${it.internalStoragePercentage}% Full", style = MaterialTheme.typography.titleLarge)
                             Spacer(modifier = Modifier.weight(1f))
                             Text(text = "INTERNAL STORAGE", style = MaterialTheme.typography.labelSmall)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.Storage, contentDescription = "Internal Storage")
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "${it.usedStorage} / ${it.totalStorage} used")
@@ -98,7 +108,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
             item {
                 // Battery
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.padding(16.dp)) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         BatteryIcon(isCharging = it.batteryStatus == "Charging")
                         Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                         Column {
@@ -114,15 +124,44 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        SmallInfoCard(title = "PROCESSOR", value = it.processorName, subtitle = it.processorDetails)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SmallInfoCard(title = "APPLICATIONS", value = "${it.appCount} Installed", subtitle = "12 System Updates")
+                    Box(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        SmallInfoCard(
+                            title = "PROCESSOR",
+                            value = it.processorName,
+                            subtitle = it.processorDetails,
+                            icon = Icons.Default.Memory
+                        )
                     }
-                    Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                        SmallInfoCard(title = "SENSORS", value = "${it.sensorCount} Available", subtitle = "")
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SmallInfoCard(title = "SYS HEALTH", value = it.sysHealth, subtitle = "Uptime: ${it.uptime}")
+                    Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                        SmallInfoCard(
+                            title = "SENSORS",
+                            value = "${it.sensorCount} Available",
+                            subtitle = "",
+                            icon = Icons.Default.Sensors
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Box(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        SmallInfoCard(
+                            title = "APPLICATIONS",
+                            value = "${it.appCount} Installed",
+                            subtitle = "12 System Updates",
+                            icon = Icons.Default.Apps
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                        SmallInfoCard(
+                            title = "SYS HEALTH",
+                            value = it.sysHealth,
+                            subtitle = "Uptime: ${it.uptime}",
+                            icon = Icons.Default.Verified
+                        )
                     }
                 }
             }
@@ -170,15 +209,35 @@ fun RamGauge(percentage: Float) {
 }
 
 @Composable
-fun SmallInfoCard(title: String, value: String, subtitle: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = value, style = MaterialTheme.typography.titleMedium)
-            if (subtitle.isNotEmpty()) {
+fun SmallInfoCard(title: String, value: String, subtitle: String, icon: ImageVector) {
+    Card(modifier = Modifier.fillMaxWidth().height(130.dp)) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = title, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

@@ -2,6 +2,8 @@ package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Device
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DeviceRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class FakeDeviceRepository : DeviceRepository {
     override fun getDevice(): Device {
@@ -24,5 +26,9 @@ class FakeDeviceRepository : DeviceRepository {
             bluetoothMacAddress = "- - -",
             usbDebugging = "Disabled"
         )
+    }
+
+    override fun getDeviceFlow(): Flow<Device> = flow {
+        emit(getDevice())
     }
 }
