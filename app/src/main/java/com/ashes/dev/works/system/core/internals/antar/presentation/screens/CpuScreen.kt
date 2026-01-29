@@ -1,16 +1,31 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CpuViewModel
@@ -18,65 +33,124 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
-    val cpu = viewModel.getCpu()
+    val cpu by viewModel.cpu.collectAsState()
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item {
-            // Header Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = cpu.socName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+    if (cpu == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        val groupedCores = cpu!!.procCpuinfo.groupBy { it["CPU part"] to it["CPU revision"] }
+
+        val nestedScrollConnection = remember {
+            object : NestedScrollConnection {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    return if (source == NestedScrollSource.Drag) available else Offset.Zero
                 }
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            // Processor Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Processor",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Cores", cpu.cores)
-                    InfoRow("Frequency Range", cpu.frequencyRange)
-                    InfoRow("Processor", cpu.processor)
-                    InfoRow("Struct", cpu.struct)
-                    InfoRow("Frequency", cpu.frequency)
-                    InfoRow("Fabrication", cpu.fabrication)
-                    InfoRow("Supported ABIs", cpu.supportedAbis)
-                    InfoRow("CPU hardware", cpu.cpuHardware)
-                    InfoRow("CPU governor", cpu.cpuGovernor)
-                    InfoRow("/proc/cpuinfo", cpu.procCpuinfo, singleLine = false)
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            item {
+                // Header Card
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = cpu!!.socName,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
-        }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
-        item {
-            // Graphics Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Graphics",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("GPU renderer", cpu.gpuRenderer)
-                    InfoRow("GPU vendor", cpu.gpuVendor)
-                    InfoRow("OpenGL ES", cpu.openGlEs)
-                    InfoRow("OpenGL extensions", cpu.openGlExtensions)
-                    InfoRow("Vulkan", cpu.vulkan)
-                    InfoRow("Frequency", cpu.gpuFrequency)
-                    InfoRow("Current frequency", cpu.currentGpuFrequency)
+            item {
+                // Processor Card
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Processor",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        InfoRow("Cores", cpu!!.cores)
+                        InfoRow("Frequency Range", cpu!!.frequencyRange)
+                        InfoRow("Processor", cpu!!.processor)
+                        InfoRow("Struct", cpu!!.struct)
+                        InfoRow("Frequency", cpu!!.frequency)
+                        InfoRow("Fabrication", cpu!!.fabrication)
+                        InfoRow("Supported ABIs", cpu!!.supportedAbis)
+                        InfoRow("CPU hardware", cpu!!.cpuHardware)
+                        InfoRow("CPU governor", cpu!!.cpuGovernor)
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                // Instruction Set Card
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Instruction Set",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        InfoRow("Features", cpu!!.features, singleLine = false)
+                    }
+                }
+            }
+
+            items(groupedCores.entries.toList()) { (key, coreInfoList) ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Processor ${coreInfoList.joinToString(", ") { it["processor"] ?: "" }}",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        coreInfoList.first().forEach { (key, value) ->
+                            if (key != "Features" && key != "BogoMIPS" && key != "processor") {
+                                InfoRow(key, value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                // Graphics Card
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Graphics",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        InfoRow("GPU renderer", cpu!!.gpuRenderer)
+                        InfoRow("GPU vendor", cpu!!.gpuVendor)
+                        InfoRow("OpenGL ES", cpu!!.openGlEs)
+                        Column(
+                            modifier = Modifier
+                                .height(250.dp)
+                                .nestedScroll(nestedScrollConnection)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                text = cpu!!.openGlExtensions,
+                                modifier = Modifier.alpha(0.7f)
+                            )
+                        }
+                        InfoRow("Vulkan", cpu!!.vulkan)
+                        InfoRow("Frequency", cpu!!.gpuFrequency)
+                        InfoRow("Current frequency", cpu!!.currentGpuFrequency)
+                    }
                 }
             }
         }
