@@ -28,6 +28,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ashes.dev.works.system.core.internals.antar.domain.model.Cpu
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CpuViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -51,108 +52,126 @@ fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
         }
 
         LazyColumn(modifier = Modifier.padding(16.dp)) {
-            item {
-                // Header Card
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = cpu!!.socName,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+            item(key = "header") {
+                CpuHeader(socName = cpu!!.socName)
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            item {
-                // Processor Card
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Processor",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        InfoRow("Cores", cpu!!.cores)
-                        InfoRow("Frequency Range", cpu!!.frequencyRange)
-                        InfoRow("Processor", cpu!!.processor)
-                        InfoRow("Struct", cpu!!.struct)
-                        InfoRow("Frequency", cpu!!.frequency)
-                        InfoRow("Fabrication", cpu!!.fabrication)
-                        InfoRow("Supported ABIs", cpu!!.supportedAbis)
-                        InfoRow("CPU hardware", cpu!!.cpuHardware)
-                        InfoRow("CPU governor", cpu!!.cpuGovernor)
-                    }
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            item {
-                // Instruction Set Card
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Instruction Set",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        InfoRow("Features", cpu!!.features, singleLine = false)
-                    }
-                }
-            }
-
-            items(groupedCores.entries.toList()) { (key, coreInfoList) ->
+            item(key = "processor") { 
                 Spacer(modifier = Modifier.height(16.dp))
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Processor ${coreInfoList.joinToString(", ") { it["processor"] ?: "" }}",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        coreInfoList.first().forEach { (key, value) ->
-                            if (key != "Features" && key != "BogoMIPS" && key != "processor") {
-                                InfoRow(key, value)
-                            }
-                        }
-                    }
-                }
+                ProcessorCard(cpu = cpu!!)
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            item(key = "instruction_set") { 
+                Spacer(modifier = Modifier.height(16.dp))
+                InstructionSetCard(features = cpu!!.features)
+            }
 
-            item {
-                // Graphics Card
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Graphics",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        InfoRow("GPU renderer", cpu!!.gpuRenderer)
-                        InfoRow("GPU vendor", cpu!!.gpuVendor)
-                        InfoRow("OpenGL ES", cpu!!.openGlEs)
-                        Column(
-                            modifier = Modifier
-                                .height(250.dp)
-                                .nestedScroll(nestedScrollConnection)
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            Text(
-                                text = cpu!!.openGlExtensions,
-                                modifier = Modifier.alpha(0.7f)
-                            )
-                        }
-                        InfoRow("Vulkan", cpu!!.vulkan)
-                        InfoRow("Frequency", cpu!!.gpuFrequency)
-                        InfoRow("Current frequency", cpu!!.currentGpuFrequency)
-                    }
+            items(groupedCores.entries.toList(), key = { it.key }) { (key, coreInfoList) ->
+                Spacer(modifier = Modifier.height(16.dp))
+                ProcessorCoreCard(coreInfoList = coreInfoList)
+            }
+
+            item(key = "graphics") { 
+                Spacer(modifier = Modifier.height(16.dp))
+                GraphicsCard(cpu = cpu!!, nestedScrollConnection = nestedScrollConnection)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CpuHeader(socName: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = socName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProcessorCard(cpu: Cpu) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Processor",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Cores", cpu.cores)
+            InfoRow("Frequency Range", cpu.frequencyRange)
+            InfoRow("Processor", cpu.processor)
+            InfoRow("Struct", cpu.struct)
+            InfoRow("Frequency", cpu.frequency)
+            InfoRow("Fabrication", cpu.fabrication)
+            InfoRow("Supported ABIs", cpu.supportedAbis)
+            InfoRow("CPU hardware", cpu.cpuHardware)
+            InfoRow("CPU governor", cpu.cpuGovernor)
+        }
+    }
+}
+
+@Composable
+private fun InstructionSetCard(features: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Instruction Set",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Features", features, singleLine = false)
+        }
+    }
+}
+
+@Composable
+private fun ProcessorCoreCard(coreInfoList: List<Map<String, String>>) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Processor ${coreInfoList.joinToString(", ") { it["processor"] ?: "" }}",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            coreInfoList.first().forEach { (key, value) ->
+                if (key != "Features" && key != "BogoMIPS" && key != "processor") {
+                    InfoRow(key, value)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GraphicsCard(cpu: Cpu, nestedScrollConnection: NestedScrollConnection) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Graphics",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("GPU renderer", cpu.gpuRenderer)
+            InfoRow("GPU vendor", cpu.gpuVendor)
+            InfoRow("OpenGL ES", cpu.openGlEs)
+            Column(
+                modifier = Modifier
+                    .height(250.dp)
+                    .nestedScroll(nestedScrollConnection)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = cpu.openGlExtensions,
+                    modifier = Modifier.alpha(0.7f)
+                )
+            }
+            InfoRow("Vulkan", cpu.vulkan)
+            InfoRow("Frequency", cpu.gpuFrequency)
+            InfoRow("Current frequency", cpu.currentGpuFrequency)
         }
     }
 }

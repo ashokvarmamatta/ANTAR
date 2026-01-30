@@ -16,7 +16,14 @@ import javax.microedition.khronos.egl.EGLDisplay
 import javax.microedition.khronos.egl.EGLSurface
 
 class CpuRepositoryImpl(private val context: Context) : CpuRepository {
+
+    private lateinit var cachedCpu: Cpu
+
     override fun getCpu(): Cpu {
+        if (::cachedCpu.isInitialized) {
+            return cachedCpu
+        }
+
         val cpuInfoMap = getCpuInfoMap()
         val cpuInfo = try {
             parseCpuInfo(File("/proc/cpuinfo").readText())
@@ -40,7 +47,7 @@ class CpuRepositoryImpl(private val context: Context) : CpuRepository {
         val maxGpuFreq = getGpuFrequency("max")
         val curGpuFreq = getGpuFrequency("current")
 
-        return Cpu(
+        cachedCpu = Cpu(
             socName = socInfo.first,
             cores = Runtime.getRuntime().availableProcessors().toString(),
             frequencyRange = if (minFreq != "- - -" && maxFreq != "- - -") "$minFreq - $maxFreq" else "- - -",
@@ -61,6 +68,7 @@ class CpuRepositoryImpl(private val context: Context) : CpuRepository {
             gpuFrequency = maxGpuFreq,
             currentGpuFrequency = curGpuFreq
         )
+        return cachedCpu
     }
 
     private fun parseCpuInfo(cpuInfo: String): Pair<String, List<Map<String, String>>> {

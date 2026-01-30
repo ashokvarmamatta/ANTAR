@@ -9,7 +9,14 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.Storage
 import java.util.Locale
 
 class StorageRepositoryImpl(private val context: Context) : StorageRepository {
+
+    private lateinit var cachedStorage: Storage
+
     override fun getStorage(): Storage {
+        if (::cachedStorage.isInitialized) {
+            return cachedStorage
+        }
+
         val internalStatFs = StatFs(Environment.getDataDirectory().path)
         val totalInternal = internalStatFs.blockCountLong * internalStatFs.blockSizeLong
         val freeInternal = internalStatFs.availableBlocksLong * internalStatFs.blockSizeLong
@@ -22,7 +29,7 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
         val freeRam = memoryInfo.availMem
         val usedRam = totalRam - freeRam
 
-        return Storage(
+        cachedStorage = Storage(
             freeMemory = formatSize(freeRam),
             usedTotalMemory = "${formatSize(usedRam)} / ${formatSize(totalRam)}",
             usagePercentageRam = "${(usedRam.toDouble() / totalRam.toDouble() * 100).toInt()}%",
@@ -38,6 +45,7 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
             internalStorageDataUsageProgress = "- - -",
             usedTotalFreeInternalData = "- - -"
         )
+        return cachedStorage
     }
 
     private fun formatSize(size: Long): String {

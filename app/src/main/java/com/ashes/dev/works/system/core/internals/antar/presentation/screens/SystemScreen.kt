@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ashes.dev.works.system.core.internals.antar.domain.model.System
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -21,100 +22,113 @@ fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
     val system = viewModel.getSystem()
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item {
-            // Header Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Android ${system.androidVersion}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = system.codename,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
+        item(key = "header") {
+            SystemHeader(androidVersion = system.androidVersion, codename = system.codename)
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            // Operating System Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Operating System",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Version name", system.versionName)
-                    InfoRow("API Level", system.apiLevel)
-                    InfoRow("Build number", system.buildNumber, singleLine = false)
-                    InfoRow("Build Time", system.buildTime)
-                    InfoRow("Build ID", system.buildId, singleLine = false)
-                    InfoRow("Security patch level", system.securityPatchLevel)
-                    InfoRow("Baseband", system.baseband, singleLine = false)
-                    InfoRow("Language", system.language)
-                    InfoRow("Time zone", system.timeZone)
-                    InfoRow("Root access", system.rootAccess)
-                    InfoRow("System uptime", system.systemUptime)
-                    InfoRow("System-as-Root", system.systemAsRoot)
-                    InfoRow("Seamless updates", system.seamlessUpdates)
-                    InfoRow("Dynamic partitions", system.dynamicPartitions)
-                    InfoRow("Project Treble", system.projectTreble)
-                }
-            }
+        item(key = "os_info") { 
+            Spacer(modifier = Modifier.height(16.dp))
+            OperatingSystemCard(system = system)
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            // Runtime & Kernel Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Runtime & Kernel",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Java Runtime", system.javaRuntime)
-                    InfoRow("Java VM", system.javaVm)
-                    InfoRow("Java VM stack size", system.javaVmStackSize)
-                    InfoRow("Kernel architecture", system.kernelArchitecture)
-                    InfoRow("Kernel version", system.kernelVersion, singleLine = false)
-                    InfoRow("OpenGL ES", system.openGlEs)
-                    InfoRow("SELinux", system.selinux)
-                    InfoRow("OpenSSL Version", system.openSslVersion, singleLine = false)
-                }
-            }
+        item(key = "runtime_kernel") { 
+            Spacer(modifier = Modifier.height(16.dp))
+            RuntimeAndKernelCard(system = system)
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item(key = "drm") { 
+            Spacer(modifier = Modifier.height(16.dp))
+            DrmCard(system = system)
+        }
+    }
+}
 
-        item {
-            // DRM Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "DRM",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Vendor", system.drmVendor)
-                    InfoRow("Version", system.drmVersion)
-                    InfoRow("Description", system.drmDescription, singleLine = false)
-                    InfoRow("Algorithm", system.drmAlgorithm)
-                    InfoRow("Security level", system.drmSecurityLevel)
-                    InfoRow("System id", system.drmSystemId)
-                    InfoRow("HDCP level", system.drmHdcpLevel)
-                    InfoRow("Max HDCP level", system.drmMaxHdcpLevel)
-                    InfoRow("Usage reporting support", system.drmUsageReportingSupport)
-                    InfoRow("Max Number of sessions", system.drmMaxNumberOfSessions)
-                    InfoRow("Number of open sessions", system.drmNumberOfOpenSessions)
-                }
-            }
+@Composable
+private fun SystemHeader(androidVersion: String, codename: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Android $androidVersion",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = codename,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun OperatingSystemCard(system: System) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Operating System",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Version name", system.versionName)
+            InfoRow("API Level", system.apiLevel)
+            InfoRow("Build number", system.buildNumber, singleLine = false)
+            InfoRow("Build Time", system.buildTime)
+            InfoRow("Build ID", system.buildId, singleLine = false)
+            InfoRow("Security patch level", system.securityPatchLevel)
+            InfoRow("Baseband", system.baseband, singleLine = false)
+            InfoRow("Language", system.language)
+            InfoRow("Time zone", system.timeZone)
+            InfoRow("Root access", system.rootAccess)
+            InfoRow("System uptime", system.systemUptime)
+            InfoRow("System-as-Root", system.systemAsRoot)
+            InfoRow("Seamless updates", system.seamlessUpdates)
+            InfoRow("Dynamic partitions", system.dynamicPartitions)
+            InfoRow("Project Treble", system.projectTreble)
+        }
+    }
+}
+
+@Composable
+private fun RuntimeAndKernelCard(system: System) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Runtime & Kernel",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Java Runtime", system.javaRuntime)
+            InfoRow("Java VM", system.javaVm)
+            InfoRow("Java VM stack size", system.javaVmStackSize)
+            InfoRow("Kernel architecture", system.kernelArchitecture)
+            InfoRow("Kernel version", system.kernelVersion, singleLine = false)
+            InfoRow("OpenGL ES", system.openGlEs)
+            InfoRow("SELinux", system.selinux)
+            InfoRow("OpenSSL Version", system.openSslVersion, singleLine = false)
+        }
+    }
+}
+
+@Composable
+private fun DrmCard(system: System) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "DRM",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Vendor", system.drmVendor)
+            InfoRow("Version", system.drmVersion)
+            InfoRow("Description", system.drmDescription, singleLine = false)
+            InfoRow("Algorithm", system.drmAlgorithm)
+            InfoRow("Security level", system.drmSecurityLevel)
+            InfoRow("System id", system.drmSystemId)
+            InfoRow("HDCP level", system.drmHdcpLevel)
+            InfoRow("Max HDCP level", system.drmMaxHdcpLevel)
+            InfoRow("Usage reporting support", system.drmUsageReportingSupport)
+            InfoRow("Max Number of sessions", system.drmMaxNumberOfSessions)
+            InfoRow("Number of open sessions", system.drmNumberOfOpenSessions)
         }
     }
 }

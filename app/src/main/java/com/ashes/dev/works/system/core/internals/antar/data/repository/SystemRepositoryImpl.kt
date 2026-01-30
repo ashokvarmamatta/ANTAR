@@ -19,11 +19,18 @@ import java.util.UUID
 import javax.net.ssl.SSLContext
 
 class SystemRepositoryImpl(private val context: Context) : SystemRepository {
+
+    private lateinit var cachedSystem: System
+
     override fun getSystem(): System {
+        if (::cachedSystem.isInitialized) {
+            return cachedSystem
+        }
+
         val drmInfo = getWidevineInfo()
         val uptimeMillis = SystemClock.elapsedRealtime()
 
-        return System(
+        cachedSystem = System(
             androidVersion = Build.VERSION.RELEASE,
             codename = Build.VERSION.CODENAME,
             releaseDate = getAndroidReleaseDate(Build.VERSION.SDK_INT),
@@ -62,6 +69,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
             drmMaxNumberOfSessions = drmInfo["maxNumberOfSessions"] ?: "- - -",
             drmNumberOfOpenSessions = drmInfo["numberOfOpenSessions"] ?: "- - -"
         )
+        return cachedSystem
     }
 
     private fun getStackSize(): String {

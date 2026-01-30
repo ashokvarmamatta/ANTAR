@@ -13,11 +13,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
+
+    private lateinit var cachedDevice: Device
     override fun getDevice(): Device {
+        if (::cachedDevice.isInitialized) {
+            return cachedDevice
+        }
+
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         val adbEnabled = try { Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) } catch (e: Exception) { 0 }
 
-        return Device(
+        cachedDevice = Device(
             deviceName = Build.MODEL,
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
@@ -36,6 +42,7 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             bluetoothMacAddress = "- - -",
             usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled"
         )
+        return cachedDevice
     }
 
     override fun getDeviceFlow(): Flow<Device> = flow {

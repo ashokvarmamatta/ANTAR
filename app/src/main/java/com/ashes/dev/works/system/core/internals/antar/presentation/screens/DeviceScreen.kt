@@ -23,64 +23,112 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
     val device by viewModel.device.collectAsState()
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item {
-            // Header Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = device.deviceName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+        item(key = "header") {
+            DeviceHeader(deviceName = device.deviceName)
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            // General Info Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "General Info",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Device name", device.deviceName)
-                    InfoRow("Model", device.model)
-                    InfoRow("Manufacturer", device.manufacturer)
-                    InfoRow("Device", device.device)
-                    InfoRow("Board", device.board)
-                    InfoRow("Hardware", device.hardware)
-                    InfoRow("Brand", device.brand)
-                }
-            }
+        item(key = "general_info") { 
+            Spacer(modifier = Modifier.height(16.dp))
+            GeneralInfoCard(
+                deviceName = device.deviceName,
+                model = device.model,
+                manufacturer = device.manufacturer,
+                device = device.device,
+                board = device.board,
+                hardware = device.hardware,
+                brand = device.brand
+            )
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item(key = "identifiers") { 
+            Spacer(modifier = Modifier.height(16.dp))
+            IdentifiersAndConnectivityCard(
+                googleAdvertisingId = device.googleAdvertisingId,
+                androidDeviceId = device.androidDeviceId,
+                hardwareSerial = device.hardwareSerial,
+                buildFingerprint = device.buildFingerprint,
+                deviceType = device.deviceType,
+                networkOperator = device.networkOperator,
+                networkType = device.networkType,
+                wifiMacAddress = device.wifiMacAddress,
+                bluetoothMacAddress = device.bluetoothMacAddress,
+                usbDebugging = device.usbDebugging
+            )
+        }
+    }
+}
 
-        item {
-            // Identifiers & Connectivity Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                     Text(
-                        text = "Identifiers & Connectivity",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    InfoRow("Google Advertising ID", device.googleAdvertisingId)
-                    InfoRow("Android Device ID", device.androidDeviceId)
-                    InfoRow("Hardware serial", device.hardwareSerial)
-                    InfoRow("Build fingerprint", device.buildFingerprint, singleLine = false)
-                    InfoRow("Device type", device.deviceType)
-                    InfoRow("Network operator", device.networkOperator)
-                    InfoRow("Network Type", device.networkType)
-                    InfoRow("WiFi MAC address", device.wifiMacAddress)
-                    InfoRow("Bluetooth MAC address", device.bluetoothMacAddress)
-                    InfoRow("USB debugging", device.usbDebugging)
-                }
-            }
+@Composable
+private fun DeviceHeader(deviceName: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = deviceName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun GeneralInfoCard(
+    deviceName: String,
+    model: String,
+    manufacturer: String,
+    device: String,
+    board: String,
+    hardware: String,
+    brand: String
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "General Info",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Device name", deviceName)
+            InfoRow("Model", model)
+            InfoRow("Manufacturer", manufacturer)
+            InfoRow("Device", device)
+            InfoRow("Board", board)
+            InfoRow("Hardware", hardware)
+            InfoRow("Brand", brand)
+        }
+    }
+}
+
+@Composable
+private fun IdentifiersAndConnectivityCard(
+    googleAdvertisingId: String,
+    androidDeviceId: String,
+    hardwareSerial: String,
+    buildFingerprint: String,
+    deviceType: String,
+    networkOperator: String,
+    networkType: String,
+    wifiMacAddress: String,
+    bluetoothMacAddress: String,
+    usbDebugging: String
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Identifiers & Connectivity",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            InfoRow("Google Advertising ID", googleAdvertisingId)
+            InfoRow("Android Device ID", androidDeviceId)
+            InfoRow("Hardware serial", hardwareSerial)
+            InfoRow("Build fingerprint", buildFingerprint, singleLine = false)
+            InfoRow("Device type", deviceType)
+            InfoRow("Network operator", networkOperator)
+            InfoRow("Network Type", networkType)
+            InfoRow("WiFi MAC address", wifiMacAddress)
+            InfoRow("Bluetooth MAC address", bluetoothMacAddress)
+            InfoRow("USB debugging", usbDebugging)
         }
     }
 }
