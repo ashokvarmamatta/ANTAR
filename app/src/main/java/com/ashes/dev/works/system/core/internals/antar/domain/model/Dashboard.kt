@@ -7,6 +7,7 @@ data class Dashboard(
     val ramUsagePercentage: String,
     val usedMemory: String,
     val totalMemory: String,
+    val freeMemory: String,
     val ramStatus: String,
     val internalStoragePercentage: String,
     val usedStorage: String,

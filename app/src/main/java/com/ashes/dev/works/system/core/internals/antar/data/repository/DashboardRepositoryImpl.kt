@@ -49,6 +49,7 @@ class DashboardRepositoryImpl(
                 ramUsagePercentage = storage.usagePercentageRam.replace("%", ""),
                 usedMemory = usedRam,
                 totalMemory = totalRam,
+                freeMemory = storage.freeMemory,
                 ramStatus = "Optimized",
                 internalStoragePercentage = storage.usagePercentageInternal.replace("%", ""),
                 usedStorage = usedStorage,

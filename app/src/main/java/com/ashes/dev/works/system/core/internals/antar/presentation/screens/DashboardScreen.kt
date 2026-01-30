@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,31 +19,42 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import kotlin.random.Random
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
@@ -66,19 +78,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
 
             item {
                 // RAM Utilization
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "RAM Utilization", style = MaterialTheme.typography.titleLarge)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            RamGauge(percentage = it.ramUsagePercentage.toFloat() / 100)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(text = "${it.usedMemory} / ${it.totalMemory}")
-                            Text(text = "Status: ${it.ramStatus}", color = Color.Green)
-                        }
-                        Icon(Icons.Default.List, contentDescription = null)
-                    }
-                }
+                DigitalRamView(dashboard = it)
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -172,41 +172,217 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
 }
 
 @Composable
-fun Chip(text: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-        Text(text = text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+fun DigitalRamView(dashboard: Dashboard) {
+    val cardBackgroundColor = Color(0xFF90CAF9)
+    val pathColor = Color(0xFF1565C0)
+
+    var graphData by remember {
+        mutableStateOf(List(15) { (dashboard.ramUsagePercentage.toFloat() - 5..dashboard.ramUsagePercentage.toFloat() + 5).random() })
+    }
+
+    var localUsedMemory by remember { mutableStateOf(dashboard.usedMemory) }
+    var localFreeMemory by remember { mutableStateOf(dashboard.freeMemory) }
+    var localRamPercentage by remember { mutableStateOf(dashboard.ramUsagePercentage) }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    DisposableEffect(dashboard) {
+        val job = coroutineScope.launch {
+            while (true) {
+                delay(1000)
+                val newPercentage = (dashboard.ramUsagePercentage.toFloat() - 3..dashboard.ramUsagePercentage.toFloat() + 3).random()
+                localRamPercentage = newPercentage.toInt().toString()
+
+                val totalRam = dashboard.totalMemory.replace(" GB", "").toFloat()
+                val usedRam = (totalRam * newPercentage) / 100
+                val freeRam = totalRam - usedRam
+
+                localUsedMemory = "${String.format("%.2f", usedRam)} GB"
+                localFreeMemory = "${String.format("%.2f", freeRam)} GB"
+
+                graphData = (graphData + newPercentage).takeLast(15)
+            }
+        }
+
+        onDispose {
+            job.cancel()
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .fillMaxWidth(0.65f)
+                    .fillMaxHeight(0.7f)
+            ) {
+                SmoothedRamGraph(color = pathColor, data = graphData)
+            }
+
+            Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "RAM - ${dashboard.totalMemory} Total",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "$localUsedMemory Used",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black.copy(alpha = 0.8f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    ScallopedProgressBar(
+                        percentage = localRamPercentage.toFloat(),
+                        mainColor = Color(0xFF0D47A1)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Text(
+                        text = "$localFreeMemory Free",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun RamGauge(percentage: Float) {
-    val animatedPercentage by animateFloatAsState(targetValue = percentage, label = "ram_gauge")
-    val stroke = Stroke(width = 16f, cap = StrokeCap.Round)
-    Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.size(120.dp)) {
+fun ScallopedProgressBar(percentage: Float, mainColor: Color) {
+    val animatedPercentage by animateFloatAsState(targetValue = percentage, label = "scallop_progress_animation")
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val radius = size.minDimension / 2f
+            val progressStrokeWidth = 8.dp.toPx()
+
+            val borderPath = Path().apply {
+                val waves = 24
+                val angleStep = 360f / waves
+                val waveHeight = 1.1f
+
+                for (i in 0..waves) {
+                    val currentAngleRad = Math.toRadians((i * angleStep).toDouble())
+                    val nextAngleRad = Math.toRadians(((i + 1) * angleStep).toDouble())
+                    val midAngleRad = (currentAngleRad + nextAngleRad) / 2
+
+                    val startX = center.x + radius * kotlin.math.cos(currentAngleRad).toFloat()
+                    val startY = center.y + radius * kotlin.math.sin(currentAngleRad).toFloat()
+
+                    val endX = center.x + radius * kotlin.math.cos(nextAngleRad).toFloat()
+                    val endY = center.y + radius * kotlin.math.sin(nextAngleRad).toFloat()
+
+                    val controlX = center.x + (radius * waveHeight) * kotlin.math.cos(midAngleRad).toFloat()
+                    val controlY = center.y + (radius * waveHeight) * kotlin.math.sin(midAngleRad).toFloat()
+
+                    if (i == 0) moveTo(startX, startY)
+                    quadraticBezierTo(controlX, controlY, endX, endY)
+                }
+                close()
+            }
+            drawPath(path = borderPath, color = mainColor.copy(alpha = 0.2f))
+
             drawArc(
-                color = Color(0xFF383838),
-                startAngle = -215f,
-                sweepAngle = 250f,
+                color = mainColor.copy(alpha = 0.4f),
+                startAngle = -90f,
+                sweepAngle = 360f,
                 useCenter = false,
-                style = stroke
+                style = Stroke(width = progressStrokeWidth)
             )
             drawArc(
-                color = Color(0xFF00C853),
-                startAngle = -215f,
-                sweepAngle = 250f * animatedPercentage,
+                color = mainColor,
+                startAngle = -90f,
+                sweepAngle = 360 * (animatedPercentage / 100f),
                 useCenter = false,
-                style = stroke
+                style = Stroke(width = progressStrokeWidth, cap = StrokeCap.Round)
             )
         }
+
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "${(percentage * 100).toInt()}%",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                text = "${animatedPercentage.toInt()}",
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
+                color = mainColor
             )
-            Text(text = "ACTIVE", style = MaterialTheme.typography.labelSmall)
+            Text(
+                text = "%",
+                style = MaterialTheme.typography.bodySmall,
+                color = mainColor
+            )
         }
+    }
+}
+
+@Composable
+fun SmoothedRamGraph(color: Color, data: List<Float>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        if (data.size < 2) return@Canvas
+
+        val width = size.width
+        val height = size.height
+
+        val path = Path().apply {
+            moveTo(0f, height)
+
+            var previousX = 0f
+            var previousY = height - (data[0] / 100f * height)
+            lineTo(previousX, previousY)
+
+            for (i in 1 until data.size) {
+                val currentX = (i.toFloat() / (data.size - 1)) * width
+                val currentY = height - (data[i] / 100f * height)
+
+                val controlX = (previousX + currentX) / 2f
+                cubicTo(controlX, previousY, controlX, currentY, currentX, currentY)
+
+                previousX = currentX
+                previousY = currentY
+            }
+
+            lineTo(width, height)
+            close()
+        }
+
+        drawPath(
+            path = path,
+            brush = Brush.verticalGradient(
+                colors = listOf(color.copy(alpha = 0.8f), color.copy(alpha = 0.1f))
+            )
+        )
+
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = 3.dp.toPx())
+        )
+    }
+}
+
+@Composable
+fun Chip(text: String) {
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+        Text(text = text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
     }
 }
 
@@ -248,7 +424,6 @@ fun BatteryIcon(isCharging: Boolean) {
     Canvas(modifier = Modifier.size(width = 36.dp, height = 48.dp)) {        val strokeWidth = 4f
         val cornerRadius = 4f
 
-        // Battery outline
         drawRoundRect(
             color = color,
             size = size,
@@ -256,7 +431,6 @@ fun BatteryIcon(isCharging: Boolean) {
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
         )
 
-        // Battery level
         val levelHeight = size.height * 0.6f
         val levelWidth = size.width - (strokeWidth * 2) - 4.dp.toPx()
         val levelTop = size.height - levelHeight - strokeWidth - 2.dp.toPx()
@@ -266,7 +440,6 @@ fun BatteryIcon(isCharging: Boolean) {
             size = androidx.compose.ui.geometry.Size(levelWidth, levelHeight)
         )
 
-        // Battery terminal
         val terminalWidth = size.width * 0.4f
         val terminalHeight = strokeWidth
         drawRect(
@@ -275,4 +448,8 @@ fun BatteryIcon(isCharging: Boolean) {
             size = androidx.compose.ui.geometry.Size(terminalWidth, terminalHeight)
         )
     }
+}
+
+fun ClosedRange<Float>.random(): Float {
+    return Random.nextFloat() * (endInclusive - start) + start
 }
