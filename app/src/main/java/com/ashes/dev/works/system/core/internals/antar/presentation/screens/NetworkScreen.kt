@@ -1,5 +1,9 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,14 +14,38 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.NetworkViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
+    val context = LocalContext.current
     val network = viewModel.getNetwork()
+
+    val requestPermissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        // Handle permissions result
+    }
+
+    LaunchedEffect(Unit) {
+        val permissionsToRequest = mutableListOf<String>()
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.READ_PHONE_STATE)
+        }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_NUMBERS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.READ_PHONE_NUMBERS)
+        }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        if (permissionsToRequest.isNotEmpty()) {
+            requestPermissions.launch(permissionsToRequest.toTypedArray())
+        }
+    }
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         item {
