@@ -1,6 +1,9 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,14 +33,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -55,6 +51,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
+import java.util.Locale
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
@@ -68,7 +65,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Chip(text = it.deviceModel)
+                    Chip(text = it.deviceName)
                     Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                     Chip(text = "Android ${it.osVersion}")
                 }
@@ -180,27 +177,26 @@ fun DigitalRamView(dashboard: Dashboard) {
         mutableStateOf(List(15) { (dashboard.ramUsagePercentage.toFloat() - 5..dashboard.ramUsagePercentage.toFloat() + 5).random() })
     }
 
-    var localUsedMemory by remember { mutableStateOf(dashboard.usedMemory) }
-    var localFreeMemory by remember { mutableStateOf(dashboard.freeMemory) }
-    var localRamPercentage by remember { mutableStateOf(dashboard.ramUsagePercentage) }
-
+    var targetRamPercentage by remember { mutableStateOf(dashboard.ramUsagePercentage.toFloat()) }
+    val animatedRamPercentage = remember { Animatable(dashboard.ramUsagePercentage.toFloat()) }
+    
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(targetRamPercentage) {
+        animatedRamPercentage.animateTo(
+            targetValue = targetRamPercentage,
+            animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+        )
+    }
 
     DisposableEffect(dashboard) {
         val job = coroutineScope.launch {
             while (true) {
-                delay(1000)
-                val newPercentage = (dashboard.ramUsagePercentage.toFloat() - 3..dashboard.ramUsagePercentage.toFloat() + 3).random()
-                localRamPercentage = newPercentage.toInt().toString()
-
-                val totalRam = dashboard.totalMemory.replace(" GB", "").toFloat()
-                val usedRam = (totalRam * newPercentage) / 100
-                val freeRam = totalRam - usedRam
-
-                localUsedMemory = "${String.format("%.2f", usedRam)} GB"
-                localFreeMemory = "${String.format("%.2f", freeRam)} GB"
-
-                graphData = (graphData + newPercentage).takeLast(15)
+                delay(2000)
+                val base = dashboard.ramUsagePercentage.toFloat()
+                val variance = (base - 1.5f..base + 1.5f).random()
+                targetRamPercentage = variance
+                graphData = (graphData + variance).takeLast(15)
             }
         }
 
@@ -208,6 +204,17 @@ fun DigitalRamView(dashboard: Dashboard) {
             job.cancel()
         }
     }
+
+    val currentDisplayPercentage = animatedRamPercentage.value
+    val totalRamVal = remember(dashboard.totalMemory) { 
+        dashboard.totalMemory.replace(" GB", "").toFloatOrNull() ?: 1f 
+    }
+    val usedRamDisplay = (totalRamVal * currentDisplayPercentage) / 100
+    val freeRamDisplay = totalRamVal - usedRamDisplay
+
+    // Format to one decimal place as requested: X.X0
+    val formattedUsed = String.format(Locale.US, "%.1f0", usedRamDisplay)
+    val formattedFree = String.format(Locale.US, "%.1f0", freeRamDisplay)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -235,7 +242,7 @@ fun DigitalRamView(dashboard: Dashboard) {
                         color = Color.Black.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "$localUsedMemory Used",
+                        text = "$formattedUsed GB Used",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black.copy(alpha = 0.8f)
@@ -249,14 +256,14 @@ fun DigitalRamView(dashboard: Dashboard) {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     ScallopedProgressBar(
-                        percentage = localRamPercentage.toFloat(),
+                        percentage = currentDisplayPercentage,
                         mainColor = Color(0xFF0D47A1)
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     Text(
-                        text = "$localFreeMemory Free",
+                        text = "$formattedFree GB Free",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Black.copy(alpha = 0.8f),
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -269,8 +276,6 @@ fun DigitalRamView(dashboard: Dashboard) {
 
 @Composable
 fun ScallopedProgressBar(percentage: Float, mainColor: Color) {
-    val animatedPercentage by animateFloatAsState(targetValue = percentage, label = "scallop_progress_animation")
-
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val radius = size.minDimension / 2f
@@ -312,7 +317,7 @@ fun ScallopedProgressBar(percentage: Float, mainColor: Color) {
             drawArc(
                 color = mainColor,
                 startAngle = -90f,
-                sweepAngle = 360 * (animatedPercentage / 100f),
+                sweepAngle = 360 * (percentage / 100f),
                 useCenter = false,
                 style = Stroke(width = progressStrokeWidth, cap = StrokeCap.Round)
             )
@@ -320,7 +325,7 @@ fun ScallopedProgressBar(percentage: Float, mainColor: Color) {
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "${animatedPercentage.toInt()}",
+                text = "${percentage.toInt()}",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 color = mainColor

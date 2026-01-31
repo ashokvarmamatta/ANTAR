@@ -2,10 +2,8 @@ package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
 import android.telephony.TelephonyManager
@@ -33,8 +31,14 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             0
         }
 
+        // Try to get a more user-friendly name from Settings.Global.DEVICE_NAME
+        // falling back to Build.MODEL if not found.
+        val friendlyName = Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+            ?: Settings.Secure.getString(context.contentResolver, "bluetooth_name")
+            ?: Build.MODEL
+
         cachedDevice = Device(
-            deviceName = Build.MODEL,
+            deviceName = friendlyName,
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
             device = Build.DEVICE,
