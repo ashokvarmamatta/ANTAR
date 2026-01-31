@@ -1,16 +1,23 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Device
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DeviceRepository
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 
 class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
@@ -20,8 +27,11 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             return cachedDevice
         }
 
-        val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        val adbEnabled = try { Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) } catch (e: Exception) { 0 }
+        val adbEnabled = try {
+            Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0)
+        } catch (e: Exception) {
+            0
+        }
 
         cachedDevice = Device(
             deviceName = Build.MODEL,
@@ -32,26 +42,66 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             hardware = Build.HARDWARE,
             brand = Build.BRAND,
             googleAdvertisingId = "- - -",
-            androidDeviceId = androidId ?: "- - -",
-            hardwareSerial = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) Build.SERIAL else "- - -",
+            androidDeviceId = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ANDROID_ID
+            ) ?: "- - -",
+            hardwareSerial = getHardwareSerial(),
             buildFingerprint = Build.FINGERPRINT,
             deviceType = if (context.resources.configuration.smallestScreenWidthDp >= 600) "Tablet" else "Phone",
-            networkOperator = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkOperatorName ?: "- - -",
+            networkOperator = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkOperatorName
+                ?: "- - -",
             networkType = getNetworkType(),
-            wifiMacAddress = "- - -",
-            bluetoothMacAddress = "- - -",
+            wifiMacAddress = getWifiMacAddress(),
+            bluetoothMacAddress = getBluetoothMacAddress(),
             usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled"
         )
+        // Fetch advertising ID separately
+        fetchAdvertisingId()
         return cachedDevice
     }
+
+    private fun fetchAdvertisingId() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context)
+                cachedDevice = cachedDevice.copy(googleAdvertisingId = adInfo.id ?: "- - - ")
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+    }
+
+
+    @SuppressLint("HardwareIds")
+    private fun getHardwareSerial(): String {
+        return "Not available"
+    }
+
+
+    @SuppressLint("HardwareIds")
+    private fun getWifiMacAddress(): String {
+        return "Not available"
+    }
+
+    @SuppressLint("HardwareIds")
+    private fun getBluetoothMacAddress(): String {
+        return "Not available"
+    }
+
 
     override fun getDeviceFlow(): Flow<Device> = flow {
         emit(getDevice())
     }
 
     private fun getNetworkType(): String {
-        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+        val telephonyManager =
+            context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             return "Permission Required"
         }
         return try {

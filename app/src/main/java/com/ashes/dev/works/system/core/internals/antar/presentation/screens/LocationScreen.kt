@@ -49,8 +49,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
         )
 
         LazyColumn(modifier = Modifier.padding(16.dp)) {
-            item {
-                // Satellites Card
+            item { 
                 Card(modifier = Modifier.fillMaxWidth().height(250.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -74,7 +73,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
                                 .groupingBy { it.constellation }
                                 .eachCount()
 
-                            val satelliteList = allConstellations.map {
+                            val satelliteList = allConstellations.map { 
                                 it to (satelliteCounts[it] ?: 0)
                             }.sortedByDescending { it.second }
 
@@ -88,8 +87,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            item {
-                // Position Details Card
+            item { 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -118,11 +116,9 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
                 }
             }
 
-
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
-                // Address Card
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -130,7 +126,11 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        Text(location.address)
+                        if (location.address == "Permission Denied") {
+                            Text("Permission not granted to access location.")
+                        } else {
+                            Text(location.address)
+                        }
                     }
                 }
             }

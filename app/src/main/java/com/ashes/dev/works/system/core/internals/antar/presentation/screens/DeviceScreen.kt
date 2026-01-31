@@ -1,5 +1,6 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import android.Manifest
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,8 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DeviceViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
     val device by viewModel.device.collectAsState()
