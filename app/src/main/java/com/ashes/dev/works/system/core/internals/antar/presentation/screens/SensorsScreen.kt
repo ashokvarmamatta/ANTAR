@@ -1,25 +1,45 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import com.ashes.dev.works.system.core.internals.antar.domain.model.SensorDetail
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SensorsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SensorsScreen(viewModel: SensorsViewModel = koinViewModel()) {
-    val sensors = viewModel.getSensors()
+    val sensorsState by viewModel.sensorsState.collectAsState()
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
+    if (sensorsState == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val sensors = sensorsState!!
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         item {
             // Header Card
             Card(modifier = Modifier.fillMaxWidth()) {
@@ -32,23 +52,67 @@ fun SensorsScreen(viewModel: SensorsViewModel = koinViewModel()) {
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        items(sensors.sensorList, key = { "${it.name}_${it.type}" }) { sensor ->
+            SensorItem(sensor)
+        }
+    }
+}
 
-        item {
-            // Sensor Item Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Sensor Details",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    // This should be a list of sensors, but for now we are just displaying one.
-                    InfoRow("Sensor Type Name", sensors.sensorTypeName)
-                    InfoRow("Name", sensors.name)
-                    InfoRow("Vendor", sensors.vendor)
-                    InfoRow("Wake Up Sensor", sensors.wakeUpSensor)
-                    InfoRow("Power", sensors.power)
+@Composable
+fun SensorItem(sensor: SensorDetail) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Sensor Icon with Black and White theme
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                val bwMatrix = remember { ColorMatrix().apply { setToSaturation(0f) } }
+                Icon(
+                    painter = rememberVectorPainter(image = Icons.Default.Sensors),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = sensor.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = "Type: ${sensor.type}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    LabelValue("Vendor", sensor.vendor)
+                    LabelValue("Power", "${sensor.power}mA")
                 }
             }
         }
