@@ -118,6 +118,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
                 }
             }
 
+
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
