@@ -50,7 +50,7 @@ val appModule = module {
     single<SensorsRepository> { SensorsRepositoryImpl(get()) }
     single<AppsRepository> { AppsRepositoryImpl(get()) }
     single<LocationRepository> { LocationRepositoryImpl(get()) }
-    single<CameraRepository> { CameraRepositoryImpl() }
+    single<CameraRepository> { CameraRepositoryImpl(get()) }
     single<DashboardRepository> { DashboardRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
 
     viewModel { DeviceViewModel(get()) }
