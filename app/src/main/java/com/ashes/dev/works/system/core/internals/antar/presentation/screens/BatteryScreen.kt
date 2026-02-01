@@ -38,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -71,7 +70,7 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -84,7 +83,7 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
                 Icon(
                     imageVector = if (showMetricGraph) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                     contentDescription = "Toggle Metric Graph",
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
@@ -134,13 +133,13 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Battery Info",
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -171,7 +170,6 @@ fun CapacityGraphCard(
     estimatedMax: Int,
     isCharging: Boolean
 ) {
-    // Increased animation duration for capacity as it changes slowly, reduces CPU load
     val animatedRemaining by animateFloatAsState(
         targetValue = remainingCapacity.toFloat(),
         animationSpec = tween(1500),
@@ -185,9 +183,11 @@ fun CapacityGraphCard(
         (range - animatedRemaining) / range
     }
 
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
@@ -203,7 +203,7 @@ fun CapacityGraphCard(
                     )
                     Text(
                         text = "$remainingCapacity mAh",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -212,7 +212,7 @@ fun CapacityGraphCard(
                 Icon(
                     imageVector = Icons.Default.BatteryChargingFull,
                     contentDescription = "Battery",
-                    tint = if (isCharging) Color(0xFF4CAF50) else Color(0xFF42A5F5),
+                    tint = if (isCharging) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(56.dp)
                 )
             }
@@ -222,7 +222,7 @@ fun CapacityGraphCard(
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .graphicsLayer() // Isolate this layer for better performance
+                .graphicsLayer()
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val width = size.width
@@ -238,7 +238,7 @@ fun CapacityGraphCard(
                     
                     drawPath(
                         path = path,
-                        color = Color.DarkGray.copy(alpha = 0.2f),
+                        color = onSurfaceVariant.copy(alpha = 0.2f),
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
                     
@@ -251,7 +251,6 @@ fun CapacityGraphCard(
                         )
                     }
                     
-                    // markerY using Hermite/Smoothstep logic
                     val it_val = 1 - t
                     val markerY = it_val * it_val * it_val * yStart + 3 * it_val * it_val * t * yStart + 3 * it_val * t * t * yEnd + t * t * t * yEnd
                     
@@ -278,14 +277,15 @@ fun CapacityGraphCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 Text(
                     text = if (isCharging) "0 mAh" else "$estimatedMax mAh",
-                    color = Color.Gray,
+                    color = labelColor,
                     fontSize = 11.sp
                 )
                 Text(
                     text = if (isCharging) "$estimatedMax mAh" else "0 mAh",
-                    color = Color.Gray,
+                    color = labelColor,
                     fontSize = 11.sp
                 )
             }
@@ -315,7 +315,7 @@ fun ChargingGraphCard(
                         BatteryMetric.POWER -> "Power Output"
                         BatteryMetric.TEMPERATURE -> "Temperature"
                     },
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
                 Text(
@@ -324,14 +324,14 @@ fun ChargingGraphCard(
                         BatteryMetric.POWER -> String.format("%.4f W", power)
                         BatteryMetric.TEMPERATURE -> "${temp / 10.0} °C"
                     },
-                    color = Color(0xFF42A5F5),
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             Text(
                 text = chargerType,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -343,9 +343,10 @@ fun ChargingGraphCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            BatteryMetric.values().forEach { metric ->
+            BatteryMetric.entries.forEach { metric ->
                 val isSelected = metric == selectedMetric
-                val bgColor by animateColorAsState(if (isSelected) Color(0xFF42A5F5) else Color(0xFF2C2C2C), label = "chooser")
+                val bgColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, label = "chooser")
+                val textColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, label = "chooserTxt")
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -354,7 +355,7 @@ fun ChargingGraphCard(
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(metric.name, color = if (isSelected) Color.White else Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(metric.name, color = textColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -364,11 +365,11 @@ fun ChargingGraphCard(
         Box(modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .graphicsLayer() // Performance isolation
+            .graphicsLayer()
         ) {
             LineGraph(
                 dataPoints = history,
-                lineColor = Color(0xFF42A5F5),
+                lineColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -474,6 +475,7 @@ fun BatteryHealthIndicator(
     modifier: Modifier = Modifier
 ) {
     val animatedLevel by animateFloatAsState(targetValue = batteryLevel.toFloat(), label = "lvl")
+    val color = MaterialTheme.colorScheme.primary
 
     Box(
         contentAlignment = Alignment.Center,
@@ -487,7 +489,7 @@ fun BatteryHealthIndicator(
             
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF42A5F5).copy(alpha = 0.1f), Color.Transparent),
+                    colors = listOf(color.copy(alpha = 0.1f), Color.Transparent),
                     center = center,
                     radius = radius + 20.dp.toPx()
                 ),
@@ -510,7 +512,7 @@ fun BatteryHealthIndicator(
 
             drawPath(
                 path = path,
-                color = Color(0xFF42A5F5),
+                color = color,
                 style = Stroke(width = 4.dp.toPx())
             )
         }
@@ -521,12 +523,12 @@ fun BatteryHealthIndicator(
                     text = String.format("%.2f", animatedLevel),
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF42A5F5)
+                    color = color
                 )
                 Text(
                     text = "%",
                     fontSize = 18.sp,
-                    color = Color(0xFF42A5F5),
+                    color = color,
                     modifier = Modifier.padding(bottom = 8.dp, start = 2.dp)
                 )
             }

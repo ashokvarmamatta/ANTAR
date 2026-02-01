@@ -37,7 +37,8 @@ fun InfoRow(label: String, value: String, singleLine: Boolean = true) {
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(0.55f),
-                textAlign = TextAlign.End
+                textAlign = TextAlign.End,
+                maxLines = 1
             )
         }
     } else {

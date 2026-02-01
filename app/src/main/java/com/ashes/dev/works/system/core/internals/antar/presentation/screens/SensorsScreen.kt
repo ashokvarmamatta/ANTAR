@@ -14,8 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import com.ashes.dev.works.system.core.internals.antar.domain.model.SensorDetail
@@ -72,7 +70,6 @@ fun SensorItem(sensor: SensorDetail) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Sensor Icon with Black and White theme
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -82,7 +79,6 @@ fun SensorItem(sensor: SensorDetail) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                val bwMatrix = remember { ColorMatrix().apply { setToSaturation(0f) } }
                 Icon(
                     painter = rememberVectorPainter(image = Icons.Default.Sensors),
                     contentDescription = null,

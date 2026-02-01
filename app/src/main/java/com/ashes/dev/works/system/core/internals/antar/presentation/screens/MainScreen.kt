@@ -1,24 +1,31 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(navController: NavController) {
     val screens = listOf(
@@ -26,41 +33,120 @@ fun MainScreen(navController: NavController) {
         Screen.Device,
         Screen.System,
         Screen.Cpu,
+        Screen.Battery,
         Screen.Location,
         Screen.Network,
         Screen.Storage,
-        Screen.Battery,
         Screen.Display,
         Screen.Sensors,
         Screen.Apps,
         Screen.Camera
     )
+
     val pagerState = rememberPagerState(pageCount = { screens.size })
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold {
-        innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            ScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        topBar = {
+            Surface(
+                shadowElevation = 2.dp,
+                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.surface
             ) {
-                screens.forEachIndexed { index, screen ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { 
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                ) {
+                    // Compact App Name Title
+                    Text(
+                        text = stringResource(id = R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    ScrollableTabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        containerColor = Color.Transparent,
+                        edgePadding = 16.dp,
+                        divider = {},
+                        indicator = { tabPositions ->
+                            if (pagerState.currentPage < tabPositions.size) {
+                                val currentTab = tabPositions[pagerState.currentPage]
+                                val targetPage = pagerState.targetPage
+                                val targetTab = tabPositions.getOrNull(targetPage) ?: currentTab
+                                val fraction = pagerState.currentPageOffsetFraction
+
+                                // Continuous indicator movement linked to pager scroll position
+                                val indicatorWidth = lerp(currentTab.width, targetTab.width, fraction.coerceIn(-1f, 1f).let { if (it < 0) -it else it })
+                                val indicatorOffset = lerp(currentTab.left, targetTab.left, fraction)
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .wrapContentSize(Alignment.BottomStart)
+                                        .offset(x = indicatorOffset)
+                                        .width(indicatorWidth)
+                                        .height(32.dp) // Compact chip height
+                                        .padding(horizontal = 4.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                        .zIndex(1f)
+                                )
                             }
                         },
-                        text = { Text(text = screen.title) }
-                    )
+                        modifier = Modifier.height(44.dp) // Reduced row height
+                    ) {
+                        screens.forEachIndexed { index, screen ->
+                            val isSelected = pagerState.currentPage == index
+                            val textColor by animateColorAsState(
+                                targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                label = "textColor"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .height(32.dp)
+                                    .padding(horizontal = 2.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
+                                    .wrapContentSize(Alignment.Center)
+                                    .zIndex(2f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = screen.title,
+                                    color = textColor,
+                                    fontSize = 13.sp, // Compact font size
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier.padding(horizontal = 10.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
-
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1
             ) { page ->
                 when (screens[page]) {
                     Screen.Dashboard -> DashboardScreen()
@@ -79,4 +165,8 @@ fun MainScreen(navController: NavController) {
             }
         }
     }
+}
+
+private fun lerp(start: androidx.compose.ui.unit.Dp, stop: androidx.compose.ui.unit.Dp, fraction: Float): androidx.compose.ui.unit.Dp {
+    return start + (stop - start) * fraction
 }
