@@ -1,9 +1,6 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -79,17 +76,31 @@ fun MainScreen(navController: NavController) {
                                 val targetTab = tabPositions.getOrNull(targetPage) ?: currentTab
                                 val fraction = pagerState.currentPageOffsetFraction
 
-                                // Continuous indicator movement linked to pager scroll position
-                                val indicatorWidth = lerp(currentTab.width, targetTab.width, fraction.coerceIn(-1f, 1f).let { if (it < 0) -it else it })
-                                val indicatorOffset = lerp(currentTab.left, targetTab.left, fraction)
+                                // Expressive horizontal leap logic for both directions
+                                val indicatorStart: androidx.compose.ui.unit.Dp
+                                val indicatorEnd: androidx.compose.ui.unit.Dp
+
+                                if (fraction >= 0) {
+                                    // Moving forward (Left to Right)
+                                    // Right edge stretches first, then left edge catches up
+                                    indicatorStart = lerp(currentTab.left, targetTab.left, (fraction * 2f - 1f).coerceAtLeast(0f))
+                                    indicatorEnd = lerp(currentTab.right, targetTab.right, (fraction * 2f).coerceAtMost(1f))
+                                } else {
+                                    // Moving backward (Right to Left)
+                                    // Left edge stretches first, then right edge catches up
+                                    // fraction is negative (from 0 to -1)
+                                    val absFraction = -fraction
+                                    indicatorStart = lerp(currentTab.left, targetTab.left, (absFraction * 2f).coerceAtMost(1f))
+                                    indicatorEnd = lerp(currentTab.right, targetTab.right, (absFraction * 2f - 1f).coerceAtLeast(0f))
+                                }
 
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .wrapContentSize(Alignment.BottomStart)
-                                        .offset(x = indicatorOffset)
-                                        .width(indicatorWidth)
-                                        .height(32.dp) // Compact chip height
+                                        .offset(x = indicatorStart)
+                                        .width(indicatorEnd - indicatorStart)
+                                        .height(32.dp)
                                         .padding(horizontal = 4.dp)
                                         .background(
                                             color = MaterialTheme.colorScheme.primary,
@@ -99,7 +110,7 @@ fun MainScreen(navController: NavController) {
                                 )
                             }
                         },
-                        modifier = Modifier.height(44.dp) // Reduced row height
+                        modifier = Modifier.height(44.dp)
                     ) {
                         screens.forEachIndexed { index, screen ->
                             val isSelected = pagerState.currentPage == index
@@ -125,7 +136,7 @@ fun MainScreen(navController: NavController) {
                                 Text(
                                     text = screen.title,
                                     color = textColor,
-                                    fontSize = 13.sp, // Compact font size
+                                    fontSize = 13.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     modifier = Modifier.padding(horizontal = 10.dp)
                                 )
