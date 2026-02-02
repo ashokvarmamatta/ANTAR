@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,7 +35,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Cpu
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CpuViewModel
@@ -98,47 +95,39 @@ private fun CpuHeader(cpu: Cpu) {
             containerColor = Color(0xFF90CAF9)
         )
     ) {
-        Box(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_cpu_chip),
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = Color.Unspecified
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_cpu_chip),
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = Color.Unspecified
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column {
+                Text(
+                    text = cpu.socName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Cores: ${cpu.cores}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.7f)
+                )
                 
-                Column {
-                    Text(
-                        text = cpu.socName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    
-                    Text(
-                        text = "Cores: ${cpu.cores}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = cpu.fabrication,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black.copy(alpha = 0.7f)
-                    )
-                }
+                Text(
+                    text = cpu.fabrication,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.7f)
+                )
             }
-            
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.BottomEnd),
-                tint = Color.Black.copy(alpha = 0.8f)
-            )
         }
     }
 }

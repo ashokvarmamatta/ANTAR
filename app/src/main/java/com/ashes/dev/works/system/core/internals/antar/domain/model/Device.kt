@@ -17,5 +17,6 @@ data class Device(
     val networkType: String,
     val wifiMacAddress: String,
     val bluetoothMacAddress: String,
-    val usbDebugging: String
+    val usbDebugging: String,
+    val supports6G: String
 )

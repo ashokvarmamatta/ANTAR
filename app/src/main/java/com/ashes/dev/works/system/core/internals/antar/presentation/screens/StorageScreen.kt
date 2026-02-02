@@ -2,8 +2,6 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -64,7 +62,7 @@ private fun StorageHeader(storage: Storage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF90CAF9) // Same as Network/Cpu
+            containerColor = Color(0xFF90CAF9)
         )
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
@@ -99,15 +97,6 @@ private fun StorageHeader(storage: Storage) {
                     )
                 }
             }
-            
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.BottomEnd),
-                tint = Color.Black.copy(alpha = 0.8f)
-            )
         }
     }
 }

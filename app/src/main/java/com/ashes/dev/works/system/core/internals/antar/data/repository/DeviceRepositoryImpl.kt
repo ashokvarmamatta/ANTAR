@@ -14,16 +14,18 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
-    private lateinit var cachedDevice: Device
+    private var cachedDevice: Device? = null
+    private val _deviceFlow = MutableStateFlow<Device?>(null)
+
     override fun getDevice(): Device {
-        if (::cachedDevice.isInitialized) {
-            return cachedDevice
-        }
+        cachedDevice?.let { return it }
 
         val adbEnabled = try {
             Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0)
@@ -31,13 +33,14 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             0
         }
 
-        // Try to get a more user-friendly name from Settings.Global.DEVICE_NAME
-        // falling back to Build.MODEL if not found.
-        val friendlyName = Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
-            ?: Settings.Secure.getString(context.contentResolver, "bluetooth_name")
-            ?: Build.MODEL
+        val friendlyName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+        } else {
+            null
+        } ?: Settings.Secure.getString(context.contentResolver, "bluetooth_name")
+          ?: Build.MODEL
 
-        cachedDevice = Device(
+        val device = Device(
             deviceName = friendlyName,
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
@@ -58,20 +61,33 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
             networkType = getNetworkType(),
             wifiMacAddress = getWifiMacAddress(),
             bluetoothMacAddress = getBluetoothMacAddress(),
-            usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled"
+            usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled",
+            supports6G = get6GSupport()
         )
-        // Fetch advertising ID separately
+        cachedDevice = device
+        _deviceFlow.value = device
         fetchAdvertisingId()
-        return cachedDevice
+        return device
+    }
+
+    private fun get6GSupport(): String {
+        return "No"
     }
 
     private fun fetchAdvertisingId() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context)
-                cachedDevice = cachedDevice.copy(googleAdvertisingId = adInfo.id ?: "- - - ")
+                val id = if (!adInfo.isLimitAdTrackingEnabled) {
+                    adInfo.id ?: "Not available"
+                } else {
+                    "Limited by user"
+                }
+                cachedDevice = cachedDevice?.copy(googleAdvertisingId = id)
+                _deviceFlow.value = cachedDevice
             } catch (e: Exception) {
-                // Ignore
+                cachedDevice = cachedDevice?.copy(googleAdvertisingId = "Unavailable")
+                _deviceFlow.value = cachedDevice
             }
         }
     }
@@ -79,7 +95,24 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
     @SuppressLint("HardwareIds")
     private fun getHardwareSerial(): String {
-        return "Not available"
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            @Suppress("DEPRECATION")
+            Build.SERIAL ?: "Unknown"
+        } else {
+            try {
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                    // Note: On Android 10+, this will likely return "Unknown" or throw an exception due to privacy restrictions
+                    // for non-system apps.
+                    Build.getSerial() ?: "Unknown"
+                } else {
+                    "Permission Required"
+                }
+            } catch (e: SecurityException) {
+                "Permission Denied"
+            } catch (e: Exception) {
+                "Unknown"
+            }
+        }
     }
 
 
@@ -95,7 +128,12 @@ class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
 
     override fun getDeviceFlow(): Flow<Device> = flow {
+        // Initial emit
         emit(getDevice())
+        // Observe updates (like Advertising ID)
+        _deviceFlow.collect { device ->
+            device?.let { emit(it) }
+        }
     }
 
     private fun getNetworkType(): String {
