@@ -87,7 +87,7 @@ private fun SystemHeader(androidVersion: String, codename: String, versionName: 
             
             Column {
                 HeaderRow(icon = Icons.Default.Build, text = "Android $androidVersion")
-                //HeaderRow(icon = Icons.Default.CheckCircle, text = codename)
+                HeaderRow(icon = Icons.Default.CheckCircle, text = codename)
                 val displayName = versionName.removePrefix("Android $androidVersion ").removePrefix("Android ").trim()
                 HeaderRow(icon = Icons.Default.Star, text = displayName)
                 HeaderRow(icon = Icons.Default.DateRange, text = "Released : $releaseDate")

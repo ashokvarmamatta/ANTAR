@@ -1,14 +1,12 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +21,6 @@ import androidx.core.graphics.drawable.toBitmap
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.AppsViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 
@@ -32,8 +29,8 @@ import org.koin.androidx.compose.koinViewModel
 fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     val appsState by viewModel.appsState.collectAsState()
     val tabs = listOf("All", "System", "User")
-    val pagerState = rememberPagerState(pageCount = { tabs.size })
-    val coroutineScope = rememberCoroutineScope()
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var searchQuery by remember { mutableStateOf("") }
 
     if (appsState == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -45,6 +42,20 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     val apps = appsState!!
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text("Search apps...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            singleLine = true,
+            shape = MaterialTheme.shapes.medium
+        )
+
+        // Segmented Buttons for Category Selection (Click based, no sliding)
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -53,33 +64,28 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
             tabs.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    selected = pagerState.currentPage == index
+                    onClick = { selectedTabIndex = index },
+                    selected = selectedTabIndex == index
                 ) {
                     Text(label)
                 }
             }
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.Top,
-            beyondViewportPageCount = 0 // Reduced to save memory
-        ) { page ->
-            val filteredApps = remember(page, apps.appList) {
-                when (page) {
-                    1 -> apps.appList.filter { it.isSystemApp }
-                    2 -> apps.appList.filter { !it.isSystemApp }
-                    else -> apps.appList
+        val filteredApps = remember(selectedTabIndex, apps.appList, searchQuery) {
+            apps.appList.filter { app ->
+                val matchesCategory = when (selectedTabIndex) {
+                    1 -> app.isSystemApp
+                    2 -> !app.isSystemApp
+                    else -> true
                 }
+                val matchesSearch = app.appName.contains(searchQuery, ignoreCase = true) ||
+                        app.packageName.contains(searchQuery, ignoreCase = true)
+                matchesCategory && matchesSearch
             }
-            AppList(filteredApps)
         }
+
+        AppList(filteredApps)
     }
 }
 

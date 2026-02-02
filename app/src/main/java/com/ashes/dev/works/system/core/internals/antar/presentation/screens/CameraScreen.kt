@@ -1,21 +1,37 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CameraViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -25,51 +41,22 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         item {
-            // Camera Selector Card
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Camera Selector",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+            // Camera Selector Header
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(viewModel.cameraIds) { id ->
+                    val isSelected = viewModel.selectedCameraId == id
                     
-                    viewModel.cameraIds.forEach { id ->
-                        val isSelected = viewModel.selectedCameraId == id
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable { viewModel.selectCamera(id) },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Row(modifier = Modifier.padding(12.dp)) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Camera ID: $id",
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    if (isSelected) {
-                                        Text(
-                                            text = "Resolution: ${camera.megaPixels}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Text(
-                                        text = "Selected",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    CameraHeaderCard(
+                        id = id,
+                        isSelected = isSelected,
+                        megaPixels = if (isSelected) camera.megaPixels else "Camera", 
+                        resolution = if (isSelected) camera.supportedResolutions.split(",").firstOrNull() ?: "" else "ID: $id",
+                        placement = if (id == "0" || id == "2") "Back" else "Front",
+                        onClick = { viewModel.selectCamera(id) }
+                    )
                 }
             }
         }
@@ -170,6 +157,75 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                     InfoRow("Pixel Array Size", camera.pixelArraySize, singleLine = false)
                     InfoRow("Timestamp Source", camera.timestampSource)
                     InfoRow("Orientation", camera.orientation)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CameraHeaderCard(
+    id: String,
+    isSelected: Boolean,
+    megaPixels: String,
+    resolution: String,
+    placement: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(150.dp)
+            .height(130.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) Color(0xFF90CAF9) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp).fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = if (isSelected) "$megaPixels - $placement" else "Camera $id",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = if (isSelected) resolution else placement,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) Color.Black.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val iconRes = if (placement.contains("Front", ignoreCase = true)) {
+                    R.drawable.ic_camera_front
+                } else {
+                    R.drawable.ic_camera_back
+                }
+                
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = if (isSelected) Color(0xFF0D47A1) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                )
+                
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Selected",
+                        modifier = Modifier
+                            .size(18.dp)
+                            .align(Alignment.BottomEnd),
+                        tint = Color(0xFF0D47A1)
+                    )
                 }
             }
         }
