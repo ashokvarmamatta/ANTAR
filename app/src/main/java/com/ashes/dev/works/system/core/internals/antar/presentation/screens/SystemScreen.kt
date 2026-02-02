@@ -1,18 +1,34 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.domain.model.System
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -23,7 +39,12 @@ fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         item(key = "header") {
-            SystemHeader(androidVersion = system.androidVersion, codename = system.codename)
+            SystemHeader(
+                androidVersion = system.androidVersion,
+                codename = system.codename,
+                versionName = system.versionName,
+                releaseDate = system.releaseDate
+            )
         }
 
         item(key = "os_info") { 
@@ -44,19 +65,57 @@ fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun SystemHeader(androidVersion: String, codename: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Android $androidVersion",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+private fun SystemHeader(androidVersion: String, codename: String, versionName: String, releaseDate: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF90CAF9)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_android_version), 
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = Color(0xFF2E7D32)
             )
-            Text(
-                text = codename,
-                style = MaterialTheme.typography.titleMedium
-            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column {
+                HeaderRow(icon = Icons.Default.Build, text = "Android $androidVersion")
+                //HeaderRow(icon = Icons.Default.CheckCircle, text = codename)
+                val displayName = versionName.removePrefix("Android $androidVersion ").removePrefix("Android ").trim()
+                HeaderRow(icon = Icons.Default.Star, text = displayName)
+                HeaderRow(icon = Icons.Default.DateRange, text = "Released : $releaseDate")
+            }
         }
+    }
+}
+
+@Composable
+private fun HeaderRow(icon: ImageVector, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = Color.Black
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp
+        )
     }
 }
 
@@ -69,7 +128,11 @@ private fun OperatingSystemCard(system: System) {
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            InfoRow("Version name", system.versionName)
+            
+            val displayVersionName = system.versionName.removePrefix("Android ${system.androidVersion} ").removePrefix("Android ").trim()
+
+            InfoRow("Android version", system.androidVersion)
+            InfoRow("Version name", displayVersionName)
             InfoRow("API Level", system.apiLevel)
             InfoRow("Build number", system.buildNumber, singleLine = false)
             InfoRow("Build Time", system.buildTime)

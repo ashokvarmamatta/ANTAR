@@ -2,17 +2,24 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,11 +30,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Cpu
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CpuViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -53,7 +64,7 @@ fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
 
         LazyColumn(modifier = Modifier.padding(16.dp)) {
             item(key = "header") {
-                CpuHeader(socName = cpu!!.socName)
+                CpuHeader(cpu = cpu!!)
             }
 
             item(key = "processor") { 
@@ -66,7 +77,7 @@ fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
                 InstructionSetCard(features = cpu!!.features)
             }
 
-            items(groupedCores.entries.toList(), key = { it.key }) { (key, coreInfoList) ->
+            items(groupedCores.entries.toList(), key = { it.key.toString() }) { (key, coreInfoList) ->
                 Spacer(modifier = Modifier.height(16.dp))
                 ProcessorCoreCard(coreInfoList = coreInfoList)
             }
@@ -80,13 +91,53 @@ fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun CpuHeader(socName: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = socName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+private fun CpuHeader(cpu: Cpu) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF90CAF9)
+        )
+    ) {
+        Box(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_cpu_chip),
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = Color.Unspecified
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Column {
+                    Text(
+                        text = cpu.socName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    
+                    Text(
+                        text = "Cores: ${cpu.cores}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Black.copy(alpha = 0.7f)
+                    )
+                    
+                    Text(
+                        text = cpu.fabrication,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Black.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.BottomEnd),
+                tint = Color.Black.copy(alpha = 0.8f)
             )
         }
     }

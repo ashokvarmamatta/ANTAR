@@ -34,7 +34,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
             androidVersion = Build.VERSION.RELEASE,
             codename = Build.VERSION.CODENAME,
             releaseDate = getAndroidReleaseDate(Build.VERSION.SDK_INT),
-            versionName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Build.VERSION.RELEASE_OR_CODENAME else Build.VERSION.RELEASE,
+            versionName = getAndroidVersionName(Build.VERSION.SDK_INT),
             apiLevel = Build.VERSION.SDK_INT.toString(),
             buildNumber = Build.DISPLAY,
             buildTime = formatTime(Build.TIME),
@@ -70,6 +70,33 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
             drmNumberOfOpenSessions = drmInfo["numberOfOpenSessions"] ?: "- - -"
         )
         return cachedSystem
+    }
+
+    private fun getAndroidVersionName(sdkInt: Int): String {
+        return when (sdkInt) {
+            14 -> "Ice Cream Sandwich"
+            15 -> "Ice Cream Sandwich"
+            16 -> "Jelly Bean"
+            17 -> "Jelly Bean"
+            18 -> "Jelly Bean"
+            19 -> "KitKat"
+            21 -> "Lollipop"
+            22 -> "Lollipop"
+            23 -> "Marshmallow"
+            24 -> "Nougat"
+            25 -> "Nougat"
+            26 -> "Oreo"
+            27 -> "Oreo"
+            28 -> "Pie"
+            29 -> "Android 10 (Q)"
+            30 -> "Android 11 (R)"
+            31 -> "Android 12 (S)"
+            32 -> "Android 12 (Sv2)"
+            33 -> "Android 13 (Tiramisu)"
+            34 -> "Android 14 (Upside Down Cake)"
+            35 -> "Android 15 (Vanilla Ice Cream)"
+            else -> "Android $sdkInt"
+        }
     }
 
     private fun getStackSize(): String {
