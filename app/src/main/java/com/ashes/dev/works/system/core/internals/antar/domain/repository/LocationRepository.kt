@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocationRepository {
     fun getLocation(): Flow<Location>
+    fun isGpsEnabled(): Flow<Boolean>
 }

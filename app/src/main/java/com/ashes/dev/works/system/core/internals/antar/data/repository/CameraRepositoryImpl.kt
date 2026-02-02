@@ -6,17 +6,23 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Camera
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.CameraRepository
+import java.util.Locale
 
 class CameraRepositoryImpl(private val context: Context) : CameraRepository {
-    override fun getCamera(): Camera {
-        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val ids = manager.cameraIdList
-        if (ids.isEmpty()) {
-            return emptyCamera()
-        }
+    private val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-        val id = ids[0]
+    override fun getCameraIds(): List<String> = manager.cameraIdList.toList()
+
+    override fun getCamera(id: String): Camera {
         val chars = manager.getCameraCharacteristics(id)
+
+        val pixelArraySize = chars.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
+        val megaPixels = if (pixelArraySize != null) {
+            val mp = (pixelArraySize.width * pixelArraySize.height).toDouble() / 1_000_000.0
+            String.format(Locale.US, "%.1f MP", mp)
+        } else {
+            "- - -"
+        }
 
         return Camera(
             aberrationModes = chars.get(CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES)?.joinToString() ?: "- - -",
@@ -91,24 +97,8 @@ class CameraRepositoryImpl(private val context: Context) : CameraRepository {
                 CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME -> "Realtime"
                 else -> "Unknown"
             },
-            orientation = chars.get(CameraCharacteristics.SENSOR_ORIENTATION)?.toString() ?: "- - -"
+            orientation = chars.get(CameraCharacteristics.SENSOR_ORIENTATION)?.toString() ?: "- - -",
+            megaPixels = megaPixels
         )
     }
-
-    private fun emptyCamera() = Camera(
-        aberrationModes = "- - -", antibandingModes = "- - -", autoExposureModes = "- - -",
-        targetFpsRanges = "- - -", compensationRange = "- - -", compensationStep = "- - -",
-        autoFocusModes = "- - -", effects = "- - -", sceneModes = "- - -",
-        videoStabilizationModes = "- - -", autoWhiteBalanceModes = "- - -",
-        maxAutoExposureRegions = "- - -", maxAutoFocusRegions = "- - -",
-        maxAutoWhiteBalanceRegions = "- - -", edgeModes = "- - -", flashAvailable = "- - -",
-        hotPixelModes = "- - -", hardwareLevel = "- - -", thumbnailSizes = "- - -",
-        lensPlacement = "- - -", apertures = "- - -", filterDensities = "- - -",
-        focalLengths = "- - -", opticalStabilization = "- - -", focusDistanceCalibration = "- - -",
-        cameraCapabilities = "- - -", maxOutputStreams = "- - -", maxOutputStreamsStalling = "- - -",
-        maxRawOutputStreams = "- - -", partialResults = "- - -", maxDigitalZoom = "- - -",
-        croppingType = "- - -", supportedResolutions = "- - -", testPatternModes = "- - -",
-        colorFilterArrangement = "- - -", sensorSize = "- - -", pixelArraySize = "- - -",
-        timestampSource = "- - -", orientation = "- - -"
-    )
 }

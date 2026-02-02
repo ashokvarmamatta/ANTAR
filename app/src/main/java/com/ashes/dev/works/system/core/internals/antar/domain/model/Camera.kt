@@ -39,5 +39,6 @@ data class Camera(
     val sensorSize: String,
     val pixelArraySize: String,
     val timestampSource: String,
-    val orientation: String
+    val orientation: String,
+    val megaPixels: String
 )

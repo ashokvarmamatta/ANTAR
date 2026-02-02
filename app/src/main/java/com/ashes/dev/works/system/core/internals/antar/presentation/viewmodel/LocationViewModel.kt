@@ -5,4 +5,5 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.Locatio
 
 class LocationViewModel(private val locationRepository: LocationRepository) : ViewModel() {
     fun getLocation() = locationRepository.getLocation()
+    fun isGpsEnabled() = locationRepository.isGpsEnabled()
 }

@@ -1,7 +1,10 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.GnssStatus
@@ -23,6 +26,30 @@ import kotlinx.coroutines.flow.callbackFlow
 import java.util.Locale
 
 class LocationRepositoryImpl(private val context: Context) : LocationRepository {
+
+    override fun isGpsEnabled(): Flow<Boolean> = callbackFlow {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        
+        val checkGps = {
+            val isEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            trySend(isEnabled)
+        }
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == LocationManager.PROVIDERS_CHANGED_ACTION) {
+                    checkGps()
+                }
+            }
+        }
+
+        checkGps()
+        context.registerReceiver(receiver, IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION))
+
+        awaitClose {
+            context.unregisterReceiver(receiver)
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun getLocation(): Flow<Location> = callbackFlow {
@@ -144,9 +171,11 @@ private fun AndroidLocation.toLocationModel(geocoder: Geocoder, gnssStatus: Gnss
         }
     } ?: emptyList()
 
+    val totalSatellites = satellites.size
     val satellitesInFix = satellites.count { it.usedInFix }
-    val speedAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasSpeedAccuracy()) "${speedAccuracyMetersPerSecond} m/s" else "0.0 m/s"
-    val bearingAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasBearingAccuracy()) bearingAccuracyDegrees.toString() else "- - -"
+    
+    val speedAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasSpeedAccuracy()) "${String.format(Locale.US, "%.2f", speedAccuracyMetersPerSecond)} m/s" else "0.0 m/s"
+    val bearingAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasBearingAccuracy()) String.format(Locale.US, "%.2f", bearingAccuracyDegrees) else "- - -"
     val address = try {
         val addresses = geocoder.getFromLocation(latitude, longitude, 1)
         addresses?.firstOrNull()?.getAddressLine(0) ?: "- - -"
@@ -159,23 +188,23 @@ private fun AndroidLocation.toLocationModel(geocoder: Geocoder, gnssStatus: Gnss
     Log.d(TAG, "Bearing: $bearing, Bearing Accuracy: $bearingAccuracy")
     Log.d(TAG, "Horizontal Accuracy (hvAccurate): $accuracy")
     Log.d(TAG, "PDOP: $pdop, HDOP: $hdop, VDOP: $vdop")
-    Log.d(TAG, "Number of Satellites in fix: $satellitesInFix")
+    Log.d(TAG, "Number of Satellites in fix: $satellitesInFix / $totalSatellites")
     Log.d(TAG, "Address: $address")
 
     return Location(
         satellites = satellites,
-        latitude = latitude.toString(),
-        longitude = longitude.toString(),
-        altitude = altitude.toString(),
+        latitude = String.format(Locale.US, "%.6f", latitude),
+        longitude = String.format(Locale.US, "%.6f", longitude),
+        altitude = String.format(Locale.US, "%.2f", altitude),
         seaLevelAltitude = "- - -",
-        speed = speed.toString(),
+        speed = String.format(Locale.US, "%.2f", speed),
         speedAccurate = speedAccuracy,
         pdop = pdop ?: "- - -",
         timeToFirstFix = "",
         ehvDop = if(hdop != null && vdop != null) "H: $hdop, V: $vdop" else "- - -",
-        hvAccurate = accuracy.toString(),
-        numberOfSatellites = satellitesInFix.toString(),
-        bearing = bearing.toString(),
+        hvAccurate = String.format(Locale.US, "%.2f", accuracy),
+        numberOfSatellites = if (totalSatellites > 0) "$satellitesInFix / $totalSatellites" else "- - -",
+        bearing = String.format(Locale.US, "%.2f", bearing),
         bearingAccurate = bearingAccuracy,
         address = address
     )
