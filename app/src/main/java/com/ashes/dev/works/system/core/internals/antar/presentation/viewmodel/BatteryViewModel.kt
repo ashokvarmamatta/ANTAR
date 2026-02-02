@@ -49,7 +49,7 @@ class BatteryViewModel(private val batteryRepository: BatteryRepository) : ViewM
             .launchIn(viewModelScope)
     }
 
-    fun selectMetric(metric: BatteryMetric) {
+    fun setMetric(metric: BatteryMetric) {
         _selectedMetric.value = metric
     }
 

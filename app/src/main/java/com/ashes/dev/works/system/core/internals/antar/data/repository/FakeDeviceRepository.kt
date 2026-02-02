@@ -24,7 +24,8 @@ class FakeDeviceRepository : DeviceRepository {
             networkType = "- - -",
             wifiMacAddress = "- - -",
             bluetoothMacAddress = "- - -",
-            usbDebugging = "Disabled"
+            usbDebugging = "Disabled",
+            supports6G = "No"
         )
     }
 

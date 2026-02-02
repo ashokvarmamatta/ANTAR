@@ -76,19 +76,13 @@ fun MainScreen(navController: NavController) {
                                 val targetTab = tabPositions.getOrNull(targetPage) ?: currentTab
                                 val fraction = pagerState.currentPageOffsetFraction
 
-                                // Expressive horizontal leap logic for both directions
                                 val indicatorStart: androidx.compose.ui.unit.Dp
                                 val indicatorEnd: androidx.compose.ui.unit.Dp
 
                                 if (fraction >= 0) {
-                                    // Moving forward (Left to Right)
-                                    // Right edge stretches first, then left edge catches up
                                     indicatorStart = lerp(currentTab.left, targetTab.left, (fraction * 2f - 1f).coerceAtLeast(0f))
                                     indicatorEnd = lerp(currentTab.right, targetTab.right, (fraction * 2f).coerceAtMost(1f))
                                 } else {
-                                    // Moving backward (Right to Left)
-                                    // Left edge stretches first, then right edge catches up
-                                    // fraction is negative (from 0 to -1)
                                     val absFraction = -fraction
                                     indicatorStart = lerp(currentTab.left, targetTab.left, (absFraction * 2f).coerceAtMost(1f))
                                     indicatorEnd = lerp(currentTab.right, targetTab.right, (absFraction * 2f - 1f).coerceAtLeast(0f))
@@ -149,29 +143,44 @@ fun MainScreen(navController: NavController) {
             }
         }
     ) { innerPadding ->
-        Column(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1
-            ) { page ->
-                when (screens[page]) {
-                    Screen.Dashboard -> DashboardScreen()
-                    Screen.Device -> DeviceScreen()
-                    Screen.System -> SystemScreen()
-                    Screen.Cpu -> CpuScreen()
-                    Screen.Location -> LocationScreen()
-                    Screen.Network -> NetworkScreen()
-                    Screen.Storage -> StorageScreen()
-                    Screen.Battery -> BatteryScreen()
-                    Screen.Display -> DisplayScreen()
-                    Screen.Sensors -> SensorsScreen()
-                    Screen.Apps -> AppsScreen()
-                    Screen.Camera -> CameraScreen()
+                .padding(innerPadding),
+            beyondViewportPageCount = 2,
+            pageSpacing = 0.dp
+        ) { page ->
+            key(screens[page].route) {
+                // Determine if we should show the content of the screen
+                // For Location screen, we only show it when it's the current page or very close to it
+                // To avoid the "Location in use" icon when not on the tab.
+                val isLocationScreen = screens[page] == Screen.Location
+                val isCurrentPage = pagerState.currentPage == page
+                
+                // Only render Location screen when it's actively selected
+                if (isLocationScreen) {
+                    if (isCurrentPage) {
+                        LocationScreen()
+                    } else {
+                        // Placeholder while not visible to prevent location access
+                        Box(Modifier.fillMaxSize())
+                    }
+                } else {
+                    when (screens[page]) {
+                        Screen.Dashboard -> DashboardScreen()
+                        Screen.Device -> DeviceScreen()
+                        Screen.System -> SystemScreen()
+                        Screen.Cpu -> CpuScreen()
+                        Screen.Battery -> BatteryScreen()
+                        Screen.Network -> NetworkScreen()
+                        Screen.Storage -> StorageScreen()
+                        Screen.Display -> DisplayScreen()
+                        Screen.Sensors -> SensorsScreen()
+                        Screen.Apps -> AppsScreen()
+                        Screen.Camera -> CameraScreen()
+                        else -> { /* Handled Location above */ }
+                    }
                 }
             }
         }

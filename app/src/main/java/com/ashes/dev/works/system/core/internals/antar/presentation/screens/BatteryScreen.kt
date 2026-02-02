@@ -1,54 +1,36 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryMetric
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -56,6 +38,11 @@ import kotlin.math.sin
 fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
     val batteryInfo by viewModel.batteryInfo.collectAsState()
     val capacityHistory by viewModel.capacityHistory.collectAsState()
+    val currentHistory by viewModel.currentHistory.collectAsState()
+    val powerHistory by viewModel.powerHistory.collectAsState()
+    val tempHistory by viewModel.tempHistory.collectAsState()
+    val selectedMetric by viewModel.selectedMetric.collectAsState()
+    val showMetricGraph by viewModel.showMetricGraph.collectAsState()
     
     val scrollState = rememberScrollState()
 
@@ -67,15 +54,16 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                batteryInfo?.let {
-                    BatteryHealthIndicator(batteryLevel = it.preciseLevel)
-                }
-            }
+        // Centered Battery Visualization
+        batteryInfo?.let {
+            Spacer(modifier = Modifier.height(24.dp))
+            BatteryVisualization(
+                level = it.preciseLevel,
+                cycles = it.chargeCycles
+            )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         batteryInfo?.let {
             CapacityHistoryCard(
@@ -85,6 +73,18 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
                 history = capacityHistory
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        MetricsSection(
+            showMetricGraph = showMetricGraph,
+            onToggleGraph = { viewModel.toggleMetricGraph() },
+            selectedMetric = selectedMetric,
+            onMetricSelected = { viewModel.setMetric(it) },
+            currentHistory = currentHistory,
+            powerHistory = powerHistory,
+            tempHistory = tempHistory
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -120,6 +120,171 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
         }
         
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun BatteryVisualization(level: Double, cycles: Int) {
+    val animatedLevel by animateFloatAsState(targetValue = level.toFloat(), label = "level")
+    
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(220.dp)
+    ) {
+        // Percentage Text in the middle
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = String.format("%.1f", animatedLevel),
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "%",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp, start = 2.dp)
+                )
+            }
+        }
+
+        // Circular Progress exactly fitting the Box
+        CircularBatteryProgress(
+            progress = animatedLevel / 100f,
+            modifier = Modifier.fillMaxSize()
+        )
+        
+        // Cycle count badge positioned on the bottom edge of the circle
+        Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 0.dp) 
+                .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+        ) {
+            Text(
+                text = "$cycles Cycles",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun CircularBatteryProgress(progress: Float, modifier: Modifier = Modifier) {
+    val color = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    
+    Canvas(modifier = modifier) {
+        val strokeWidthPx = 14.dp.toPx()
+        // Use an inset to ensure stroke is fully inside the canvas and not clipped
+        val inset = strokeWidthPx / 2
+        val drawSize = size.minDimension - strokeWidthPx
+        
+        // Track
+        drawCircle(
+            color = trackColor,
+            radius = drawSize / 2,
+            center = center,
+            style = Stroke(width = strokeWidthPx)
+        )
+        
+        // Animated progress arc
+        drawArc(
+            color = color,
+            startAngle = -90f,
+            sweepAngle = 360f * progress,
+            useCenter = false,
+            topLeft = Offset((size.width - drawSize) / 2, (size.height - drawSize) / 2),
+            size = Size(drawSize, drawSize),
+            style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+        )
+    }
+}
+
+@Composable
+fun MetricsSection(
+    showMetricGraph: Boolean,
+    onToggleGraph: () -> Unit,
+    selectedMetric: BatteryMetric,
+    onMetricSelected: (BatteryMetric) -> Unit,
+    currentHistory: List<Int>,
+    powerHistory: List<Double>,
+    tempHistory: List<Int>
+) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleGraph() },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Battery Metrics",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Icon(
+                    imageVector = if (showMetricGraph) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
+
+            AnimatedVisibility(
+                visible = showMetricGraph,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        BatteryMetric.entries.forEachIndexed { index, metric ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = BatteryMetric.entries.size),
+                                onClick = { onMetricSelected(metric) },
+                                selected = selectedMetric == metric
+                            ) {
+                                Text(metric.name.lowercase().replaceFirstChar { it.titlecase(Locale.getDefault()) }, fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(modifier = Modifier.fillMaxWidth().height(150.dp)) {
+                        val history: List<Number> = when (selectedMetric) {
+                            BatteryMetric.CURRENT -> currentHistory
+                            BatteryMetric.POWER -> powerHistory
+                            BatteryMetric.TEMPERATURE -> tempHistory
+                        }
+
+                        if (history.isNotEmpty()) {
+                            LineGraph(
+                                dataPoints = history,
+                                lineColor = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("No data", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -295,83 +460,6 @@ fun LineGraph(
                 radius = 8.dp.toPx(),
                 center = Offset(lastX, lastY)
             )
-        }
-    }
-}
-
-@Composable
-fun BatteryHealthIndicator(
-    batteryLevel: Double,
-    modifier: Modifier = Modifier
-) {
-    val animatedLevel by animateFloatAsState(targetValue = batteryLevel.toFloat(), label = "lvl")
-    val color = MaterialTheme.colorScheme.primary
-    val backgroundColor = MaterialTheme.colorScheme.surfaceVariant
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(180.dp)
-            .graphicsLayer()
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2, size.height / 2)
-            val radius = size.minDimension / 2 - 15.dp.toPx()
-            
-            // Background track
-            drawCircle(
-                color = backgroundColor,
-                radius = radius,
-                center = center,
-                style = Stroke(width = 4.dp.toPx())
-            )
-
-            // Animated "Wave" Progress
-            val path = Path()
-            val waveCount = 24
-            val waveAmplitude = 8f
-            val sweepAngle = (animatedLevel / 100f * 360f).coerceIn(0f, 360f)
-            
-            for (angle in 0..sweepAngle.toInt() step 1) {
-                val theta = Math.toRadians(angle.toDouble() - 90.0)
-                val r = radius + waveAmplitude * sin(waveCount * Math.toRadians(angle.toDouble())).toFloat()
-                val x = center.x + r * cos(theta).toFloat()
-                val y = center.y + r * sin(theta).toFloat()
-                if (angle == 0) path.moveTo(x, y) else path.lineTo(x, y)
-            }
-
-            drawPath(
-                path = path,
-                color = color,
-                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
-            )
-            
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(color.copy(alpha = 0.1f), Color.Transparent),
-                    center = center,
-                    radius = radius
-                ),
-                radius = radius,
-                center = center
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = String.format("%.2f", animatedLevel),
-                    fontSize = 44.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-                Text(
-                    text = "%",
-                    fontSize = 18.sp,
-                    color = color,
-                    modifier = Modifier.padding(bottom = 8.dp, start = 2.dp)
-                )
-            }
         }
     }
 }

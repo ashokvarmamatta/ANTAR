@@ -1,11 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import android.Manifest
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DeviceViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import org.koin.androidx.compose.koinViewModel
@@ -55,7 +52,8 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
                 networkType = device.networkType,
                 wifiMacAddress = device.wifiMacAddress,
                 bluetoothMacAddress = device.bluetoothMacAddress,
-                usbDebugging = device.usbDebugging
+                usbDebugging = device.usbDebugging,
+                supports6G = device.supports6G
             )
         }
     }
@@ -89,7 +87,7 @@ private fun GeneralInfoCard(
             Text(
                 text = "General Info",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 12.dp)
             )
             InfoRow("Device name", deviceName)
             InfoRow("Model", model)
@@ -113,25 +111,45 @@ private fun IdentifiersAndConnectivityCard(
     networkType: String,
     wifiMacAddress: String,
     bluetoothMacAddress: String,
-    usbDebugging: String
+    usbDebugging: String,
+    supports6G: String
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Identifiers & Connectivity",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-            InfoRow("Google Advertising ID", googleAdvertisingId)
+            
+            MultiLineInfoRow("Google Advertising ID", googleAdvertisingId)
             InfoRow("Android Device ID", androidDeviceId)
             InfoRow("Hardware serial", hardwareSerial)
-            InfoRow("Build fingerprint", buildFingerprint, singleLine = false)
+            MultiLineInfoRow("Build fingerprint", buildFingerprint)
             InfoRow("Device type", deviceType)
             InfoRow("Network operator", networkOperator)
             InfoRow("Network Type", networkType)
             InfoRow("WiFi MAC address", wifiMacAddress)
             InfoRow("Bluetooth MAC address", bluetoothMacAddress)
             InfoRow("USB debugging", usbDebugging)
+            InfoRow("Supports 6G", supports6G)
         }
+    }
+}
+
+@Composable
+private fun MultiLineInfoRow(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 6.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 16.sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 2.dp)
+        )
     }
 }
