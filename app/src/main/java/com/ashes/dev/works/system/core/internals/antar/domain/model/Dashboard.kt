@@ -13,6 +13,7 @@ data class Dashboard(
     val usedStorage: String,
     val totalStorage: String,
     val batteryStatus: String,
+    val batteryLevel: Float,
     val batteryTemp: String,
     val batteryVoltage: String,
     val processorName: String,

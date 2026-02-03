@@ -1,41 +1,23 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -45,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.delay
@@ -58,68 +41,32 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
     val dashboard by viewModel.dashboardInfo.collectAsState()
 
     dashboard?.let {
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             item {
-                // Header Chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                 ) {
                     Chip(text = it.deviceName)
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                     Chip(text = "Android ${it.osVersion}")
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
             item {
-                // RAM Utilization
                 DigitalRamView(dashboard = it)
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
             item {
-                // Internal Storage
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "${it.internalStoragePercentage}% Full", style = MaterialTheme.typography.titleLarge)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(text = "INTERNAL STORAGE", style = MaterialTheme.typography.labelSmall)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Default.Storage, contentDescription = "Internal Storage")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "${it.usedStorage} / ${it.totalStorage} used")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            progress = it.internalStoragePercentage.toFloat() / 100,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                InternalStorageCard(dashboard = it)
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
             item {
-                // Battery
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        BatteryIcon(isCharging = it.batteryStatus == "Charging")
-                        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                        Column {
-                            Text(text = "POWER SOURCE", style = MaterialTheme.typography.labelSmall)
-                            Text(text = it.batteryStatus, style = MaterialTheme.typography.titleLarge)
-                            Text(text = "${it.batteryTemp} • ${it.batteryVoltage}")
-                        }
-                    }
-                }
+                BatteryCard(dashboard = it)
             }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
                 Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
@@ -142,15 +89,13 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
             item {
                 Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                     Box(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         SmallInfoCard(
                             title = "APPLICATIONS",
                             value = "${it.appCount} Installed",
-                            subtitle = "12 System Updates",
+                            subtitle = "Updates Available",
                             icon = Icons.Default.Apps
                         )
                     }
@@ -164,6 +109,140 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun InternalStorageCard(dashboard: Dashboard) {
+    val progress = dashboard.internalStoragePercentage.toFloat() / 100f
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Internal Storage",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${dashboard.internalStoragePercentage}% Full",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.Storage,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Modern custom progress bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primaryContainer
+                                )
+                            )
+                        )
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "${dashboard.usedStorage} Used",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Total ${dashboard.totalStorage}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BatteryCard(dashboard: Dashboard) {
+    val isCharging = dashboard.batteryStatus == "Charging"
+    val batteryLevel = dashboard.batteryLevel
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Power Source",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${batteryLevel.toInt()}% charged",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                
+                BatteryIcon(
+                    isCharging = isCharging, 
+                    batteryLevel = batteryLevel,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = "${dashboard.batteryStatus} • ${dashboard.batteryTemp} • ${dashboard.batteryVoltage}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -212,13 +291,12 @@ fun DigitalRamView(dashboard: Dashboard) {
     val usedRamDisplay = (totalRamVal * currentDisplayPercentage) / 100
     val freeRamDisplay = totalRamVal - usedRamDisplay
 
-    // Format to one decimal place as requested: X.X0
-    val formattedUsed = String.format(Locale.US, "%.1f0", usedRamDisplay)
-    val formattedFree = String.format(Locale.US, "%.1f0", freeRamDisplay)
+    val formattedUsed = String.format(Locale.US, "%.1f GB", usedRamDisplay)
+    val formattedFree = String.format(Locale.US, "%.1f GB", freeRamDisplay)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = cardBackgroundColor)
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
@@ -242,7 +320,7 @@ fun DigitalRamView(dashboard: Dashboard) {
                         color = Color.Black.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "$formattedUsed GB Used",
+                        text = "$formattedUsed Used",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black.copy(alpha = 0.8f)
@@ -263,7 +341,7 @@ fun DigitalRamView(dashboard: Dashboard) {
                     Spacer(modifier = Modifier.weight(1f))
 
                     Text(
-                        text = "$formattedFree GB Free",
+                        text = "$formattedFree Free",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Black.copy(alpha = 0.8f),
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -326,13 +404,13 @@ fun ScallopedProgressBar(percentage: Float, mainColor: Color) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "${percentage.toInt()}",
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = mainColor
             )
             Text(
                 text = "%",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = mainColor
             )
         }
@@ -386,37 +464,58 @@ fun SmoothedRamGraph(color: Color, data: List<Float>) {
 
 @Composable
 fun Chip(text: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-        Text(text = text, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    Surface(
+        shape = RoundedCornerShape(16.dp), 
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Text(
+            text = text, 
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
 @Composable
 fun SmallInfoCard(title: String, value: String, subtitle: String, icon: ImageVector) {
-    Card(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+    Card(
+        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(icon, contentDescription = title, modifier = Modifier.size(32.dp))
-            Spacer(modifier = Modifier.height(12.dp))
+            Icon(
+                icon, 
+                contentDescription = title, 
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             if (subtitle.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
                 )
             }
         }
@@ -424,34 +523,80 @@ fun SmallInfoCard(title: String, value: String, subtitle: String, icon: ImageVec
 }
 
 @Composable
-fun BatteryIcon(isCharging: Boolean) {
-    val color = if (isCharging) Color.Green else Color.White
-    Canvas(modifier = Modifier.size(width = 36.dp, height = 48.dp)) {        val strokeWidth = 4f
-        val cornerRadius = 4f
+fun BatteryIcon(
+    isCharging: Boolean, 
+    batteryLevel: Float,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "battery")
+    
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "chargingPulse"
+    )
 
-        drawRoundRect(
-            color = color,
-            size = size,
-            style = Stroke(width = strokeWidth),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
-        )
+    val currentAlpha = if (isCharging) pulseAlpha else 1.0f
+    val color = if (isCharging) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
+    
+    Box(
+        contentAlignment = Alignment.Center, 
+        modifier = modifier
+            .size(width = 48.dp, height = 64.dp) // Increased height and width
+            .padding(2.dp)
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidthPx = 3.dp.toPx()
+            val cornerRadiusPx = 4.dp.toPx()
+            val terminalHeightPx = 5.dp.toPx() // Slightly taller terminal
+            
+            val shellWidth = size.width
+            val shellHeight = size.height - terminalHeightPx
+            
+            // Battery shell centered vertically
+            drawRoundRect(
+                color = color,
+                topLeft = androidx.compose.ui.geometry.Offset(0f, terminalHeightPx),
+                size = androidx.compose.ui.geometry.Size(shellWidth, shellHeight),
+                style = Stroke(width = strokeWidthPx),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadiusPx, cornerRadiusPx)
+            )
 
-        val levelHeight = size.height * 0.6f
-        val levelWidth = size.width - (strokeWidth * 2) - 4.dp.toPx()
-        val levelTop = size.height - levelHeight - strokeWidth - 2.dp.toPx()
-        drawRect(
-            color = color,
-            topLeft = androidx.compose.ui.geometry.Offset(strokeWidth + 2.dp.toPx(), levelTop),
-            size = androidx.compose.ui.geometry.Size(levelWidth, levelHeight)
-        )
+            // Fill level
+            val maxFillWidth = shellWidth - (strokeWidthPx * 2) - 6.dp.toPx()
+            val maxFillHeight = shellHeight - (strokeWidthPx * 2) - 6.dp.toPx()
+            
+            val fillHeight = maxFillHeight * (batteryLevel / 100f)
+            val fillTop = terminalHeightPx + shellHeight - fillHeight - strokeWidthPx - 3.dp.toPx()
+            val fillLeft = strokeWidthPx + 3.dp.toPx()
+            
+            drawRect(
+                color = color.copy(alpha = currentAlpha),
+                topLeft = androidx.compose.ui.geometry.Offset(fillLeft, fillTop),
+                size = androidx.compose.ui.geometry.Size(maxFillWidth, fillHeight)
+            )
 
-        val terminalWidth = size.width * 0.4f
-        val terminalHeight = strokeWidth
-        drawRect(
-            color = color,
-            topLeft = androidx.compose.ui.geometry.Offset(size.width / 2 - terminalWidth / 2, 0f),
-            size = androidx.compose.ui.geometry.Size(terminalWidth, terminalHeight)
-        )
+            // Battery terminal cap
+            val terminalWidth = shellWidth * 0.4f
+            drawRect(
+                color = color,
+                topLeft = androidx.compose.ui.geometry.Offset((shellWidth - terminalWidth) / 2, 0f),
+                size = androidx.compose.ui.geometry.Size(terminalWidth, terminalHeightPx)
+            )
+        }
+        
+        if (isCharging) {
+            Icon(
+                imageVector = Icons.Default.BatteryChargingFull,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp), // Slightly larger icon
+                tint = Color.White
+            )
+        }
     }
 }
 
