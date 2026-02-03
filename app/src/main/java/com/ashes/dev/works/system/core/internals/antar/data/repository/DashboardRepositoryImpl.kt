@@ -9,8 +9,10 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.DeviceR
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SensorsRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.StorageRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SystemRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
 
 class DashboardRepositoryImpl(
     private val deviceRepository: DeviceRepository,
@@ -27,43 +29,45 @@ class DashboardRepositoryImpl(
             deviceRepository.getDeviceFlow(),
             batteryRepository.getBatteryInfo()
         ) { device, battery ->
-            val system = systemRepository.getSystem()
-            val storage = storageRepository.getStorage()
-            val sensors = sensorsRepository.getSensors()
-            val apps = appsRepository.getApps()
-            val cpu = cpuRepository.getCpu()
+            // Running heavy calculations on IO dispatcher to avoid blocking main thread
+            withContext(Dispatchers.IO) {
+                val system = systemRepository.getSystem()
+                val storage = storageRepository.getStorage()
+                val sensors = sensorsRepository.getSensors()
+                val apps = appsRepository.getApps()
+                val cpu = cpuRepository.getCpu()
 
-            val ramUsageParts = storage.usedTotalMemory.split(" / ")
-            val usedRam = if (ramUsageParts.isNotEmpty()) ramUsageParts[0] else "- - -"
-            val totalRam = if (ramUsageParts.size > 1) ramUsageParts[1] else "- - -"
+                val ramUsageParts = storage.usedTotalMemory.split(" / ")
+                val usedRam = if (ramUsageParts.isNotEmpty()) ramUsageParts[0] else "- - -"
+                val totalRam = if (ramUsageParts.size > 1) ramUsageParts[1] else "- - -"
 
-            val storageUsageParts = storage.usedTotalFreeInternal.split(" / ")
-            val usedStorage = if (storageUsageParts.isNotEmpty()) storageUsageParts[0] else "- - -"
-            val totalStorage = if (storageUsageParts.size > 1) storageUsageParts[1] else "- - -"
+                val storageUsageParts = storage.usedTotalFreeInternal.split(" / ")
+                val usedStorage = if (storageUsageParts.isNotEmpty()) storageUsageParts[0] else "- - -"
+                val totalStorage = if (storageUsageParts.size > 1) storageUsageParts[1] else "- - -"
 
-
-            Dashboard(
-                deviceModel = device.model,
-                deviceName = device.deviceName,
-                osVersion = system.androidVersion,
-                ramUsagePercentage = storage.usagePercentageRam.replace("%", ""),
-                usedMemory = usedRam,
-                totalMemory = totalRam,
-                freeMemory = storage.freeMemory,
-                ramStatus = "Optimized",
-                internalStoragePercentage = storage.usagePercentageInternal.replace("%", ""),
-                usedStorage = usedStorage,
-                totalStorage = totalStorage,
-                batteryStatus = if (battery.isCharging) "Charging" else "Discharging",
-                batteryTemp = "${battery.temperature / 10f}°C",
-                batteryVoltage = "${battery.voltage} V",
-                processorName = cpu.socName,
-                processorDetails = "Octa-core ${cpu.frequency}",
-                sensorCount = sensors.sensorCountMessage.replace(" available", ""),
-                appCount = apps.appCount.replace(" installed", ""),
-                sysHealth = "Excellent",
-                uptime = system.systemUptime
-            )
+                Dashboard(
+                    deviceModel = device.model,
+                    deviceName = device.deviceName,
+                    osVersion = system.androidVersion,
+                    ramUsagePercentage = storage.usagePercentageRam.replace("%", ""),
+                    usedMemory = usedRam,
+                    totalMemory = totalRam,
+                    freeMemory = storage.freeMemory,
+                    ramStatus = "Optimized",
+                    internalStoragePercentage = storage.usagePercentageInternal.replace("%", ""),
+                    usedStorage = usedStorage,
+                    totalStorage = totalStorage,
+                    batteryStatus = if (battery.isCharging) "Charging" else "Discharging",
+                    batteryTemp = "${battery.temperature / 10f}°C",
+                    batteryVoltage = "${battery.voltage} V",
+                    processorName = cpu.socName,
+                    processorDetails = "Octa-core ${cpu.frequency}",
+                    sensorCount = sensors.sensorCountMessage.replace(" available", ""),
+                    appCount = apps.appCount.replace(" installed", ""),
+                    sysHealth = "Excellent",
+                    uptime = system.systemUptime
+                )
+            }
         }
     }
 }

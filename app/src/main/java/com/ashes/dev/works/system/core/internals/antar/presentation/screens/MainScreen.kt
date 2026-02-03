@@ -148,22 +148,17 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            beyondViewportPageCount = 2,
+            beyondViewportPageCount = 1,
             pageSpacing = 0.dp
         ) { page ->
             key(screens[page].route) {
-                // Determine if we should show the content of the screen
-                // For Location screen, we only show it when it's the current page or very close to it
-                // To avoid the "Location in use" icon when not on the tab.
                 val isLocationScreen = screens[page] == Screen.Location
                 val isCurrentPage = pagerState.currentPage == page
                 
-                // Only render Location screen when it's actively selected
                 if (isLocationScreen) {
                     if (isCurrentPage) {
                         LocationScreen()
                     } else {
-                        // Placeholder while not visible to prevent location access
                         Box(Modifier.fillMaxSize())
                     }
                 } else {
@@ -179,7 +174,7 @@ fun MainScreen(navController: NavController) {
                         Screen.Sensors -> SensorsScreen()
                         Screen.Apps -> AppsScreen()
                         Screen.Camera -> CameraScreen()
-                        else -> { /* Handled Location above */ }
+                        Screen.Location -> { /* Handled above */ }
                     }
                 }
             }
