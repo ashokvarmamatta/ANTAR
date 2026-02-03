@@ -58,6 +58,7 @@ class DashboardRepositoryImpl(
                     usedStorage = usedStorage,
                     totalStorage = totalStorage,
                     batteryStatus = if (battery.isCharging) "Charging" else "Discharging",
+                    batteryLevel = battery.preciseLevel.toFloat(),
                     batteryTemp = "${battery.temperature / 10f}°C",
                     batteryVoltage = "${battery.voltage} V",
                     processorName = cpu.socName,
