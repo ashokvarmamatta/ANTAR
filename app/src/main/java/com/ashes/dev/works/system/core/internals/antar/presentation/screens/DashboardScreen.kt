@@ -152,7 +152,6 @@ private fun InternalStorageCard(dashboard: Dashboard) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Modern custom progress bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -231,7 +230,7 @@ private fun BatteryCard(dashboard: Dashboard) {
                 BatteryIcon(
                     isCharging = isCharging, 
                     batteryLevel = batteryLevel,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.size(width = 48.dp, height = 64.dp)
                 )
             }
             
@@ -545,19 +544,16 @@ fun BatteryIcon(
     
     Box(
         contentAlignment = Alignment.Center, 
-        modifier = modifier
-            .size(width = 48.dp, height = 64.dp) // Increased height and width
-            .padding(2.dp)
+        modifier = modifier.padding(4.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidthPx = 3.dp.toPx()
             val cornerRadiusPx = 4.dp.toPx()
-            val terminalHeightPx = 5.dp.toPx() // Slightly taller terminal
+            val terminalHeightPx = 4.dp.toPx()
             
             val shellWidth = size.width
             val shellHeight = size.height - terminalHeightPx
             
-            // Battery shell centered vertically
             drawRoundRect(
                 color = color,
                 topLeft = androidx.compose.ui.geometry.Offset(0f, terminalHeightPx),
@@ -566,13 +562,12 @@ fun BatteryIcon(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadiusPx, cornerRadiusPx)
             )
 
-            // Fill level
-            val maxFillWidth = shellWidth - (strokeWidthPx * 2) - 6.dp.toPx()
-            val maxFillHeight = shellHeight - (strokeWidthPx * 2) - 6.dp.toPx()
+            val maxFillWidth = shellWidth - (strokeWidthPx * 2) - 4.dp.toPx()
+            val maxFillHeight = shellHeight - (strokeWidthPx * 2) - 4.dp.toPx()
             
             val fillHeight = maxFillHeight * (batteryLevel / 100f)
-            val fillTop = terminalHeightPx + shellHeight - fillHeight - strokeWidthPx - 3.dp.toPx()
-            val fillLeft = strokeWidthPx + 3.dp.toPx()
+            val fillTop = terminalHeightPx + shellHeight - fillHeight - strokeWidthPx - 2.dp.toPx()
+            val fillLeft = strokeWidthPx + 2.dp.toPx()
             
             drawRect(
                 color = color.copy(alpha = currentAlpha),
@@ -580,7 +575,6 @@ fun BatteryIcon(
                 size = androidx.compose.ui.geometry.Size(maxFillWidth, fillHeight)
             )
 
-            // Battery terminal cap
             val terminalWidth = shellWidth * 0.4f
             drawRect(
                 color = color,
@@ -593,7 +587,7 @@ fun BatteryIcon(
             Icon(
                 imageVector = Icons.Default.BatteryChargingFull,
                 contentDescription = null,
-                modifier = Modifier.size(28.dp), // Slightly larger icon
+                modifier = Modifier.size(24.dp),
                 tint = Color.White
             )
         }
