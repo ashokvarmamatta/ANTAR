@@ -12,6 +12,8 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.SystemR
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 
 class DashboardRepositoryImpl(
@@ -24,18 +26,32 @@ class DashboardRepositoryImpl(
     private val cpuRepository: CpuRepository
 ) : DashboardRepository {
 
+    private var cachedSensors: String? = null
+    private var cachedApps: String? = null
+    private var cachedCpuName: String? = null
+    private var cachedCpuDetails: String? = null
+
     override fun getDashboardInfo(): Flow<Dashboard> {
         return combine(
             deviceRepository.getDeviceFlow(),
             batteryRepository.getBatteryInfo()
         ) { device, battery ->
-            // Running heavy calculations on IO dispatcher to avoid blocking main thread
             withContext(Dispatchers.IO) {
                 val system = systemRepository.getSystem()
                 val storage = storageRepository.getStorage()
-                val sensors = sensorsRepository.getSensors()
-                val apps = appsRepository.getApps()
-                val cpu = cpuRepository.getCpu()
+                
+                // Fetch heavy info only if not cached to speed up initial load
+                if (cachedSensors == null) {
+                    cachedSensors = sensorsRepository.getSensors().sensorCountMessage.replace(" available", "")
+                }
+                if (cachedApps == null) {
+                    cachedApps = appsRepository.getApps().appCount.replace(" installed", "")
+                }
+                if (cachedCpuName == null) {
+                    val cpu = cpuRepository.getCpu()
+                    cachedCpuName = cpu.socName
+                    cachedCpuDetails = "Octa-core ${cpu.frequency}"
+                }
 
                 val ramUsageParts = storage.usedTotalMemory.split(" / ")
                 val usedRam = if (ramUsageParts.isNotEmpty()) ramUsageParts[0] else "- - -"
@@ -61,14 +77,14 @@ class DashboardRepositoryImpl(
                     batteryLevel = battery.preciseLevel.toFloat(),
                     batteryTemp = "${battery.temperature / 10f}°C",
                     batteryVoltage = "${battery.voltage} V",
-                    processorName = cpu.socName,
-                    processorDetails = "Octa-core ${cpu.frequency}",
-                    sensorCount = sensors.sensorCountMessage.replace(" available", ""),
-                    appCount = apps.appCount.replace(" installed", ""),
+                    processorName = cachedCpuName ?: "- - -",
+                    processorDetails = cachedCpuDetails ?: "- - -",
+                    sensorCount = cachedSensors ?: "- - -",
+                    appCount = cachedApps ?: "- - -",
                     sysHealth = "Excellent",
                     uptime = system.systemUptime
                 )
             }
-        }
+        }.conflate().flowOn(Dispatchers.Default)
     }
 }

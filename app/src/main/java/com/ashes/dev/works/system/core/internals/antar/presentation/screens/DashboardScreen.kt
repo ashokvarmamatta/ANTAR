@@ -267,20 +267,10 @@ fun DigitalRamView(dashboard: Dashboard) {
         )
     }
 
-    DisposableEffect(dashboard) {
-        val job = coroutineScope.launch {
-            while (true) {
-                delay(2000)
-                val base = dashboard.ramUsagePercentage.toFloat()
-                val variance = (base - 1.5f..base + 1.5f).random()
-                targetRamPercentage = variance
-                graphData = (graphData + variance).takeLast(15)
-            }
-        }
-
-        onDispose {
-            job.cancel()
-        }
+    LaunchedEffect(dashboard) {
+        val variance = (dashboard.ramUsagePercentage.toFloat() - 1.5f..dashboard.ramUsagePercentage.toFloat() + 1.5f).random()
+        targetRamPercentage = variance
+        graphData = (graphData + variance).takeLast(15)
     }
 
     val currentDisplayPercentage = animatedRamPercentage.value
