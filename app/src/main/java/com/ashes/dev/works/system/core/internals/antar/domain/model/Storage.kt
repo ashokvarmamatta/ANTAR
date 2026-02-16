@@ -4,6 +4,7 @@ data class Storage(
     val freeMemory: String,
     val usedTotalMemory: String,
     val usagePercentageRam: String,
+    val ramType: String,
     val internalStoragePath: String,
     val usedTotalFreeInternal: String,
     val usagePercentageInternal: String,

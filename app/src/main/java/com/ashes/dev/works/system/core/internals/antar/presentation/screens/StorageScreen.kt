@@ -110,6 +110,7 @@ private fun RamCard(storage: Storage) {
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+            InfoRow("Type", storage.ramType)
             InfoRow("Free Memory", storage.freeMemory)
             InfoRow("Used / Total Memory", storage.usedTotalMemory)
             InfoRow("Usage Percentage", storage.usagePercentageRam)
