@@ -1,28 +1,15 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,15 +35,54 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
             ) {
                 items(viewModel.cameraIds) { id ->
                     val isSelected = viewModel.selectedCameraId == id
-                    
+
                     CameraHeaderCard(
                         id = id,
                         isSelected = isSelected,
-                        megaPixels = if (isSelected) camera.megaPixels else "Camera", 
-                        resolution = if (isSelected) camera.supportedResolutions.split(",").firstOrNull() ?: "" else "ID: $id",
+                        megaPixels = if (isSelected) camera.megaPixels else "Cam $id",
+                        resolution = if (isSelected) camera.supportedResolutions.split(",").firstOrNull() ?: "" else "",
                         placement = if (id == "0" || id == "2") "Back" else "Front",
                         onClick = { viewModel.selectCamera(id) }
                     )
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+
+        // --- NEW: SENSOR FORENSICS CARD ---
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Sensor Forensics (Raw Data)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    InfoRow1("OS Reported Active Array", camera.pixelArraySize)
+                    InfoRow1("RAW_SENSOR Support", camera.rawSensorSize)
+                    InfoRow1("Pixel Binning Status", camera.binningStatus)
+                    InfoRow1("Physical Camera IDs", camera.physicalIds)
+                    InfoRow1("Ultra High-Res Mode (API 31+)", camera.ultraHighResMode)
+
+                    if (camera.binningStatus.contains("Likely")) {
+                        Text(
+                            text = "Note: OS is reporting 'binned' resolution as maximum.",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(top = 8.dp),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
         }
@@ -72,20 +98,20 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    InfoRow("Lens Placement", camera.lensPlacement)
-                    InfoRow("Megapixels", camera.megaPixels)
-                    InfoRow("Hardware Level", camera.hardwareLevel)
-                    InfoRow("Aberration Modes", camera.aberrationModes, singleLine = false)
-                    InfoRow("Antibanding Modes", camera.antibandingModes, singleLine = false)
-                    InfoRow("Auto Exposure Modes", camera.autoExposureModes, singleLine = false)
-                    InfoRow("Target FPS Ranges", camera.targetFpsRanges, singleLine = false)
-                    InfoRow("Compensation Range", camera.compensationRange, singleLine = false)
-                    InfoRow("Compensation Step", camera.compensationStep)
-                    InfoRow("AutoFocus Modes", camera.autoFocusModes, singleLine = false)
-                    InfoRow("Effects", camera.effects, singleLine = false)
-                    InfoRow("Scene Modes", camera.sceneModes, singleLine = false)
-                    InfoRow("Video Stabilization Modes", camera.videoStabilizationModes, singleLine = false)
-                    InfoRow("Auto White Balance Modes", camera.autoWhiteBalanceModes, singleLine = false)
+                    InfoRow1("Lens Placement", camera.lensPlacement)
+                    InfoRow1("Megapixels (Output)", camera.megaPixels)
+                    InfoRow1("Hardware Level", camera.hardwareLevel)
+                    InfoRow1("Aberration Modes", camera.aberrationModes, singleLine = false)
+                    InfoRow1("Antibanding Modes", camera.antibandingModes, singleLine = false)
+                    InfoRow1("Auto Exposure Modes", camera.autoExposureModes, singleLine = false)
+                    InfoRow1("Target FPS Ranges", camera.targetFpsRanges, singleLine = false)
+                    InfoRow1("Compensation Range", camera.compensationRange, singleLine = false)
+                    InfoRow1("Compensation Step", camera.compensationStep)
+                    InfoRow1("AutoFocus Modes", camera.autoFocusModes, singleLine = false)
+                    InfoRow1("Effects", camera.effects, singleLine = false)
+                    InfoRow1("Scene Modes", camera.sceneModes, singleLine = false)
+                    InfoRow1("Video Stabilization Modes", camera.videoStabilizationModes, singleLine = false)
+                    InfoRow1("Auto White Balance Modes", camera.autoWhiteBalanceModes, singleLine = false)
                 }
             }
         }
@@ -101,12 +127,12 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    InfoRow("Maximum Auto Exposure Regions", camera.maxAutoExposureRegions)
-                    InfoRow("Maximum Auto Focus Regions", camera.maxAutoFocusRegions)
-                    InfoRow("Maximum Auto White Balance Regions", camera.maxAutoWhiteBalanceRegions)
-                    InfoRow("Edge Modes", camera.edgeModes, singleLine = false)
-                    InfoRow("Flash Available", camera.flashAvailable)
-                    InfoRow("Hot Pixel Modes", camera.hotPixelModes, singleLine = false)
+                    InfoRow1("Maximum Auto Exposure Regions", camera.maxAutoExposureRegions)
+                    InfoRow1("Maximum Auto Focus Regions", camera.maxAutoFocusRegions)
+                    InfoRow1("Maximum Auto White Balance Regions", camera.maxAutoWhiteBalanceRegions)
+                    InfoRow1("Edge Modes", camera.edgeModes, singleLine = false)
+                    InfoRow1("Flash Available", camera.flashAvailable)
+                    InfoRow1("Hot Pixel Modes", camera.hotPixelModes, singleLine = false)
                 }
             }
         }
@@ -122,19 +148,19 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    InfoRow("Thumbnail Sizes", camera.thumbnailSizes, singleLine = false)
-                    InfoRow("Apertures", camera.apertures, singleLine = false)
-                    InfoRow("Filter Densities", camera.filterDensities, singleLine = false)
-                    InfoRow("Focal Lengths", camera.focalLengths, singleLine = false)
-                    InfoRow("Optical Stabilization", camera.opticalStabilization, singleLine = false)
-                    InfoRow("Focus Distance Calibration", camera.focusDistanceCalibration)
-                    InfoRow("Camera Capabilities", camera.cameraCapabilities, singleLine = false)
-                    InfoRow("Maximum Output Streams", camera.maxOutputStreams)
-                    InfoRow("Maximum Output Streams Stalling", camera.maxOutputStreamsStalling)
-                    InfoRow("Maximum RAW Output Streams", camera.maxRawOutputStreams)
-                    InfoRow("Partial Results", camera.partialResults)
-                    InfoRow("Maximum Digital Zoom", camera.maxDigitalZoom)
-                    InfoRow("Cropping Type", camera.croppingType)
+                    InfoRow1("Thumbnail Sizes", camera.thumbnailSizes, singleLine = false)
+                    InfoRow1("Apertures", camera.apertures, singleLine = false)
+                    InfoRow1("Filter Densities", camera.filterDensities, singleLine = false)
+                    InfoRow1("Focal Lengths", camera.focalLengths, singleLine = false)
+                    InfoRow1("Optical Stabilization", camera.opticalStabilization, singleLine = false)
+                    InfoRow1("Focus Distance Calibration", camera.focusDistanceCalibration)
+                    InfoRow1("Camera Capabilities", camera.cameraCapabilities, singleLine = false)
+                    InfoRow1("Maximum Output Streams", camera.maxOutputStreams)
+                    InfoRow1("Maximum Output Streams Stalling", camera.maxOutputStreamsStalling)
+                    InfoRow1("Maximum RAW Output Streams", camera.maxRawOutputStreams)
+                    InfoRow1("Partial Results", camera.partialResults)
+                    InfoRow1("Maximum Digital Zoom", camera.maxDigitalZoom)
+                    InfoRow1("Cropping Type", camera.croppingType)
                 }
             }
         }
@@ -150,16 +176,34 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    InfoRow("Supported Resolutions", camera.supportedResolutions, singleLine = false)
-                    InfoRow("Test Pattern Modes", camera.testPatternModes, singleLine = false)
-                    InfoRow("Color Filter Arrangement", camera.colorFilterArrangement)
-                    InfoRow("Sensor Size", camera.sensorSize, singleLine = false)
-                    InfoRow("Pixel Array Size", camera.pixelArraySize, singleLine = false)
-                    InfoRow("Timestamp Source", camera.timestampSource)
-                    InfoRow("Orientation", camera.orientation)
+                    InfoRow1("Supported Resolutions", camera.supportedResolutions, singleLine = false)
+                    InfoRow1("Test Pattern Modes", camera.testPatternModes, singleLine = false)
+                    InfoRow1("Color Filter Arrangement", camera.colorFilterArrangement)
+                    InfoRow1("Sensor Size (Physical)", camera.sensorSize, singleLine = false)
+                    InfoRow1("Timestamp Source", camera.timestampSource)
+                    InfoRow1("Orientation", camera.orientation)
                 }
             }
         }
+    }
+}
+
+// Helper Composable for Rows
+@Composable
+fun InfoRow1(label: String, value: String, singleLine: Boolean = true) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = if (singleLine) 1 else Int.MAX_VALUE
+        )
     }
 }
 
@@ -202,21 +246,21 @@ private fun CameraHeaderCard(
                     maxLines = 1
                 )
             }
-            
+
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 val iconRes = if (placement.contains("Front", ignoreCase = true)) {
                     R.drawable.ic_camera_front
                 } else {
                     R.drawable.ic_camera_back
                 }
-                
+
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(40.dp),
                     tint = if (isSelected) Color(0xFF0D47A1) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
-                
+
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,

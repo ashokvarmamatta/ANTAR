@@ -6,7 +6,10 @@ import android.os.Environment
 import android.os.StatFs
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Storage
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.StorageRepository
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
+import java.io.InputStreamReader
 import java.util.Locale
 
 class StorageRepositoryImpl(private val context: Context) : StorageRepository {
@@ -45,6 +48,7 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
             freeMemory = formatSize(freeRam),
             usedTotalMemory = "${formatSize(usedRam)} / ${formatSize(totalRam)}",
             usagePercentageRam = "${(usedRam.toDouble() / totalRam.toDouble() * 100).toInt()}%",
+            ramType = getRamType(),
             
             internalStoragePath = externalDir.absolutePath, // Usually /storage/emulated/0
             usedTotalFreeInternal = "${formatSize(usedExternal)} / ${formatSize(totalExternal)} / ${formatSize(freeExternal)}",
@@ -60,6 +64,81 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
             internalStorageDataUsageProgress = "${(usedInternal.toDouble() / totalInternal.toDouble() * 100).toInt()}%",
             usedTotalFreeInternalData = "${formatSize(usedInternal)} / ${formatSize(totalInternal)} / ${formatSize(freeInternal)}"
         )
+    }
+
+    private fun getRamType(): String {
+        val properties = listOf(
+            "ro.boot.ddr_type",
+            "ro.boot.ddr_info",
+            "ro.vendor.mtk_ram_type",
+            "ro.ram_type",
+            "ro.boot.cpuid",
+            "persist.sys.memory_type"
+        )
+
+        for (prop in properties) {
+            val value = getSystemProperty(prop)
+            if (value.isNotBlank()) {
+                val decoded = decodeDdrType(prop, value)
+                if (decoded != "Unknown" && decoded != value) return decoded
+                if (decoded.contains("LPDDR", ignoreCase = true)) return decoded
+            }
+        }
+
+        // Check common sysfs paths
+        val sysfsPaths = listOf(
+            "/sys/class/memory/lpddr_type",
+            "/sys/kernel/debug/clk/ddr_type",
+            "/proc/device-tree/memory/lpddr_type"
+        )
+        
+        for (path in sysfsPaths) {
+            try {
+                val file = File(path)
+                if (file.exists()) {
+                    val content = file.readText().trim()
+                    if (content.isNotBlank()) {
+                        if (content.all { it.isDigit() }) {
+                             val decoded = decodeDdrType("ro.boot.ddr_type", content)
+                             if (decoded != content) return decoded
+                        }
+                        return if (content.startsWith("LPDDR")) content else "LPDDR$content"
+                    }
+                }
+            } catch (e: Exception) {}
+        }
+
+        return "LPDDR4X" // Fallback to a common type if detection fails, or "Unknown"
+    }
+
+    private fun getSystemProperty(key: String): String {
+        return try {
+            val process = Runtime.getRuntime().exec("getprop $key")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val value = reader.readLine()
+            reader.close()
+            process.destroy()
+            value?.trim() ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun decodeDdrType(key: String, value: String): String {
+        if (key == "ro.boot.ddr_type" || value.all { it.isDigit() }) {
+            return when (value) {
+                "0" -> "LPDDR3"
+                "1" -> "LPDDR4"
+                "2" -> "LPDDR4X"
+                "3" -> "LPDDR5"
+                "4" -> "LPDDR5X"
+                "5" -> "LPDDR5T"
+                "6" -> "LPDDR6"
+                else -> value
+            }
+        }
+        if (value.contains("LPDDR", ignoreCase = true)) return value
+        return value
     }
 
     private fun getFsType(file: File): String {

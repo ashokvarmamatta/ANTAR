@@ -86,16 +86,16 @@ fun LoadingSplash() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Antar",
-            style = MaterialTheme.typography.displayMedium,
-            fontWeight = FontWeight.ExtraBold,
+            text = "Antar - Device info",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
         
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val infiniteTransition = rememberInfiniteTransition(label = "dots")
@@ -105,10 +105,10 @@ fun LoadingSplash() {
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     animation = keyframes {
-                        durationMillis = 600
+                        durationMillis = 800
                         0.2f at 0
                         1f at 200
-                        0.2f at 400
+                        0.2f at 600
                     }
                 ), label = "dot1"
             )
@@ -117,10 +117,10 @@ fun LoadingSplash() {
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     animation = keyframes {
-                        durationMillis = 600
-                        0.2f at 100
-                        1f at 300
-                        0.2f at 500
+                        durationMillis = 800
+                        0.2f at 150
+                        1f at 350
+                        0.2f at 750
                     }
                 ), label = "dot2"
             )
@@ -129,10 +129,10 @@ fun LoadingSplash() {
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     animation = keyframes {
-                        durationMillis = 600
-                        0.2f at 200
-                        1f at 400
-                        0.2f at 600
+                        durationMillis = 800
+                        0.2f at 300
+                        1f at 500
+                        0.2f at 800
                     }
                 ), label = "dot3"
             )
@@ -147,7 +147,7 @@ fun LoadingSplash() {
         Text(
             text = "Loading device information...",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             fontWeight = FontWeight.Medium
         )
     }
@@ -157,7 +157,7 @@ fun LoadingSplash() {
 fun Dot(alpha: Float) {
     Box(
         modifier = Modifier
-            .size(10.dp)
+            .size(12.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary.copy(alpha = alpha))
     )
