@@ -1,4 +1,4 @@
-# ANTAR — Device Info & Analytics
+# 📱 ANTAR — Device Info & Analytics
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
@@ -6,13 +6,20 @@
   <img src="https://img.shields.io/badge/Jetpack_Compose-UI-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" />
   <img src="https://img.shields.io/badge/Architecture-MVVM-00897B?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Min_SDK-24-brightgreen?style=for-the-badge" />
+  <br/>
+  <a href="https://github.com/ashokvarmamatta/ANTAR/releases/download/v1.0.0/ANTAR-v1.0.0.apk">
+    <img src="https://img.shields.io/badge/Download_APK-v1.0.0-00D4AA?style=for-the-badge&logo=android&logoColor=white" />
+  </a>
 </p>
 
-**ANTAR** is a comprehensive Android device information and analytics application that surfaces deep hardware metrics, real-time system monitoring, and detailed sensor data — all in a beautiful, dark-themed UI built entirely with **Jetpack Compose**.
+<p align="center">
+  <b>Your phone has secrets. ANTAR reveals them all.</b><br/>
+  <sub>A comprehensive device analytics app that digs deep into every sensor, chip, and signal on your Android device.</sub>
+</p>
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
 <p align="center">
   <img src="screenshots/01_dashboard.jpg" width="200" />
@@ -29,136 +36,143 @@
 
 ---
 
-## Features
+## ✨ Features
 
-### Dashboard
-- **RAM Monitor** — Real-time memory usage with animated circular progress (used/total/free)
-- **Internal Storage** — Storage breakdown with visual progress bar
-- **Power Source** — Battery percentage, charging state, temperature, voltage
-- **Processor Info** — Chipset name, core count, clock speed
-- **Sensor Count** — Total available hardware sensors (44+)
-- **App Count** — Installed applications with update detection
-- **System Health** — Overall device health score with uptime tracking
+### 🏠 Dashboard — Everything at a Glance
+> One screen. Every vital metric. Zero clutter.
+- 🧠 **RAM Monitor** — Animated circular gauge showing real-time memory (used / total / free)
+- 💾 **Storage Meter** — How full is your phone? Visual progress bar tells you instantly
+- 🔋 **Power Source** — Battery %, charging state, temperature, voltage — all live
+- ⚡ **Processor** — Chipset name, core count, clock speed
+- 📡 **Sensors** — 44+ hardware sensors detected and cataloged
+- 📦 **Apps** — Total installed count with update detection
+- 💚 **System Health** — Overall score + uptime tracking
 
-### Device Information
-- Complete device model, manufacturer, brand, and hardware details
-- Build fingerprint, product name, board, and bootloader info
+### 📋 Device — Know Your Hardware
+> Every detail about the metal in your hands.
+- Model, manufacturer, brand, board, bootloader
+- Build fingerprint, product name, hardware revision
 
-### System
-- Android version, API level, build number, security patch level
-- Baseband version, kernel info, root detection
-- System-as-Root and Seamless Update support detection
+### ⚙️ System — Under the Hood
+> What Android version? What security patch? Is it rooted?
+- 🤖 Android version, API level, codename (e.g., Vanilla Ice Cream)
+- 🔒 Security patch level, baseband version
+- 🔍 Root detection, System-as-Root, Seamless Updates support
 
-### CPU
-- Processor architecture (ARM, x86)
-- Core count, clock speeds (min/max/current)
-- CPU governor and scaling driver info
-- Real-time per-core frequency monitoring
+### 🧮 CPU — Real-Time Processor Intel
+> Watch your cores work in real-time.
+- Architecture (ARM64, x86), core count
+- Min / Max / Current clock speeds per core
+- CPU governor, scaling driver, thermal info
 
-### Battery
-- **Battery Health** — Cycle count tracking with circular gauge
-- **Real-time Graph** — Live mAh discharge/charge curve
-- **Detailed Metrics** — Health percentage, temperature, voltage, charger type
-- Expandable battery metrics panel
+### 🔋 Battery — Health Deep Dive
+> Is your battery dying? ANTAR knows before you do.
+- 🔄 **Cycle Count** — Beautiful circular gauge showing battery wear
+- 📈 **Live Graph** — Real-time mAh discharge/charge curve
+- 🌡️ Health %, temperature, voltage, charger type
+- Expandable detailed metrics panel
 
-### Location
-- **GPS Coordinates** — Latitude, longitude with reverse geocoding
-- **Satellite Tracking** — Beidou, NavStar GPS, GLONASS, QZSS, Galileo, IRNSS counts
-- **Position Details** — Altitude, speed, PDOP, TTFF, horizontal/vertical DOP
+### 📍 Location — GPS & Satellites
+> Track every satellite your phone can see.
+- 🛰️ **Satellite Tracking** — Beidou, NavStar, GLONASS, QZSS, Galileo, IRNSS
+- 📌 Lat/Long with reverse geocoding to street address
+- Altitude, speed, PDOP, TTFF, DOP values
 
-### Network
-- **WiFi** — SSID, BSSID, IP (v4/v6), gateway, DNS, link speed, frequency, security
-- **Cellular** — Dual SIM detection, carrier info, signal strength
-- **Public IP** detection with one-tap lookup
-- **Data Usage** monitoring
+### 🌐 Network — WiFi & Cellular Deep Scan
+> Your network has no secrets from ANTAR.
+- 📶 WiFi — SSID, BSSID, IP (v4 + v6), gateway, DNS, link speed, frequency
+- 📱 Cellular — Dual SIM detection, carrier, signal strength
+- 🌍 Public IP lookup with one tap
+- WPA2/WPA3 security detection
 
-### Display
-- Screen resolution, physical size, DPI, refresh rate
-- HDR capability detection
-- Display bucket classification (mdpi/hdpi/xhdpi/xxhdpi)
-- Brightness mode and screen timeout
+### 🖥️ Display — Screen Specs
+> Know every pixel.
+- Resolution (1220x2712), physical size, DPI
+- 🎮 120Hz refresh rate detection, HDR support
+- Brightness mode, screen timeout, display bucket
 
-### Sensors
-- Complete sensor inventory (44+ sensor types)
+### 🔬 Sensors — Full Hardware Inventory
+> 44+ sensors. Every single one documented.
 - Accelerometer, gyroscope, magnetometer, proximity, light
-- Vendor, power consumption, and resolution per sensor
+- Vendor, power consumption, resolution per sensor
 
-### Apps
-- Installed application count
-- System vs user app breakdown
-- Update availability detection
+### 📦 Apps — What's Installed
+> Quick audit of everything on your device.
+- Total count, system vs user breakdown
+- Update availability flags
 
 ---
 
-## Tech Stack
+## 🏗️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Language** | Kotlin 100% |
-| **UI** | Jetpack Compose + Material 3 |
-| **Architecture** | MVVM + Clean Architecture |
-| **DI** | Koin |
-| **Async** | Kotlin Coroutines + Flow |
-| **Data** | Android SensorManager, TelephonyManager, BatteryManager, WifiManager, LocationManager |
-| **Charts** | Custom Compose Canvas drawing for battery graphs and circular gauges |
-| **Navigation** | Tab-based with horizontal pager |
-| **Min SDK** | 24 (Android 7.0) |
-| **Target SDK** | 35 (Android 15) |
+| 🗣️ **Language** | Kotlin 100% |
+| 🎨 **UI** | Jetpack Compose + Material 3 |
+| 🏛️ **Architecture** | MVVM + Clean Architecture |
+| 💉 **DI** | Koin |
+| ⚡ **Async** | Kotlin Coroutines + Flow |
+| 📊 **Charts** | Custom Compose Canvas (battery graphs, circular gauges) |
+| 🧭 **Navigation** | Tab-based horizontal pager |
+| 📱 **Min SDK** | 24 (Android 7.0) |
+| 🎯 **Target SDK** | 35 (Android 15) |
 
 ---
 
-## Architecture
+## 🧬 Architecture
 
 ```
 app/
  ui/
-   dashboard/       # Main dashboard with system overview cards
-   device/          # Device hardware details
-   system/          # OS and build information
-   cpu/             # Processor monitoring
-   battery/         # Battery health & real-time graphs
-   location/        # GPS & satellite tracking
-   network/         # WiFi & cellular info
-   storage/         # Internal/external storage
-   display/         # Screen specifications
-   sensors/         # Hardware sensor inventory
-   apps/            # Installed applications
+   dashboard/       → 🏠 System overview cards
+   device/          → 📋 Hardware details
+   system/          → ⚙️ OS & build info
+   cpu/             → 🧮 Processor monitoring
+   battery/         → 🔋 Health & live graphs
+   location/        → 📍 GPS & satellites
+   network/         → 🌐 WiFi & cellular
+   storage/         → 💾 Storage breakdown
+   display/         → 🖥️ Screen specs
+   sensors/         → 🔬 Sensor inventory
+   apps/            → 📦 App management
  data/
-   repository/      # Data access layer
-   model/           # Data models
- di/                # Koin dependency injection modules
- utils/             # Extensions & helpers
+   repository/      → 📂 Data access layer
+   model/           → 📄 Data models
+ di/                → 💉 Koin modules
+ utils/             → 🔧 Extensions & helpers
 ```
 
 ---
 
-## Key Technical Highlights
+## 🔥 Key Technical Highlights
 
-- **Real-time Data Streams** — Uses StateFlow for reactive updates across all system metrics
-- **Dual SIM Detection** — Complex TelephonyManager + SubscriptionManager handling for multi-SIM devices
-- **Custom Canvas Charts** — Battery discharge curve and circular gauges drawn with Compose Canvas API
-- **Dynamic Permissions** — Runtime permission handling for location, phone state, and usage stats
-- **Lifecycle-Aware** — All sensor listeners and location callbacks bound to lifecycle to prevent leaks
-- **Efficient Polling** — Configurable update intervals to balance freshness vs battery impact
+- ⚡ **Real-time StateFlow Streams** — Reactive updates across ALL system metrics, no polling lag
+- 📱 **Dual SIM Detection** — Complex TelephonyManager + SubscriptionManager for multi-SIM devices
+- 🎨 **Custom Canvas Charts** — Battery curves & circular gauges hand-drawn with Compose Canvas API
+- 🔐 **Dynamic Permissions** — Graceful handling of location, phone state, usage stats permissions
+- 🧹 **Zero Leaks** — All sensor listeners & location callbacks lifecycle-bound
+- 🔋 **Battery Efficient** — Smart polling intervals that respect your battery
 
 ---
 
-## Build & Run
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/ashokvarmamatta/ANTAR.git
 ```
 
 1. Open in **Android Studio** (Hedgehog or later)
-2. Sync Gradle dependencies
-3. Run on device or emulator (API 24+)
+2. Sync Gradle
+3. Run on device (API 24+)
+
+Or just [**download the APK**](https://github.com/ashokvarmamatta/ANTAR/releases/download/v1.0.0/ANTAR-v1.0.0.apk) and install!
 
 ---
 
-## Author
+## 👨‍💻 Author
 
 **Matta Ashok Varma** — Senior Android Developer
 
-- [GitHub](https://github.com/ashokvarmamatta)
-- [LinkedIn](https://www.linkedin.com/in/ashokvarmamatta)
-- [Portfolio](https://ashokvarmamatta.github.io/portfolio/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ashokvarmamatta)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ashokvarmamatta)
+[![Portfolio](https://img.shields.io/badge/Portfolio-00D4AA?style=flat-square&logo=googlechrome&logoColor=white)](https://ashokvarmamatta.github.io/portfolio/)
