@@ -58,7 +58,7 @@ ANTAR is an Android app that reads every piece of hardware and software informat
 |:-------:|:-------:|:-------:|:----:|
 | <img src="screenshots/09_storage.jpg" width="180" /> | <img src="screenshots/10_display.jpg" width="180" /> | <img src="screenshots/11_sensors.jpg" width="180" /> | <img src="screenshots/12_apps.jpg" width="180" /> |
 
-| SIM Info |
+| CAMERA Info |
 |:--------:|
 | <img src="screenshots/13_sim.jpg" width="180" /> |
 
