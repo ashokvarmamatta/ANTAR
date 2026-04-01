@@ -50,7 +50,7 @@ ANTAR is an Android app that reads every piece of hardware and software informat
 |:---------:|:------:|:------:|:---:|
 | <img src="screenshots/01_dashboard.jpg" width="180" /> | <img src="screenshots/02_device.jpg" width="180" /> | <img src="screenshots/03_system.jpg" width="180" /> | <img src="screenshots/04_cpu.jpg" width="180" /> |
 
-| Battery | Battery Health | Location | Network |
+| Battery | Location | Location | Network |
 |:-------:|:--------------:|:--------:|:-------:|
 | <img src="screenshots/05_battery.jpg" width="180" /> | <img src="screenshots/06_battery_health.jpg" width="180" /> | <img src="screenshots/07_location.jpg" width="180" /> | <img src="screenshots/08_network.jpg" width="180" /> |
 
