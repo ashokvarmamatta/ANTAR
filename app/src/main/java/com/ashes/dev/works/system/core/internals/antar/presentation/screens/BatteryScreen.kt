@@ -116,19 +116,8 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
         Spacer(modifier = Modifier.height(16.dp))
 
         batteryInfo?.let {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Battery Info",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+            PremiumCard {
+                    SectionTitle(title = "Battery Info")
                     InfoRow("Health", it.health)
                     InfoRow("Battery Health", it.batteryHealthStatus)
                     InfoRow("Temperature", "${it.temperature / 10.0}\u00B0C")
@@ -141,8 +130,6 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
                     InfoRow("Charge Cycles", "${it.chargeCycles}")
                     InfoRow("Current", "${it.current / 1000} mA")
                     InfoRow("Power", String.format("%.2f W", it.power))
-                    InfoRow("Dual-cell device", "No")
-                }
             }
         }
 

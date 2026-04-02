@@ -1,155 +1,89 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import android.Manifest
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DeviceViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
     val device by viewModel.device.collectAsState()
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item(key = "header") {
-            DeviceHeader(deviceName = device.deviceName)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            GradientHeaderCard {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "DEVICE",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = AntarCyan,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    )
+                    Text(
+                        text = device.deviceName,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${device.manufacturer} \u2022 ${device.model}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray
+                    )
+                }
+            }
         }
 
-        item(key = "general_info") { 
-            Spacer(modifier = Modifier.height(16.dp))
-            GeneralInfoCard(
-                deviceName = device.deviceName,
-                model = device.model,
-                manufacturer = device.manufacturer,
-                device = device.device,
-                board = device.board,
-                hardware = device.hardware,
-                brand = device.brand
-            )
+        item {
+            PremiumCard {
+                SectionTitle(title = "General Info", icon = Icons.Outlined.PhoneAndroid)
+                InfoRow("Device name", device.deviceName)
+                InfoRow("Model", device.model)
+                InfoRow("Manufacturer", device.manufacturer)
+                InfoRow("Device", device.device)
+                InfoRow("Board", device.board)
+                InfoRow("Hardware", device.hardware)
+                InfoRow("Brand", device.brand)
+            }
         }
 
-        item(key = "identifiers") { 
-            Spacer(modifier = Modifier.height(16.dp))
-            IdentifiersAndConnectivityCard(
-                googleAdvertisingId = device.googleAdvertisingId,
-                androidDeviceId = device.androidDeviceId,
-                hardwareSerial = device.hardwareSerial,
-                buildFingerprint = device.buildFingerprint,
-                deviceType = device.deviceType,
-                networkOperator = device.networkOperator,
-                networkType = device.networkType,
-                wifiMacAddress = device.wifiMacAddress,
-                bluetoothMacAddress = device.bluetoothMacAddress,
-                usbDebugging = device.usbDebugging,
-                supports6G = device.supports6G
-            )
+        item {
+            PremiumCard {
+                SectionTitle(title = "Identifiers & Connectivity", icon = Icons.Outlined.Fingerprint, accentColor = AntarPurple)
+                CopyableInfoRow("Google Advertising ID", device.googleAdvertisingId)
+                CopyableInfoRow("Android Device ID", device.androidDeviceId)
+                CopyableInfoRow("Hardware Serial", device.hardwareSerial)
+                CopyableInfoRow("Build Fingerprint", device.buildFingerprint)
+                InfoRow("Device type", device.deviceType)
+                InfoRow("Network operator", device.networkOperator)
+                InfoRow("Network Type", device.networkType)
+                InfoRow("WiFi MAC address", device.wifiMacAddress)
+                InfoRow("Bluetooth MAC address", device.bluetoothMacAddress)
+                InfoRow("USB debugging", device.usbDebugging)
+                InfoRow("Supports 6G", device.supports6G)
+            }
         }
-    }
-}
-
-@Composable
-private fun DeviceHeader(deviceName: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = deviceName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-private fun GeneralInfoCard(
-    deviceName: String,
-    model: String,
-    manufacturer: String,
-    device: String,
-    board: String,
-    hardware: String,
-    brand: String
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "General Info",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            InfoRow("Device name", deviceName)
-            InfoRow("Model", model)
-            InfoRow("Manufacturer", manufacturer)
-            InfoRow("Device", device)
-            InfoRow("Board", board)
-            InfoRow("Hardware", hardware)
-            InfoRow("Brand", brand)
-        }
-    }
-}
-
-@Composable
-private fun IdentifiersAndConnectivityCard(
-    googleAdvertisingId: String,
-    androidDeviceId: String,
-    hardwareSerial: String,
-    buildFingerprint: String,
-    deviceType: String,
-    networkOperator: String,
-    networkType: String,
-    wifiMacAddress: String,
-    bluetoothMacAddress: String,
-    usbDebugging: String,
-    supports6G: String
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Identifiers & Connectivity",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
-            MultiLineInfoRow("Google Advertising ID", googleAdvertisingId)
-            InfoRow("Android Device ID", androidDeviceId)
-            InfoRow("Hardware serial", hardwareSerial)
-            MultiLineInfoRow("Build fingerprint", buildFingerprint)
-            InfoRow("Device type", deviceType)
-            InfoRow("Network operator", networkOperator)
-            InfoRow("Network Type", networkType)
-            InfoRow("WiFi MAC address", wifiMacAddress)
-            InfoRow("Bluetooth MAC address", bluetoothMacAddress)
-            InfoRow("USB debugging", usbDebugging)
-            InfoRow("Supports 6G", supports6G)
-        }
-    }
-}
-
-@Composable
-private fun MultiLineInfoRow(label: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 6.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 16.sp),
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 2.dp)
-        )
     }
 }
