@@ -86,11 +86,19 @@ private fun SystemHeader(androidVersion: String, codename: String, versionName: 
             Spacer(modifier = Modifier.width(16.dp))
             
             Column {
-                HeaderRow(icon = Icons.Default.Build, text = "Android $androidVersion")
-                HeaderRow(icon = Icons.Default.CheckCircle, text = codename)
+                if (androidVersion.isNotBlank() && androidVersion != "- - -") {
+                    HeaderRow(icon = Icons.Default.Build, text = "Android $androidVersion")
+                }
+                if (codename.isNotBlank() && codename != "- - -" && codename != "REL") {
+                    HeaderRow(icon = Icons.Default.CheckCircle, text = codename)
+                }
                 val displayName = versionName.removePrefix("Android $androidVersion ").removePrefix("Android ").trim()
-                HeaderRow(icon = Icons.Default.Star, text = displayName)
-                HeaderRow(icon = Icons.Default.DateRange, text = "Released : $releaseDate")
+                if (displayName.isNotBlank() && displayName != "- - -") {
+                    HeaderRow(icon = Icons.Default.Star, text = displayName)
+                }
+                if (releaseDate.isNotBlank() && releaseDate != "- - -") {
+                    HeaderRow(icon = Icons.Default.DateRange, text = "Released : $releaseDate")
+                }
             }
         }
     }

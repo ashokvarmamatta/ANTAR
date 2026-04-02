@@ -95,6 +95,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
             33 -> "Android 13 (Tiramisu)"
             34 -> "Android 14 (Upside Down Cake)"
             35 -> "Android 15 (Vanilla Ice Cream)"
+            36 -> "Android 16 (Baklava)"
             else -> "Android $sdkInt"
         }
     }
@@ -147,6 +148,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
             33 -> "August 15, 2022"
             34 -> "October 4, 2023"
             35 -> "September 3, 2024"
+            36 -> "2025"
             else -> "- - -"
         }
     }
