@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLog
+import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLogDao
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -17,7 +19,10 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 
-class BatteryRepositoryImpl(private val context: Context) : BatteryRepository {
+class BatteryRepositoryImpl(
+    private val context: Context,
+    private val batteryLogDao: BatteryLogDao
+) : BatteryRepository {
 
     override fun getBatteryInfo(): Flow<Battery> = callbackFlow {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
@@ -41,7 +46,7 @@ class BatteryRepositoryImpl(private val context: Context) : BatteryRepository {
         val pollJob = launch {
             while (true) {
                 pollBattery()
-                delay(500) 
+                delay(500)
             }
         }
 
@@ -50,6 +55,42 @@ class BatteryRepositoryImpl(private val context: Context) : BatteryRepository {
             pollJob.cancel()
         }
     }.distinctUntilChanged() // Only emit when the Battery data actually changes
+
+    override fun getBatteryHistory(sinceMillis: Long): Flow<List<BatteryLog>> {
+        return batteryLogDao.getLogsSince(sinceMillis)
+    }
+
+    override suspend fun logCurrentBattery() {
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            ?: return
+
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        val batteryPct = if (scale > 0) (level * 100 / scale) else 0
+
+        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
+
+        val temperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+        val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
+
+        val currentNowUa = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+        val remainingCapacityUah = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+        val powerWatt = (currentNowUa / 1_000_000.0) * (voltage / 1000.0)
+
+        val log = BatteryLog(
+            batteryLevel = batteryPct,
+            isCharging = isCharging,
+            temperature = temperature,
+            current = currentNowUa,
+            power = powerWatt,
+            voltage = voltage / 1000.0,
+            remainingCapacity = remainingCapacityUah / 1000
+        )
+        batteryLogDao.insert(log)
+    }
 
     private fun kotlinx.coroutines.channels.ProducerScope<Battery>.sendBatteryUpdate(intent: Intent, batteryManager: BatteryManager) {
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)

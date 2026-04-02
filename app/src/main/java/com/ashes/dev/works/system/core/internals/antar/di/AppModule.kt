@@ -1,5 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.di
 
+import androidx.room.Room
+import com.ashes.dev.works.system.core.internals.antar.data.db.AntarDatabase
 import com.ashes.dev.works.system.core.internals.antar.data.repository.AppsRepositoryImpl
 import com.ashes.dev.works.system.core.internals.antar.data.repository.BatteryRepositoryImpl
 import com.ashes.dev.works.system.core.internals.antar.data.repository.CameraRepositoryImpl
@@ -40,11 +42,20 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
+    // Database
+    single {
+        Room.databaseBuilder(get(), AntarDatabase::class.java, "antar_db")
+            .fallbackToDestructiveMigration(false)
+            .build()
+    }
+    single { get<AntarDatabase>().batteryLogDao() }
+
+    // Repositories
     single<DeviceRepository> { DeviceRepositoryImpl(get()) }
     single<SystemRepository> { SystemRepositoryImpl(get()) }
     single<CpuRepository> { CpuRepositoryImpl(get()) }
     single<StorageRepository> { StorageRepositoryImpl(get()) }
-    single<BatteryRepository> { BatteryRepositoryImpl(get()) }
+    single<BatteryRepository> { BatteryRepositoryImpl(get(), get()) }
     single<NetworkRepository> { NetworkRepositoryImpl(get()) }
     single<DisplayRepository> { DisplayRepositoryImpl(get()) }
     single<SensorsRepository> { SensorsRepositoryImpl(get()) }
@@ -53,6 +64,7 @@ val appModule = module {
     single<CameraRepository> { CameraRepositoryImpl(get()) }
     single<DashboardRepository> { DashboardRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
 
+    // ViewModels
     viewModel { DeviceViewModel(get()) }
     viewModel { SystemViewModel(get()) }
     viewModel { CpuViewModel(get()) }
