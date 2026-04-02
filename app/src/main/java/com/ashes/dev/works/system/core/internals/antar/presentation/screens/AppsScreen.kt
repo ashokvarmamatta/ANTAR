@@ -11,27 +11,31 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.AppsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,7 +53,7 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
 
     if (appsState == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = AntarCyan)
         }
         return
     }
@@ -57,21 +61,22 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     val apps = appsState!!
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Category Selection Row with Search Toggle
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.weight(1f)
-            ) {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.weight(1f)) {
                 tabs.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
                         onClick = { selectedTabIndex = index },
-                        selected = selectedTabIndex == index
+                        selected = selectedTabIndex == index,
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = AntarCyan.copy(alpha = 0.15f),
+                            activeContentColor = AntarCyan
+                        )
                     ) {
                         Text(label)
                     }
@@ -81,12 +86,12 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
             IconButton(onClick = { isSearchExpanded = !isSearchExpanded }) {
                 Icon(
                     imageVector = if (isSearchExpanded) Icons.Default.Close else Icons.Default.Search,
-                    contentDescription = "Toggle Search"
+                    contentDescription = "Toggle Search",
+                    tint = AntarCyan
                 )
             }
         }
 
-        // Search Bar (Shown below categories when expanded)
         AnimatedVisibility(
             visible = isSearchExpanded,
             enter = fadeIn() + expandVertically(),
@@ -98,10 +103,14 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                placeholder = { Text("Search apps...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = { Text("Search apps...", color = AntarGray) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AntarCyan) },
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AntarCyan,
+                    unfocusedBorderColor = AntarDimGray.copy(alpha = 0.3f)
+                )
             )
         }
 
@@ -118,38 +127,26 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
             }
         }
 
-        AppList(
-            appList = filteredApps,
-            expandedAppPackageName = expandedAppPackageName,
-            onExpandApp = { expandedAppPackageName = if (expandedAppPackageName == it) null else it }
-        )
-    }
-}
-
-@Composable
-fun AppList(
-    appList: List<AppDetail>,
-    expandedAppPackageName: String?,
-    onExpandApp: (String) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            Text(
-                text = "${appList.size} Apps",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-        items(appList, key = { it.packageName }) { app ->
-            AppItem(
-                app = app,
-                isExpanded = expandedAppPackageName == app.packageName,
-                onClick = { onExpandApp(app.packageName) }
-            )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                Text(
+                    text = "${filteredApps.size} Apps",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AntarGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            items(filteredApps, key = { it.packageName }) { app ->
+                AppItem(
+                    app = app,
+                    isExpanded = expandedAppPackageName == app.packageName,
+                    onClick = { expandedAppPackageName = if (expandedAppPackageName == app.packageName) null else app.packageName }
+                )
+            }
         }
     }
 }
@@ -162,60 +159,56 @@ fun AppItem(
 ) {
     val context = LocalContext.current
     var iconDrawable by remember(app.packageName) { mutableStateOf<Drawable?>(null) }
-    
+
     LaunchedEffect(app.packageName) {
         withContext(Dispatchers.IO) {
             try {
                 iconDrawable = context.packageManager.getApplicationIcon(app.packageName)
-            } catch (e: Exception) {
-                // Ignore
-            }
+            } catch (_: Exception) {}
         }
     }
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(AntarCard.copy(alpha = 0.5f))
+            .border(0.5.dp, AntarDimGray.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
             .animateContentSize()
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+            .clickable { onClick() }
     ) {
         Column {
             Row(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .fillMaxWidth(),
+                modifier = Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val bwMatrix = remember { ColorMatrix().apply { setToSaturation(0f) } }
-                
-                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                // Full color app icons
+                Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                     iconDrawable?.let { drawable ->
                         Image(
                             bitmap = drawable.toBitmap().asImageBitmap(),
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            colorFilter = ColorFilter.colorMatrix(bwMatrix),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(10.dp)),
                             contentScale = ContentScale.Fit
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = app.appName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1
                     )
                     Text(
                         text = app.packageName,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = AntarGray,
                         maxLines = 1
                     )
                     Row(
@@ -248,7 +241,7 @@ fun AppItem(
                             context.startActivity(intent)
                         }
                     ) {
-                        Icon(Icons.Default.Info, contentDescription = null)
+                        Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
                         Text("App Info")
                     }
@@ -259,31 +252,15 @@ fun AppItem(
                             if (intent != null) {
                                 context.startActivity(intent)
                             }
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Open App")
+                        Text("Open", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun LabelValue(label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = "$label: ",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
-        )
     }
 }

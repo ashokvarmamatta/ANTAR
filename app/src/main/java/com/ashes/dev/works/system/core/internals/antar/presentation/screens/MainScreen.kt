@@ -1,6 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +23,11 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientEnd
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientMid
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientStart
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,28 +53,36 @@ fun MainScreen(navController: NavController) {
     Scaffold(
         topBar = {
             Surface(
-                shadowElevation = 2.dp,
-                tonalElevation = 1.dp,
-                color = MaterialTheme.colorScheme.surface
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+                color = AntarDark
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
                 ) {
-                    // Compact App Name Title
-                    Text(
-                        text = stringResource(id = R.string.app_name),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+                    // App title with gradient text effect
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = AntarCyan,
+                            letterSpacing = 2.sp
+                        )
+                    }
 
+                    // Premium scrollable tab row
                     ScrollableTabRow(
                         selectedTabIndex = pagerState.currentPage,
                         containerColor = Color.Transparent,
-                        edgePadding = 16.dp,
+                        edgePadding = 12.dp,
                         divider = {},
                         indicator = { tabPositions ->
                             if (pagerState.currentPage < tabPositions.size) {
@@ -94,30 +109,37 @@ fun MainScreen(navController: NavController) {
                                         .wrapContentSize(Alignment.BottomStart)
                                         .offset(x = indicatorStart)
                                         .width(indicatorEnd - indicatorStart)
-                                        .height(32.dp)
+                                        .height(36.dp)
                                         .padding(horizontal = 4.dp)
                                         .background(
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = RoundedCornerShape(16.dp)
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    GradientStart.copy(alpha = 0.2f),
+                                                    GradientMid.copy(alpha = 0.15f),
+                                                    GradientEnd.copy(alpha = 0.1f)
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(18.dp)
                                         )
                                         .zIndex(1f)
                                 )
                             }
                         },
-                        modifier = Modifier.height(44.dp)
+                        modifier = Modifier.height(48.dp)
                     ) {
                         screens.forEachIndexed { index, screen ->
                             val isSelected = pagerState.currentPage == index
                             val textColor by animateColorAsState(
-                                targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                label = "textColor"
+                                targetValue = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                                animationSpec = tween(300),
+                                label = "tabColor"
                             )
 
                             Box(
                                 modifier = Modifier
-                                    .height(32.dp)
+                                    .height(36.dp)
                                     .padding(horizontal = 2.dp)
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(18.dp))
                                     .clickable {
                                         coroutineScope.launch {
                                             pagerState.animateScrollToPage(index)
@@ -127,18 +149,43 @@ fun MainScreen(navController: NavController) {
                                     .zIndex(2f),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = screen.title,
-                                    color = textColor,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 10.dp)
-                                )
+                                ) {
+                                    Icon(
+                                        imageVector = screen.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = textColor
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = screen.title,
+                                        color = textColor,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
                             }
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Subtle gradient divider
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        AntarCyan.copy(alpha = 0.3f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
                 }
             }
         }
@@ -154,7 +201,7 @@ fun MainScreen(navController: NavController) {
             key(screens[page].route) {
                 val isLocationScreen = screens[page] == Screen.Location
                 val isCurrentPage = pagerState.currentPage == page
-                
+
                 if (isLocationScreen) {
                     if (isCurrentPage) {
                         LocationScreen()
