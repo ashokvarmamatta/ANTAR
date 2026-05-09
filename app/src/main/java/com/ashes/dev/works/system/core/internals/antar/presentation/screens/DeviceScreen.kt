@@ -72,7 +72,6 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
         item {
             PremiumCard {
                 SectionTitle(title = "Identifiers & Connectivity", icon = Icons.Outlined.Fingerprint, accentColor = AntarPurple)
-                CopyableInfoRow("Google Advertising ID", device.googleAdvertisingId)
                 CopyableInfoRow("Android Device ID", device.androidDeviceId)
                 CopyableInfoRow("Hardware Serial", device.hardwareSerial)
                 CopyableInfoRow("Build Fingerprint", device.buildFingerprint)

@@ -8,7 +8,6 @@ data class Device(
     val board: String,
     val hardware: String,
     val brand: String,
-    val googleAdvertisingId: String,
     val androidDeviceId: String,
     val hardwareSerial: String,
     val buildFingerprint: String,

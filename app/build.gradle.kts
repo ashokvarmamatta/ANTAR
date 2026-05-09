@@ -64,7 +64,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
-    implementation(libs.play.services.ads.identifier)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)

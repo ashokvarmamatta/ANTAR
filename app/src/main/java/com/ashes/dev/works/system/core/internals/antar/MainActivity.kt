@@ -22,8 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.ashes.dev.works.system.core.internals.antar.presentation.screens.MainScreen
+import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.NavGraph
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.ANTARTheme
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -62,12 +63,15 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                BackHandler(enabled = true) {
+                val currentBackStackEntry by navController.currentBackStackEntryAsState()
+                val isOnMain = currentBackStackEntry?.destination?.route.let { it == null || it == "main" }
+
+                BackHandler(enabled = isOnMain) {
                     showExitDialog = true
                 }
 
                 if (dashboardData != null) {
-                    MainScreen(navController = navController)
+                    NavGraph(navController = navController)
                 } else {
                     LoadingSplash()
                 }

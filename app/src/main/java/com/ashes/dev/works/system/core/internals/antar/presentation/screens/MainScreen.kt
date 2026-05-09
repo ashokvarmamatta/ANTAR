@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -74,8 +76,18 @@ fun MainScreen(navController: NavController) {
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = AntarCyan,
-                            letterSpacing = 2.sp
+                            letterSpacing = 2.sp,
+                            modifier = Modifier.weight(1f)
                         )
+                        IconButton(
+                            onClick = { navController.navigate(Screen.Settings.route) }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = "Settings",
+                                tint = AntarCyan
+                            )
+                        }
                     }
 
                     // Premium scrollable tab row
@@ -222,6 +234,7 @@ fun MainScreen(navController: NavController) {
                         Screen.Apps -> AppsScreen()
                         Screen.Camera -> CameraScreen()
                         Screen.Location -> { /* Handled above */ }
+                        Screen.Settings -> { /* Not part of the pager — opened from the top-bar icon */ }
                     }
                 }
             }

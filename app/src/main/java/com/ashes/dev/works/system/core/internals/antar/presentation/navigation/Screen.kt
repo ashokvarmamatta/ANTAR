@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Monitor
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Sensors
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SettingsSystemDaydream
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Wifi
@@ -28,4 +29,5 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Sensors : Screen("sensors", "Sensors", Icons.Outlined.Sensors)
     object Apps : Screen("apps", "Apps", Icons.Outlined.Apps)
     object Camera : Screen("camera", "Camera", Icons.Outlined.CameraAlt)
+    object Settings : Screen("settings", "Settings", Icons.Outlined.Settings)
 }

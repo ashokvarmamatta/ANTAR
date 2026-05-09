@@ -1,6 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -25,11 +26,12 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
     val networkPermissionsState = rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_PHONE_NUMBERS,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
+        buildList {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.NEARBY_WIFI_DEVICES)
+            }
+        }
     )
 
     if (networkPermissionsState.allPermissionsGranted) {
@@ -114,7 +116,6 @@ fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
                     PremiumCard {
                         SectionTitle(title = "SIM 1", icon = Icons.Outlined.SimCard, accentColor = AntarGreen)
                         InfoRow("Name", network.sim1Name)
-                        InfoRow("Phone number", network.sim1PhoneNumber)
                         InfoRow("Country ISO", network.sim1CountryIso)
                         InfoRow("MCC", network.sim1Mcc)
                         InfoRow("MNC", network.sim1Mnc)
@@ -131,7 +132,6 @@ fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
                     PremiumCard {
                         SectionTitle(title = "SIM 2", icon = Icons.Outlined.SimCard, accentColor = AntarBlue)
                         InfoRow("Name", network.sim2Name)
-                        InfoRow("Phone number", network.sim2PhoneNumber)
                         InfoRow("Country ISO", network.sim2CountryIso)
                         InfoRow("MCC", network.sim2Mcc)
                         InfoRow("MNC", network.sim2Mnc)
@@ -162,7 +162,7 @@ fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Phone and location access needed for network details",
+                "Location and nearby-Wi-Fi access are needed to read your current Wi-Fi security type",
                 style = MaterialTheme.typography.bodySmall,
                 color = AntarGray
             )

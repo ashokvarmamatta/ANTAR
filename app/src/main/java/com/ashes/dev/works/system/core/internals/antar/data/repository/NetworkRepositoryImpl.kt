@@ -6,13 +6,9 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import android.util.Log
-import androidx.core.app.ActivityCompat
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Network
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.NetworkRepository
-import java.net.Inet4Address
 
 class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
     override fun getNetwork(): Network {
@@ -25,21 +21,28 @@ class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
         val linkProperties = connectivityManager.getLinkProperties(connectivityManager.activeNetwork)
         val dhcpInfo = wifiManager.dhcpInfo
 
-        val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
-        val subscriptionInfoList = if (context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-            try {
-                subscriptionManager.activeSubscriptionInfoList
-            } catch (e: SecurityException) {
-                Log.e("NetworkRepositoryImpl", "Failed to get active subscription info list", e)
-                null
-            }
+        // SIM info — sourced only from unprivileged TelephonyManager APIs (no READ_PHONE_STATE).
+        // We can read default-SIM data: operator name, SIM operator (MCC+MNC), country, SIM state,
+        // carrier id (API 28+) and roaming. We cannot enumerate per-slot SubscriptionInfo without
+        // READ_PHONE_STATE, so SIM 2 is intentionally left empty (the UI hides empty SIM cards).
+        val simState = telephonyManager.simState
+        val hasSim = simState == TelephonyManager.SIM_STATE_READY
+
+        val simOperator = telephonyManager.simOperator.orEmpty()
+        val simMcc = if (simOperator.length >= 3) simOperator.substring(0, 3) else "- - -"
+        val simMnc = if (simOperator.length > 3) simOperator.substring(3) else "- - -"
+
+        val simCarrierId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            telephonyManager.simCarrierId.toString()
         } else {
-            Log.e("NetworkRepositoryImpl", "READ_PHONE_STATE not granted")
-            null
+            "- - -"
         }
 
-        val sim1Info = if (!subscriptionInfoList.isNullOrEmpty()) subscriptionInfoList[0] else null
-        val sim2Info = if (subscriptionInfoList != null && subscriptionInfoList.size > 1) subscriptionInfoList[1] else null
+        val sim1Name = if (hasSim) {
+            telephonyManager.simOperatorName.ifBlank { telephonyManager.networkOperatorName.ifBlank { "SIM detected" } }
+        } else {
+            "- - -"
+        }
 
         return Network(
             connectionType = activeNetwork?.typeName ?: "- - -",
@@ -62,41 +65,37 @@ class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
             wifiFeatures = "- - -",
             mobileDataStatus = if (telephonyManager.dataState == TelephonyManager.DATA_CONNECTED) "Connected" else "Disconnected",
             multiSim = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) telephonyManager.phoneCount.toString() else "1",
-            deviceType = try {
-                getNetworkType(telephonyManager.networkType)
-            } catch (e: SecurityException) {
-                "Permission not granted"
-            },
-            sim1Name = sim1Info?.carrierName?.toString() ?: "No SIM detected",
-            sim1PhoneNumber = if (context.checkSelfPermission(Manifest.permission.READ_PHONE_NUMBERS) == PackageManager.PERMISSION_GRANTED) {
-                sim1Info?.number ?: "- - -"
-            } else {
-                "Permission not granted"
-            },
-            sim1CountryIso = sim1Info?.countryIso ?: "- - -",
-            sim1Mcc = sim1Info?.mcc.toString(),
-            sim1Mnc = sim1Info?.mnc.toString(),
-            sim1CarrierId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) sim1Info?.carrierId.toString() else "- - -",
-            sim1CarrierName = sim1Info?.carrierName?.toString() ?: "- - -",
-            sim1DataRoaming = if (sim1Info?.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "Enabled" else "Disabled",
-            sim2Name = sim2Info?.carrierName?.toString() ?: "No SIM detected",
-            sim2PhoneNumber = if (context.checkSelfPermission(Manifest.permission.READ_PHONE_NUMBERS) == PackageManager.PERMISSION_GRANTED) {
-                sim2Info?.number ?: "- - -"
-            } else {
-                "Permission not granted"
-            },
-            sim2CountryIso = sim2Info?.countryIso ?: "- - -",
-            sim2Mcc = sim2Info?.mcc.toString(),
-            sim2Mnc = sim2Info?.mnc.toString(),
-            sim2CarrierId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) sim2Info?.carrierId.toString() else "- - -",
-            sim2CarrierName = sim2Info?.carrierName?.toString() ?: "- - -",
-            sim2DataRoaming = if (sim2Info?.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "Enabled" else "Disabled"
+            deviceType = "- - -",
+            sim1Name = sim1Name,
+            sim1PhoneNumber = "- - -",
+            sim1CountryIso = telephonyManager.simCountryIso.ifBlank { "- - -" },
+            sim1Mcc = simMcc,
+            sim1Mnc = simMnc,
+            sim1CarrierId = simCarrierId,
+            sim1CarrierName = if (hasSim) telephonyManager.networkOperatorName.ifBlank { "- - -" } else "- - -",
+            sim1DataRoaming = if (telephonyManager.isNetworkRoaming) "Enabled" else "Disabled",
+            // SIM 2: cannot be inspected without READ_PHONE_STATE — UI hides this card when blank.
+            sim2Name = "- - -",
+            sim2PhoneNumber = "- - -",
+            sim2CountryIso = "- - -",
+            sim2Mcc = "- - -",
+            sim2Mnc = "- - -",
+            sim2CarrierId = "- - -",
+            sim2CarrierName = "- - -",
+            sim2DataRoaming = "- - -"
         )
     }
 
     private fun getWifiSecurityType(wifiManager: WifiManager): String {
+        // Wi-Fi scan results are gated on FINE_LOCATION (≤ API 32) AND NEARBY_WIFI_DEVICES (API 33+).
+        // Either gate denying produces empty scan results, so we check both.
         if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return "Unknown (Needs Location)"
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            context.checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return "Unknown (Needs Nearby Devices)"
         }
         val scanResults = wifiManager.scanResults
         val currentWifi = wifiManager.connectionInfo
@@ -109,29 +108,6 @@ class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
             result.capabilities.contains("WPA") -> "WPA"
             result.capabilities.contains("WEP") -> "WEP"
             else -> "Open"
-        }
-    }
-
-
-    private fun getNetworkType(networkType: Int): String {
-        return when (networkType) {
-            TelephonyManager.NETWORK_TYPE_1xRTT -> "1xRTT"
-            TelephonyManager.NETWORK_TYPE_CDMA -> "CDMA"
-            TelephonyManager.NETWORK_TYPE_EDGE -> "EDGE"
-            TelephonyManager.NETWORK_TYPE_EHRPD -> "eHRPD"
-            TelephonyManager.NETWORK_TYPE_EVDO_0 -> "EVDO rev. 0"
-            TelephonyManager.NETWORK_TYPE_EVDO_A -> "EVDO rev. A"
-            TelephonyManager.NETWORK_TYPE_EVDO_B -> "EVDO rev. B"
-            TelephonyManager.NETWORK_TYPE_GPRS -> "GPRS"
-            TelephonyManager.NETWORK_TYPE_HSDPA -> "HSDPA"
-            TelephonyManager.NETWORK_TYPE_HSPA -> "HSPA"
-            TelephonyManager.NETWORK_TYPE_HSPAP -> "HSPA+"
-            TelephonyManager.NETWORK_TYPE_HSUPA -> "HSUPA"
-            TelephonyManager.NETWORK_TYPE_IDEN -> "iDen"
-            TelephonyManager.NETWORK_TYPE_LTE -> "LTE"
-            TelephonyManager.NETWORK_TYPE_UMTS -> "UMTS"
-            TelephonyManager.NETWORK_TYPE_UNKNOWN -> "Unknown"
-            else -> "Unknown"
         }
     }
 

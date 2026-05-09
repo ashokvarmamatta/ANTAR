@@ -15,7 +15,6 @@ class FakeDeviceRepository : DeviceRepository {
             board = "husky",
             hardware = "husky",
             brand = "google",
-            googleAdvertisingId = "- - -",
             androidDeviceId = "- - -",
             hardwareSerial = "- - -",
             buildFingerprint = "google/husky/husky:14/UD1A.230803.041/10811862:user/release-keys",
