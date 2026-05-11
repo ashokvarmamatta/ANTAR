@@ -14,3 +14,10 @@
 .cxx
 local.properties
 scripts/audit/node_modules/
+
+# Local tooling
+.claude/
+.graphify_python
+.mcp.json
+graphify-out/
+raw/
