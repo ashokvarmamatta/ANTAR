@@ -18,8 +18,6 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PrivacyTip
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -109,26 +107,6 @@ fun SettingsScreen(navController: NavController) {
                             color = AntarGray
                         )
                     }
-                }
-            }
-
-            item {
-                PremiumCard {
-                    SectionTitle(title = "Support the app", icon = Icons.Outlined.Star)
-                    SettingsRow(
-                        icon = Icons.Outlined.Star,
-                        accent = AntarCyan,
-                        title = "Rate this app",
-                        subtitle = "Open Google Play to leave a review",
-                        onClick = { openPlayStore(context, packageName) }
-                    )
-                    SettingsRow(
-                        icon = Icons.Outlined.Share,
-                        accent = AntarPurple,
-                        title = "Share with a friend",
-                        subtitle = "Send the Play Store link",
-                        onClick = { shareApp(context, packageName) }
-                    )
                 }
             }
 
@@ -230,28 +208,6 @@ private fun SettingsRow(
             modifier = Modifier.size(20.dp)
         )
     }
-}
-
-private fun openPlayStore(context: Context, packageName: String) {
-    val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    try {
-        context.startActivity(marketIntent)
-    } catch (_: ActivityNotFoundException) {
-        openUrl(context, "https://play.google.com/store/apps/details?id=$packageName")
-    }
-}
-
-private fun shareApp(context: Context, packageName: String) {
-    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(
-            Intent.EXTRA_TEXT,
-            "Check out ANTAR — a clean device-info app for Android.\n" +
-                    "https://play.google.com/store/apps/details?id=$packageName"
-        )
-    }
-    context.startActivity(Intent.createChooser(sendIntent, "Share ANTAR via"))
 }
 
 private fun openUrl(context: Context, url: String) {

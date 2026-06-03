@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/ic_launcher-playstore.png" width="120" />
+  <img src="app/src/main/ic_launcher-512.png" width="120" />
 </p>
 
 <h1 align="center">🛰️ ANTAR</h1>
@@ -22,7 +22,7 @@
 
 ## 🤔 Why This Project Exists
 
-> **Can one app replace five different "device info" apps on the Play Store?** → That's the question that started ANTAR.
+> **Can one app replace five different "device info" apps?** → That's the question that started ANTAR.
 
 I kept installing separate apps to check my battery health, sensor list, network details, and CPU frequency — each one bloated with ads and missing something the other had. So I built ANTAR as a single, clean, ad-free tool that surfaces **everything** about your Android device in one place.
 
