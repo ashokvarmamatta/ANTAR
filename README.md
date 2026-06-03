@@ -26,7 +26,7 @@
 
 I kept installing separate apps to check my battery health, sensor list, network details, and CPU frequency — each one bloated with ads and missing something the other had. So I built ANTAR as a single, clean, ad-free tool that surfaces **everything** about your Android device in one place.
 
-This is an active, real-world project. It has real bugs, real limitations, and I'm iterating on it constantly. Claude Code was used as a development tool during parts of this project — for code reviews, refactoring suggestions, and documentation — but every architectural decision, UI design, and feature was built and tested by hand on physical devices.
+This is an active, real-world project. It has real bugs, real limitations, and I'm iterating on it constantly. Every architectural decision, UI design, and feature was built and tested by hand on physical devices.
 
 > **Who is this for?** → Developers debugging hardware issues, power users who want to know their device deeply, and anyone who's ever wondered "what sensors does my phone actually have?"
 
