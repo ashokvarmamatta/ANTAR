@@ -19,25 +19,11 @@ val StaticAntarGray = Color(0xFF8F93A2)
 val StaticAntarDimGray = Color(0xFF5A5E6F)
 
 // Dynamic theme-aware color properties
-val AntarCyan: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.primary
-
-val AntarTeal: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.primaryContainer
-
-val AntarBlue: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.secondary
-
-val AntarPurple: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.tertiary
-
-val AntarPink: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.tertiaryContainer
+val AntarCyan = StaticAntarCyan
+val AntarTeal = StaticAntarTeal
+val AntarBlue = StaticAntarBlue
+val AntarPurple = StaticAntarPurple
+val AntarPink = StaticAntarPink
 
 val AntarDark: Color
     @Composable
@@ -75,23 +61,10 @@ val AntarOrange = Color(0xFFFFAB40)
 val AntarYellow = Color(0xFFFFFF00)
 
 // Gradient colors for headers
-val GradientStart: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.primary
-
-val GradientMid: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.secondary
-
-val GradientEnd: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.tertiary
+val GradientStart = StaticAntarCyan
+val GradientMid = StaticAntarBlue
+val GradientEnd = StaticAntarPurple
 
 // Card accent - subtle glow borders
-val GlowCyan: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-
-val GlowPurple: Color
-    @Composable
-    get() = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+val GlowCyan = StaticAntarCyan.copy(alpha = 0.2f)
+val GlowPurple = StaticAntarPurple.copy(alpha = 0.2f)

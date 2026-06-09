@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.domain.model.System
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGreen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPurple
@@ -60,7 +61,7 @@ fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
                             Text(
                                 text = displayName,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = AntarCyan
                             )
                         }
                         if (system.codename.isNotBlank() && system.codename != "- - -" && system.codename != "REL") {

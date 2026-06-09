@@ -37,8 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPurple
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarRed
 import org.koin.androidx.compose.koinViewModel
 import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
@@ -122,7 +125,7 @@ fun SettingsScreen(
 
             item {
                 PremiumCard {
-                    SectionTitle(title = "App theme", icon = Icons.Outlined.Palette, accentColor = MaterialTheme.colorScheme.primary)
+                    SectionTitle(title = "App theme", icon = Icons.Outlined.Palette, accentColor = AntarCyan)
                     
                     ThemeModeSelector(
                         selectedMode = themeMode,
@@ -155,8 +158,8 @@ fun SettingsScreen(
                                 checked = dynamicColors,
                                 onCheckedChange = { themeViewModel.setDynamicColorsEnabled(it) },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                    checkedThumbColor = AntarCyan,
+                                    checkedTrackColor = AntarCyan.copy(alpha = 0.5f)
                                 )
                             )
                         }
@@ -166,24 +169,24 @@ fun SettingsScreen(
 
             item {
                 PremiumCard {
-                    SectionTitle(title = "Privacy & data", icon = Icons.Outlined.PrivacyTip, accentColor = MaterialTheme.colorScheme.tertiary)
+                    SectionTitle(title = "Privacy & data", icon = Icons.Outlined.PrivacyTip, accentColor = AntarPurple)
                     SettingsRow(
                         icon = Icons.Outlined.PrivacyTip,
-                        accent = MaterialTheme.colorScheme.tertiary,
+                        accent = AntarPurple,
                         title = "Privacy policy",
                         subtitle = PRIVACY_POLICY_URL.removePrefix("https://"),
                         onClick = { openUrl(context, PRIVACY_POLICY_URL) }
                     )
                     SettingsRow(
                         icon = Icons.Outlined.DeleteForever,
-                        accent = MaterialTheme.colorScheme.error,
+                        accent = AntarRed,
                         title = "Request data deletion",
                         subtitle = "ANTAR stores nothing off-device — open app info to clear local data",
                         onClick = { openAppInfoSettings(context) }
                     )
                     SettingsRow(
                         icon = Icons.Outlined.Info,
-                        accent = MaterialTheme.colorScheme.primary,
+                        accent = AntarCyan,
                         title = "What ANTAR collects",
                         subtitle = "Read the data-deletion page",
                         onClick = { openUrl(context, DATA_DELETION_URL) }
@@ -200,7 +203,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     SettingsRow(
                         icon = Icons.Outlined.Info,
-                        accent = MaterialTheme.colorScheme.primary,
+                        accent = AntarCyan,
                         title = "Developer",
                         subtitle = DEVELOPER_URL.removePrefix("https://"),
                         onClick = { openUrl(context, DEVELOPER_URL) }
@@ -233,12 +236,12 @@ private fun ThemeModeSelector(
         modes.forEach { (mode, label) ->
             val isSelected = selectedMode == mode
             val background = if (isSelected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                AntarCyan.copy(alpha = 0.15f)
             } else {
                 Color.Transparent
             }
             val borderModifier = if (isSelected) {
-                Modifier.border(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                Modifier.border(0.5.dp, AntarCyan.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
             } else {
                 Modifier
             }
@@ -257,7 +260,7 @@ private fun ThemeModeSelector(
                     text = label,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

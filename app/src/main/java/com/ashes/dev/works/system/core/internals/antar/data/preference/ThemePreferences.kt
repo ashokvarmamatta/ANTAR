@@ -18,19 +18,19 @@ class ThemePreferences(context: Context) {
         const val MODE_DARK = "dark"
     }
 
-    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, MODE_SYSTEM) ?: MODE_SYSTEM)
+    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK)
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
-    private val _dynamicColorsEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLORS, true))
+    private val _dynamicColorsEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLORS, false))
     val dynamicColorsEnabled: StateFlow<Boolean> = _dynamicColorsEnabled.asStateFlow()
 
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             KEY_THEME_MODE -> {
-                _themeMode.value = prefs.getString(KEY_THEME_MODE, MODE_SYSTEM) ?: MODE_SYSTEM
+                _themeMode.value = prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
             }
             KEY_DYNAMIC_COLORS -> {
-                _dynamicColorsEnabled.value = prefs.getBoolean(KEY_DYNAMIC_COLORS, true)
+                _dynamicColorsEnabled.value = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
             }
         }
     }
@@ -40,10 +40,10 @@ class ThemePreferences(context: Context) {
     }
 
     var themeModeStr: String
-        get() = prefs.getString(KEY_THEME_MODE, MODE_SYSTEM) ?: MODE_SYSTEM
+        get() = prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
         set(value) = prefs.edit().putString(KEY_THEME_MODE, value).apply()
 
     var dynamicColorsEnabledBool: Boolean
-        get() = prefs.getBoolean(KEY_DYNAMIC_COLORS, true)
+        get() = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
         set(value) = prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
 }
