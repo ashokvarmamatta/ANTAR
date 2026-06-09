@@ -1,24 +1,72 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Primary Accent - Cyan/Teal gradient palette
-val AntarCyan = Color(0xFF00E5FF)
-val AntarTeal = Color(0xFF00BFA5)
-val AntarBlue = Color(0xFF448AFF)
-val AntarPurple = Color(0xFFB388FF)
-val AntarPink = Color(0xFFFF80AB)
+// Static colors for theme initialization
+val StaticAntarCyan = Color(0xFF00E5FF)
+val StaticAntarTeal = Color(0xFF00BFA5)
+val StaticAntarBlue = Color(0xFF448AFF)
+val StaticAntarPurple = Color(0xFFB388FF)
+val StaticAntarPink = Color(0xFFFF80AB)
+val StaticAntarDark = Color(0xFF0A0E21)
+val StaticAntarSurface = Color(0xFF111631)
+val StaticAntarSurfaceElevated = Color(0xFF1A1F3D)
+val StaticAntarCard = Color(0xFF161B35)
+val StaticAntarWhite = Color(0xFFF0F0F5)
+val StaticAntarGray = Color(0xFF8F93A2)
+val StaticAntarDimGray = Color(0xFF5A5E6F)
 
-// Background layers - Deep dark with subtle blue undertone
-val AntarDark = Color(0xFF0A0E21)
-val AntarSurface = Color(0xFF111631)
-val AntarSurfaceElevated = Color(0xFF1A1F3D)
-val AntarCard = Color(0xFF161B35)
+// Dynamic theme-aware color properties
+val AntarCyan: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.primary
+
+val AntarTeal: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.primaryContainer
+
+val AntarBlue: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.secondary
+
+val AntarPurple: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.tertiary
+
+val AntarPink: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.tertiaryContainer
+
+val AntarDark: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.background
+
+val AntarSurface: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.surface
+
+val AntarSurfaceElevated: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.surfaceVariant
+
+val AntarCard: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.surfaceVariant
 
 // Text
-val AntarWhite = Color(0xFFF0F0F5)
-val AntarGray = Color(0xFF8F93A2)
-val AntarDimGray = Color(0xFF5A5E6F)
+val AntarWhite: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.onSurface
+
+val AntarGray: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+val AntarDimGray: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.outline
 
 // Semantic
 val AntarGreen = Color(0xFF69F0AE)
@@ -27,10 +75,23 @@ val AntarOrange = Color(0xFFFFAB40)
 val AntarYellow = Color(0xFFFFFF00)
 
 // Gradient colors for headers
-val GradientStart = Color(0xFF00E5FF)
-val GradientMid = Color(0xFF448AFF)
-val GradientEnd = Color(0xFFB388FF)
+val GradientStart: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.primary
+
+val GradientMid: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.secondary
+
+val GradientEnd: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.tertiary
 
 // Card accent - subtle glow borders
-val GlowCyan = Color(0x3300E5FF)
-val GlowPurple = Color(0x33B388FF)
+val GlowCyan: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+
+val GlowPurple: Color
+    @Composable
+    get() = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)

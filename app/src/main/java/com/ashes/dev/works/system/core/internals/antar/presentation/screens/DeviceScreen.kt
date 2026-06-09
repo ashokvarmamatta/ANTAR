@@ -15,8 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DeviceViewModel
@@ -37,7 +35,7 @@ fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
                     Text(
                         text = "DEVICE",
                         style = MaterialTheme.typography.labelMedium,
-                        color = AntarCyan,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp
                     )

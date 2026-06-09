@@ -37,7 +37,7 @@ fun DisplayScreen(viewModel: DisplayViewModel = koinViewModel()) {
                         imageVector = Icons.Outlined.Monitor,
                         contentDescription = null,
                         modifier = Modifier.size(56.dp),
-                        tint = AntarBlue
+                        tint = MaterialTheme.colorScheme.secondary
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
@@ -49,7 +49,7 @@ fun DisplayScreen(viewModel: DisplayViewModel = koinViewModel()) {
                         Text(
                             text = display.name,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = AntarCyan
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = "${display.screenSize} \u2022 ${display.refreshRate}",
@@ -68,13 +68,13 @@ fun DisplayScreen(viewModel: DisplayViewModel = koinViewModel()) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    StatChip(label = "Refresh", value = display.refreshRate, accentColor = AntarCyan)
+                    StatChip(label = "Refresh", value = display.refreshRate, accentColor = MaterialTheme.colorScheme.primary)
                 }
                 Box(modifier = Modifier.weight(1f)) {
-                    StatChip(label = "HDR", value = display.hdr, accentColor = AntarPurple)
+                    StatChip(label = "HDR", value = display.hdr, accentColor = MaterialTheme.colorScheme.tertiary)
                 }
                 Box(modifier = Modifier.weight(1f)) {
-                    StatChip(label = "DPI", value = display.displayDpi, accentColor = AntarBlue)
+                    StatChip(label = "DPI", value = display.displayDpi, accentColor = MaterialTheme.colorScheme.secondary)
                 }
             }
         }

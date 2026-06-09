@@ -25,11 +25,6 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientEnd
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientMid
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.GradientStart
 import kotlinx.coroutines.launch
 
 @Composable
@@ -75,7 +70,7 @@ fun MainScreen(navController: NavController) {
                             text = stringResource(id = R.string.app_name),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
-                            color = AntarCyan,
+                            color = MaterialTheme.colorScheme.primary,
                             letterSpacing = 2.sp,
                             modifier = Modifier.weight(1f)
                         )
@@ -85,7 +80,7 @@ fun MainScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
                                 contentDescription = "Settings",
-                                tint = AntarCyan
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -126,9 +121,9 @@ fun MainScreen(navController: NavController) {
                                         .background(
                                             brush = Brush.horizontalGradient(
                                                 colors = listOf(
-                                                    GradientStart.copy(alpha = 0.2f),
-                                                    GradientMid.copy(alpha = 0.15f),
-                                                    GradientEnd.copy(alpha = 0.1f)
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
                                                 )
                                             ),
                                             shape = RoundedCornerShape(18.dp)
@@ -142,7 +137,7 @@ fun MainScreen(navController: NavController) {
                         screens.forEachIndexed { index, screen ->
                             val isSelected = pagerState.currentPage == index
                             val textColor by animateColorAsState(
-                                targetValue = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 animationSpec = tween(300),
                                 label = "tabColor"
                             )
@@ -192,7 +187,7 @@ fun MainScreen(navController: NavController) {
                                 Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        AntarCyan.copy(alpha = 0.3f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                                         Color.Transparent
                                     )
                                 )

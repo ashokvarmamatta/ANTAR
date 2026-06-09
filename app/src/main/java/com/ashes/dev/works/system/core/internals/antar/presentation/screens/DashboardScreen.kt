@@ -77,7 +77,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         value = it.processorName,
                         subtitle = it.processorDetails,
                         icon = Icons.Outlined.Memory,
-                        accentColor = AntarPurple
+                        accentColor = MaterialTheme.colorScheme.tertiary
                     )
                     QuickInfoCard(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -85,7 +85,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         value = "${it.sensorCount} Available",
                         subtitle = "",
                         icon = Icons.Outlined.Sensors,
-                        accentColor = AntarGreen
+                        accentColor = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
@@ -103,7 +103,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         value = "${it.appCount} Installed",
                         subtitle = "",
                         icon = Icons.Outlined.Apps,
-                        accentColor = AntarBlue
+                        accentColor = MaterialTheme.colorScheme.primary
                     )
                     QuickInfoCard(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -111,7 +111,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         value = it.sysHealth,
                         subtitle = "Up: ${it.uptime}",
                         icon = Icons.Outlined.Verified,
-                        accentColor = AntarCyan
+                        accentColor = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -136,6 +136,11 @@ private fun RamCard(dashboard: Dashboard) {
     val usedRam = (totalRam * animatedPct) / 100
     val freeRam = totalRam - usedRam
 
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val trackColor = AntarDimGray.copy(alpha = 0.3f)
+
     GradientHeaderCard {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -149,14 +154,14 @@ private fun RamCard(dashboard: Dashboard) {
 
                     // Track
                     drawCircle(
-                        color = AntarDimGray.copy(alpha = 0.3f),
+                        color = trackColor,
                         radius = radius,
                         style = Stroke(width = strokeWidth)
                     )
                     // Progress arc
                     drawArc(
                         brush = Brush.sweepGradient(
-                            colors = listOf(AntarCyan, AntarBlue, AntarPurple)
+                            colors = listOf(primaryColor, secondaryColor, tertiaryColor)
                         ),
                         startAngle = -90f,
                         sweepAngle = 360f * (animatedPct / 100f),
@@ -171,7 +176,7 @@ private fun RamCard(dashboard: Dashboard) {
                         text = "${animatedPct.toInt()}",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AntarCyan
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = "%",
@@ -187,7 +192,7 @@ private fun RamCard(dashboard: Dashboard) {
                 Text(
                     text = "RAM",
                     style = MaterialTheme.typography.labelMedium,
-                    color = AntarCyan,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
                 )
@@ -200,7 +205,7 @@ private fun RamCard(dashboard: Dashboard) {
 
                 GradientProgressBar(
                     progress = animatedPct / 100f,
-                    colors = listOf(AntarCyan, AntarBlue)
+                    colors = listOf(primaryColor, secondaryColor)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -218,7 +223,7 @@ private fun RamCard(dashboard: Dashboard) {
                         text = "${String.format(Locale.US, "%.1f", freeRam)} GB Free",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = AntarCyan
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -237,6 +242,9 @@ private fun StorageCard(dashboard: Dashboard) {
         label = "storage"
     )
 
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+
     PremiumCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -247,7 +255,7 @@ private fun StorageCard(dashboard: Dashboard) {
                 Text(
                     text = "INTERNAL STORAGE",
                     style = MaterialTheme.typography.labelMedium,
-                    color = AntarPurple,
+                    color = secondaryColor,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 )
@@ -261,7 +269,7 @@ private fun StorageCard(dashboard: Dashboard) {
                 imageVector = Icons.Outlined.Storage,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = AntarPurple.copy(alpha = 0.6f)
+                tint = secondaryColor.copy(alpha = 0.6f)
             )
         }
 
@@ -270,7 +278,7 @@ private fun StorageCard(dashboard: Dashboard) {
         GradientProgressBar(
             progress = animatedProgress,
             height = 10.dp,
-            colors = listOf(AntarPurple, AntarPink)
+            colors = listOf(secondaryColor, tertiaryColor)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -301,7 +309,7 @@ private fun BatteryCard(dashboard: Dashboard) {
     val isCharging = dashboard.batteryStatus == "Charging"
     val batteryLevel = dashboard.batteryLevel
     val batteryColor = if (isCharging) AntarGreen else when {
-        batteryLevel > 50 -> AntarCyan
+        batteryLevel > 50 -> MaterialTheme.colorScheme.primary
         batteryLevel > 20 -> AntarOrange
         else -> AntarRed
     }
@@ -408,9 +416,9 @@ private fun QuickInfoCard(
 
 @Composable
 private fun PremiumChip(text: String, accent: Boolean = false) {
-    val chipColor = if (accent) AntarCyan.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-    val borderColor = if (accent) AntarCyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-    val textColor = if (accent) AntarCyan else MaterialTheme.colorScheme.onSurface
+    val chipColor = if (accent) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val borderColor = if (accent) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+    val textColor = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
 
     Surface(
         shape = RoundedCornerShape(20.dp),
@@ -434,7 +442,7 @@ fun BatteryIcon(
     isCharging: Boolean,
     batteryLevel: Float,
     modifier: Modifier = Modifier,
-    batteryColor: Color = if (isCharging) AntarGreen else AntarCyan
+    batteryColor: Color = if (isCharging) AntarGreen else MaterialTheme.colorScheme.primary
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "battery")
 
