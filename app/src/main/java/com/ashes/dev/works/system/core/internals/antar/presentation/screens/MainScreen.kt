@@ -57,7 +57,7 @@ fun MainScreen(navController: NavController) {
             Surface(
                 shadowElevation = 0.dp,
                 tonalElevation = 0.dp,
-                color = AntarDark
+                color = MaterialTheme.colorScheme.background
             ) {
                 Column(
                     modifier = Modifier

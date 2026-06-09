@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,9 +19,12 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,20 +42,29 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarD
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarRed
+import org.koin.androidx.compose.koinViewModel
+import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 
 private const val PRIVACY_POLICY_URL = "https://ashokvarma.dev/antar/privacy"
 private const val DATA_DELETION_URL = "https://ashokvarma.dev/antar/data-deletion"
 private const val DEVELOPER_URL = "https://ashokvarma.dev"
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(
+    navController: NavController,
+    themeViewModel: ThemeViewModel = koinViewModel()
+) {
     val context = LocalContext.current
     val packageName = context.packageName
     val versionName = remember(packageName) { readVersionName(context) }
 
+    val themeMode by themeViewModel.themeMode.collectAsState()
+    val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsState()
+
     Scaffold(
         topBar = {
-            Surface(color = AntarDark, tonalElevation = 0.dp) {
+            Surface(color = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -112,6 +125,50 @@ fun SettingsScreen(navController: NavController) {
 
             item {
                 PremiumCard {
+                    SectionTitle(title = "App theme", icon = Icons.Outlined.Palette, accentColor = AntarCyan)
+                    
+                    ThemeModeSelector(
+                        selectedMode = themeMode,
+                        onModeSelected = { themeViewModel.setThemeMode(it) }
+                    )
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Dynamic colors",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Wallpaper match (Material You)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AntarGray
+                                )
+                            }
+                            Switch(
+                                checked = dynamicColors,
+                                onCheckedChange = { themeViewModel.setDynamicColorsEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = AntarCyan,
+                                    checkedTrackColor = AntarCyan.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                PremiumCard {
                     SectionTitle(title = "Privacy & data", icon = Icons.Outlined.PrivacyTip, accentColor = AntarPurple)
                     SettingsRow(
                         icon = Icons.Outlined.PrivacyTip,
@@ -152,6 +209,59 @@ fun SettingsScreen(navController: NavController) {
                         onClick = { openUrl(context, DEVELOPER_URL) }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeModeSelector(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit
+) {
+    val modes = listOf(
+        ThemePreferences.MODE_SYSTEM to "System",
+        ThemePreferences.MODE_LIGHT to "Light",
+        ThemePreferences.MODE_DARK to "Dark"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        modes.forEach { (mode, label) ->
+            val isSelected = selectedMode == mode
+            val background = if (isSelected) {
+                AntarCyan.copy(alpha = 0.15f)
+            } else {
+                Color.Transparent
+            }
+            val borderModifier = if (isSelected) {
+                Modifier.border(0.5.dp, AntarCyan.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            } else {
+                Modifier
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(background)
+                    .then(borderModifier)
+                    .clickable { onModeSelected(mode) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

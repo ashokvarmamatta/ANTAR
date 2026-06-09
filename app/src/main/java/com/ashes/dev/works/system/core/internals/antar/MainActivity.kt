@@ -22,15 +22,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.NavGraph
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.ANTARTheme
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
     private val dashboardViewModel: DashboardViewModel by viewModel()
+    private val themeViewModel: ThemeViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -40,7 +44,16 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            ANTARTheme {
+            val themeMode by themeViewModel.themeMode.collectAsState()
+            val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsState()
+
+            val darkTheme = when (themeMode) {
+                ThemePreferences.MODE_LIGHT -> false
+                ThemePreferences.MODE_DARK -> true
+                else -> isSystemInDarkTheme()
+            }
+
+            ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors) {
                 val navController = rememberNavController()
                 var showExitDialog by remember { mutableStateOf(false) }
                 val dashboardData by dashboardViewModel.dashboardInfo.collectAsState()

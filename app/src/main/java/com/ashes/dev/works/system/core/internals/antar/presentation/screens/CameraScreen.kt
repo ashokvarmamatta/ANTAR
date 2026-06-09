@@ -175,8 +175,8 @@ private fun CameraCard(
     placement: String,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) AntarCyan.copy(alpha = 0.12f) else AntarCard.copy(alpha = 0.5f)
-    val borderColor = if (isSelected) AntarCyan.copy(alpha = 0.4f) else AntarDimGray.copy(alpha = 0.15f)
+    val bgColor = if (isSelected) AntarCyan.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val borderColor = if (isSelected) AntarCyan.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val accentColor = if (isSelected) AntarCyan else AntarGray
 
     Box(

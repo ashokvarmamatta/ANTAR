@@ -26,6 +26,7 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.Network
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SensorsRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.StorageRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SystemRepository
+import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.AppsViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CameraViewModel
@@ -38,6 +39,7 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.Ne
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SensorsViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.StorageViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -49,6 +51,9 @@ val appModule = module {
             .build()
     }
     single { get<AntarDatabase>().batteryLogDao() }
+
+    // SharedPreferences & Preferences
+    single { ThemePreferences(get()) }
 
     // Repositories
     single<DeviceRepository> { DeviceRepositoryImpl(get()) }
@@ -77,4 +82,5 @@ val appModule = module {
     viewModel { LocationViewModel(get()) }
     viewModel { CameraViewModel(get()) }
     viewModel { DashboardViewModel(get()) }
+    viewModel { ThemeViewModel(get()) }
 }

@@ -172,8 +172,8 @@ fun AppItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(AntarCard.copy(alpha = 0.5f))
-            .border(0.5.dp, AntarDimGray.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
             .animateContentSize()
             .clickable { onClick() }
     ) {

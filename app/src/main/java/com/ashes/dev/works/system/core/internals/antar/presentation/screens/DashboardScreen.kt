@@ -66,53 +66,53 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
 
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        QuickInfoCard(
-                            title = "PROCESSOR",
-                            value = it.processorName,
-                            subtitle = it.processorDetails,
-                            icon = Icons.Outlined.Memory,
-                            accentColor = AntarPurple
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        QuickInfoCard(
-                            title = "SENSORS",
-                            value = "${it.sensorCount} Available",
-                            subtitle = "",
-                            icon = Icons.Outlined.Sensors,
-                            accentColor = AntarGreen
-                        )
-                    }
+                    QuickInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        title = "PROCESSOR",
+                        value = it.processorName,
+                        subtitle = it.processorDetails,
+                        icon = Icons.Outlined.Memory,
+                        accentColor = AntarPurple
+                    )
+                    QuickInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        title = "SENSORS",
+                        value = "${it.sensorCount} Available",
+                        subtitle = "",
+                        icon = Icons.Outlined.Sensors,
+                        accentColor = AntarGreen
+                    )
                 }
             }
 
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        QuickInfoCard(
-                            title = "APPLICATIONS",
-                            value = "${it.appCount} Installed",
-                            subtitle = "",
-                            icon = Icons.Outlined.Apps,
-                            accentColor = AntarBlue
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        QuickInfoCard(
-                            title = "SYS HEALTH",
-                            value = it.sysHealth,
-                            subtitle = "Up: ${it.uptime}",
-                            icon = Icons.Outlined.Verified,
-                            accentColor = AntarCyan
-                        )
-                    }
+                    QuickInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        title = "APPLICATIONS",
+                        value = "${it.appCount} Installed",
+                        subtitle = "",
+                        icon = Icons.Outlined.Apps,
+                        accentColor = AntarBlue
+                    )
+                    QuickInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        title = "SYS HEALTH",
+                        value = it.sysHealth,
+                        subtitle = "Up: ${it.uptime}",
+                        icon = Icons.Outlined.Verified,
+                        accentColor = AntarCyan
+                    )
                 }
             }
         }
@@ -356,10 +356,12 @@ private fun QuickInfoCard(
     value: String,
     subtitle: String,
     icon: ImageVector,
-    accentColor: Color
+    accentColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        contentAlignment = Alignment.Center,
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(accentColor.copy(alpha = 0.06f))
@@ -391,15 +393,13 @@ private fun QuickInfoCard(
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
             )
-            if (subtitle.isNotEmpty()) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                    textAlign = TextAlign.Center,
-                    color = AntarGray,
-                    maxLines = 1
-                )
-            }
+            Text(
+                text = subtitle.ifEmpty { " " },
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                textAlign = TextAlign.Center,
+                color = if (subtitle.isEmpty()) Color.Transparent else AntarGray,
+                maxLines = 1
+            )
         }
     }
 }
