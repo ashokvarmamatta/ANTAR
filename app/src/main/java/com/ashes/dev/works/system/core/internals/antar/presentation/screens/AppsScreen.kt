@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
@@ -45,6 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     val appsState by viewModel.appsState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val tabs = listOf("All", "System", "User")
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
@@ -52,8 +54,12 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     var expandedAppPackageName by remember { mutableStateOf<String?>(null) }
 
     if (appsState == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = AntarCyan)
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = AntarCyan)
+            }
+        } else {
+            InstalledAppsDisclosure(onContinue = { viewModel.loadApps() })
         }
         return
     }
@@ -147,6 +153,49 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
                     onClick = { expandedAppPackageName = if (expandedAppPackageName == app.packageName) null else app.packageName }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun InstalledAppsDisclosure(onContinue: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Apps,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = AntarCyan
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "Installed apps inventory",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "ANTAR reads the list of installed apps only when you open this screen, so it can show app names, package names, versions, target SDK levels, architecture, and system-app status.",
+            style = MaterialTheme.typography.bodySmall,
+            color = AntarGray
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "The inventory is displayed locally for device auditing. It is not stored, uploaded, shared, or used for advertising or analytics.",
+            style = MaterialTheme.typography.bodySmall,
+            color = AntarGray
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onContinue,
+            colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
+        ) {
+            Text("Continue", fontWeight = FontWeight.Bold)
         }
     }
 }

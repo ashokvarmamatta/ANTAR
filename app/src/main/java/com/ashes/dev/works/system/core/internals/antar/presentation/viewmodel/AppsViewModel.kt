@@ -13,14 +13,19 @@ class AppsViewModel(private val appsRepository: AppsRepository) : ViewModel() {
     private val _appsState = MutableStateFlow<Apps?>(null)
     val appsState = _appsState.asStateFlow()
 
-    init {
-        loadApps()
-    }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
-    private fun loadApps() {
+    fun loadApps() {
+        if (_appsState.value != null || _isLoading.value) return
         viewModelScope.launch(Dispatchers.IO) {
-            val apps = appsRepository.getApps()
-            _appsState.value = apps
+            _isLoading.value = true
+            try {
+                val apps = appsRepository.getApps()
+                _appsState.value = apps
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

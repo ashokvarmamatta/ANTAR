@@ -11,6 +11,10 @@ import androidx.compose.material.icons.outlined.SimCard
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +37,7 @@ fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
             }
         }
     )
+    var showNetworkDisclosure by remember { mutableStateOf(false) }
 
     if (networkPermissionsState.allPermissionsGranted) {
         val network = viewModel.getNetwork()
@@ -168,11 +173,41 @@ fun NetworkScreen(viewModel: NetworkViewModel = koinViewModel()) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = { networkPermissionsState.launchMultiplePermissionRequest() },
+                onClick = { showNetworkDisclosure = true },
                 colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
             ) {
                 Text("Grant Permissions", fontWeight = FontWeight.Bold)
             }
         }
+    }
+
+    if (showNetworkDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showNetworkDisclosure = false },
+            title = { Text("Network permissions") },
+            text = {
+                Text(
+                    "The Network screen needs permission to read the security type of the Wi-Fi you're currently connected to.\n\n" +
+                        "Location: Android exposes Wi-Fi scan results only to apps holding location.\n\n" +
+                        "Nearby Wi-Fi devices: required by Android 13+ to scan Wi-Fi networks. ANTAR uses this only to identify the network you're already connected to; it is not used to derive your location.\n\n" +
+                        "These permissions are used solely to display WPA2, WPA3, WEP, Open, and similar Wi-Fi security labels on the Network screen. Nothing is transmitted, stored, or shared."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNetworkDisclosure = false
+                        networkPermissionsState.launchMultiplePermissionRequest()
+                    }
+                ) {
+                    Text("Continue")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNetworkDisclosure = false }) {
+                    Text("Not now")
+                }
+            }
+        )
     }
 }

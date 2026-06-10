@@ -15,6 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +41,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
     )
+    var showLocationDisclosure by remember { mutableStateOf(false) }
 
     val isGpsEnabled by viewModel.isGpsEnabled().collectAsState(initial = true)
 
@@ -199,12 +203,41 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    onClick = { locationPermissionsState.launchMultiplePermissionRequest() },
+                    onClick = { showLocationDisclosure = true },
                     colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
                 ) {
                     Text("Grant Permission", fontWeight = FontWeight.Bold)
                 }
             }
         }
+    }
+
+    if (showLocationDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showLocationDisclosure = false },
+            title = { Text("Location permission") },
+            text = {
+                Text(
+                    "ANTAR uses your device's precise and approximate location only to display GPS coordinates, satellite/GNSS status, NMEA accuracy, and the address of your current position on the Location screen.\n\n" +
+                        "Your location is read on demand, displayed only inside the app, and is never transmitted to ANTAR's servers, stored on disk, used for advertising, or shared with any third party.\n\n" +
+                        "You can revoke this permission at any time from Android Settings > Apps > ANTAR > Permissions."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLocationDisclosure = false
+                        locationPermissionsState.launchMultiplePermissionRequest()
+                    }
+                ) {
+                    Text("Continue")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLocationDisclosure = false }) {
+                    Text("Not now")
+                }
+            }
+        )
     }
 }
