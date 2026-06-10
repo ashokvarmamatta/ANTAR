@@ -30,3 +30,6 @@ marketing-videos/
 /icon-previews/
 /design-illustrations/
 .firebase/
+/.firebaserc
+/firebase.json
+/public/
