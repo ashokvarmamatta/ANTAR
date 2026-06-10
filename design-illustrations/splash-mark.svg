@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" fill="#0A0E21"/>
+  <!-- orbital rings -->
+  <circle cx="60" cy="60" r="44" fill="none" stroke="#1A1F3D" stroke-width="2"/>
+  <circle cx="60" cy="60" r="30" fill="none" stroke="#448AFF" stroke-width="2" opacity=".7"/>
+  <!-- progress arc on outer ring (animated sweep in app) -->
+  <path d="M60 16 A44 44 0 0 1 98.1 38" fill="none" stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- core -->
+  <circle cx="60" cy="60" r="14" fill="#00E5FF" opacity=".15"/>
+  <circle cx="60" cy="60" r="9" fill="#161B35" stroke="#00E5FF" stroke-width="2"/>
+  <circle cx="60" cy="60" r="3.2" fill="#00E5FF"/>
+  <!-- pop: purple orbiting node on inner ring (rotates in app) -->
+  <circle cx="81.2" cy="38.8" r="5.6" fill="#B388FF" opacity=".3"/>
+  <circle cx="81.2" cy="38.8" r="2.4" fill="#B388FF"/>
+  <!-- dust -->
+  <path fill="#00E5FF" stroke="#00E5FF" stroke-width=".5" d="M26 80c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M94 78c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+</svg>

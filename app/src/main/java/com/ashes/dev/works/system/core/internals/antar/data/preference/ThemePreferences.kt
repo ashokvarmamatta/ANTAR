@@ -12,6 +12,7 @@ class ThemePreferences(context: Context) {
     companion object {
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_DYNAMIC_COLORS = "dynamic_colors"
+        private const val KEY_INTRO_SEEN = "intro_seen"
 
         const val MODE_SYSTEM = "system"
         const val MODE_LIGHT = "light"
@@ -46,4 +47,8 @@ class ThemePreferences(context: Context) {
     var dynamicColorsEnabledBool: Boolean
         get() = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
         set(value) = prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
+
+    var introSeen: Boolean
+        get() = prefs.getBoolean(KEY_INTRO_SEEN, false)
+        set(value) = prefs.edit().putBoolean(KEY_INTRO_SEEN, value).apply()
 }

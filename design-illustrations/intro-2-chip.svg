@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200">
+  <rect width="240" height="200" fill="#0A0E21"/>
+  <circle cx="120" cy="100" r="78" fill="#111631"/>
+  <!-- traces -->
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M120 68 V46"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M120 132 V154"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M88 100 H64"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M152 100 H176"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M97 77 L80 60"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M143 123 L160 140"/>
+  <rect x="116.5" y="39" width="7" height="7" rx="1" fill="#00E5FF"/>
+  <rect x="116.5" y="154" width="7" height="7" rx="1" fill="#448AFF"/>
+  <rect x="57" y="96.5" width="7" height="7" rx="1" fill="#448AFF"/>
+  <rect x="176" y="96.5" width="7" height="7" rx="1" fill="#00E5FF"/>
+  <rect x="73.5" y="53.5" width="7" height="7" rx="1" fill="#00E5FF"/>
+  <rect x="156.5" y="136.5" width="7" height="7" rx="1" fill="#448AFF"/>
+  <!-- chip -->
+  <rect x="88" y="68" width="64" height="64" rx="9" fill="#161B35" stroke="#448AFF" stroke-width="2.5"/>
+  <rect x="99" y="79" width="42" height="42" rx="5" fill="#0A0E21"/>
+  <path stroke="#1A1F3D" stroke-width="1.4" d="M99 93h42M99 107h42M113 79v42M127 79v42"/>
+  <!-- pop: purple core -->
+  <circle cx="120" cy="100" r="10" fill="#B388FF" opacity=".25"/>
+  <circle cx="120" cy="100" r="4.2" fill="#B388FF"/>
+  <!-- signal bars -->
+  <defs>
+    <linearGradient id="bar2a" x1="52" y1="128" x2="52" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E5FF"/><stop offset="1" stop-color="#00E5FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bar2b" x1="44" y1="118" x2="44" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#448AFF"/><stop offset="1" stop-color="#448AFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#bar2b)" d="M45 118 a1 1 0 1 0 -2 0 v30 h2 z"/>
+  <path fill="url(#bar2a)" d="M53 128 a1 1 0 1 0 -2 0 v20 h2 z"/>
+  <!-- dust -->
+  <path fill="#00E5FF" stroke="#00E5FF" stroke-width=".5" d="M186 60c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M196 130c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#F0F0F5" stroke="#F0F0F5" stroke-width=".5" d="M58 80c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+</svg>

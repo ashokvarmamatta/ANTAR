@@ -5,36 +5,31 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.*
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.AnimatedSplash
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.ExitDialog
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.NavGraph
+import com.ashes.dev.works.system.core.internals.antar.presentation.screens.intro.IntroScreen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.ANTARTheme
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
+import kotlinx.coroutines.delay
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+
+private enum class RootState { Intro, Splash, Main }
 
 class MainActivity : ComponentActivity() {
     private val dashboardViewModel: DashboardViewModel by viewModel()
     private val themeViewModel: ThemeViewModel by viewModel()
+    private val themePreferences: ThemePreferences by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -56,126 +51,56 @@ class MainActivity : ComponentActivity() {
             ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors) {
                 val navController = rememberNavController()
                 var showExitDialog by remember { mutableStateOf(false) }
+                var introSeen by remember { mutableStateOf(themePreferences.introSeen) }
                 val dashboardData by dashboardViewModel.dashboardInfo.collectAsState()
 
+                // Keep the splash visible for at least 3s once it appears (after the
+                // intro, or immediately on a normal launch), even if data loads sooner.
+                var splashMinTimeElapsed by remember { mutableStateOf(false) }
+                LaunchedEffect(introSeen) {
+                    if (introSeen) {
+                        delay(3000)
+                        splashMinTimeElapsed = true
+                    }
+                }
+
+                val rootState = when {
+                    !introSeen -> RootState.Intro
+                    dashboardData == null || !splashMinTimeElapsed -> RootState.Splash
+                    else -> RootState.Main
+                }
+
                 if (showExitDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showExitDialog = false },
-                        title = { Text(text = "Exit App") },
-                        text = { Text(text = "Are you sure you want to exit?") },
-                        confirmButton = {
-                            TextButton(onClick = { finish() }) {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showExitDialog = false }) {
-                                Text("Cancel")
-                            }
-                        }
+                    ExitDialog(
+                        onDismiss = { showExitDialog = false },
+                        onConfirm = { finish() }
                     )
                 }
 
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()
                 val isOnMain = currentBackStackEntry?.destination?.route.let { it == null || it == "main" }
 
-                BackHandler(enabled = isOnMain) {
+                BackHandler(enabled = rootState == RootState.Main && isOnMain) {
                     showExitDialog = true
                 }
 
-                if (dashboardData != null) {
-                    NavGraph(navController = navController)
-                } else {
-                    LoadingSplash()
+                Crossfade(
+                    targetState = rootState,
+                    animationSpec = tween(450),
+                    label = "root"
+                ) { state ->
+                    when (state) {
+                        RootState.Intro -> IntroScreen(
+                            onFinish = {
+                                themePreferences.introSeen = true
+                                introSeen = true
+                            }
+                        )
+                        RootState.Splash -> AnimatedSplash()
+                        RootState.Main -> NavGraph(navController = navController)
+                    }
                 }
             }
         }
     }
-}
-
-@Composable
-fun LoadingSplash() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Antar - Device info",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val infiniteTransition = rememberInfiniteTransition(label = "dots")
-            
-            val dotAlpha1 by infiniteTransition.animateFloat(
-                initialValue = 0.2f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 800
-                        0.2f at 0
-                        1f at 200
-                        0.2f at 600
-                    }
-                ), label = "dot1"
-            )
-            val dotAlpha2 by infiniteTransition.animateFloat(
-                initialValue = 0.2f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 800
-                        0.2f at 150
-                        1f at 350
-                        0.2f at 750
-                    }
-                ), label = "dot2"
-            )
-            val dotAlpha3 by infiniteTransition.animateFloat(
-                initialValue = 0.2f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = keyframes {
-                        durationMillis = 800
-                        0.2f at 300
-                        1f at 500
-                        0.2f at 800
-                    }
-                ), label = "dot3"
-            )
-
-            Dot(alpha = dotAlpha1)
-            Dot(alpha = dotAlpha2)
-            Dot(alpha = dotAlpha3)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Loading device information...",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-fun Dot(alpha: Float) {
-    Box(
-        modifier = Modifier
-            .size(12.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = alpha))
-    )
 }

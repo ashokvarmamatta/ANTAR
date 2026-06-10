@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200">
+  <defs>
+    <linearGradient id="sweep3i" x1="100" y1="60" x2="130" y2="85" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E5FF" stop-opacity=".4"/><stop offset="1" stop-color="#00E5FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="200" fill="#0A0E21"/>
+  <circle cx="120" cy="100" r="78" fill="#111631"/>
+  <!-- radar -->
+  <circle cx="100" cy="92" r="40" fill="#0A0E21"/>
+  <circle cx="100" cy="92" r="40" fill="none" stroke="#448AFF" stroke-width="2"/>
+  <circle cx="100" cy="92" r="26" fill="none" stroke="#448AFF" stroke-width="1.2" opacity=".6"/>
+  <circle cx="100" cy="92" r="13" fill="none" stroke="#448AFF" stroke-width="1" opacity=".4"/>
+  <path stroke="#448AFF" stroke-width="1" opacity=".3" d="M100 52v80M60 92h80"/>
+  <path fill="url(#sweep3i)" d="M100 92 L100 52 A40 40 0 0 1 134.6 72 Z"/>
+  <path stroke="#00E5FF" stroke-width="2" stroke-linecap="round" d="M100 92 L134.6 72"/>
+  <circle cx="100" cy="92" r="2.6" fill="#00E5FF"/>
+  <!-- pop: purple contact in sweep -->
+  <circle cx="116" cy="68" r="5.6" fill="#B388FF" opacity=".3"/>
+  <circle cx="116" cy="68" r="2.4" fill="#B388FF"/>
+  <!-- gold-free blips, cyan -->
+  <circle cx="84" cy="108" r="1.8" fill="#00E5FF" opacity=".8"/>
+  <circle cx="112" cy="112" r="1.5" fill="#00E5FF" opacity=".5"/>
+  <!-- waveform exiting radar -->
+  <path stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"
+        d="M140 120 H154 L160 106 L168 134 L174 120 H196"/>
+  <path stroke="#00E5FF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".15"
+        d="M140 120 H154 L160 106 L168 134 L174 120 H196"/>
+  <rect x="196" y="116.5" width="7" height="7" rx="1" fill="#448AFF"/>
+  <!-- dust -->
+  <path fill="#00E5FF" stroke="#00E5FF" stroke-width=".5" d="M170 56c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M182 88c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#F0F0F5" stroke="#F0F0F5" stroke-width=".5" d="M56 130c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M70 148c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+</svg>

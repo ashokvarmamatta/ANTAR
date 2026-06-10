@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200">
+  <rect width="240" height="200" fill="#0A0E21"/>
+  <circle cx="120" cy="100" r="78" fill="#111631"/>
+  <!-- shield -->
+  <path fill="#161B35" stroke="#448AFF" stroke-width="2.5" stroke-linejoin="round"
+        d="M120 44 L164 60 V104 C164 130 145 148 120 158 C95 148 76 130 76 104 V60 Z"/>
+  <path fill="#0A0E21" d="M120 56 L152 68 V103 C152 123 138 137 120 145 C102 137 88 123 88 103 V68 Z"/>
+  <!-- pop: purple core glow behind the check -->
+  <circle cx="120" cy="100" r="22" fill="#B388FF" opacity=".18"/>
+  <!-- check (the meaningful element) -->
+  <path stroke="#B388FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"
+        d="M106 100 L116 110 L136 88"/>
+  <!-- orbit nodes -->
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M164 76 L186 64"/>
+  <circle cx="164" cy="76" r="4.6" fill="#00E5FF" opacity=".3"/>
+  <circle cx="164" cy="76" r="2" fill="#00E5FF"/>
+  <rect x="186" y="60" width="7" height="7" rx="1" fill="#00E5FF"/>
+  <path stroke="#F0F0F5" stroke-width="1.4" stroke-linecap="round" d="M76 116 L54 128"/>
+  <circle cx="76" cy="116" r="4.6" fill="#448AFF" opacity=".3"/>
+  <circle cx="76" cy="116" r="2" fill="#448AFF"/>
+  <rect x="48" y="124.5" width="7" height="7" rx="1" fill="#448AFF"/>
+  <!-- dust -->
+  <path fill="#00E5FF" stroke="#00E5FF" stroke-width=".5" d="M62 64c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M184 110c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#F0F0F5" stroke="#F0F0F5" stroke-width=".5" d="M150 162c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+</svg>

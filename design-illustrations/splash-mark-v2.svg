@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" fill="#0A0E21"/>
+  <!-- expanding scan ripples (animate: scale+fade) -->
+  <circle cx="60" cy="60" r="52" fill="none" stroke="#448AFF" stroke-width="1.2" opacity=".15"/>
+  <circle cx="60" cy="60" r="42" fill="none" stroke="#00E5FF" stroke-width="1.2" opacity=".3"/>
+  <!-- traces with data pulses -->
+  <path stroke="#F0F0F5" stroke-width="1.6" stroke-linecap="round" d="M60 38 V22"/>
+  <path stroke="#F0F0F5" stroke-width="1.6" stroke-linecap="round" d="M60 82 V98"/>
+  <path stroke="#F0F0F5" stroke-width="1.6" stroke-linecap="round" d="M38 60 H22"/>
+  <path stroke="#F0F0F5" stroke-width="1.6" stroke-linecap="round" d="M82 60 H98"/>
+  <rect x="56.5" y="15" width="7" height="7" rx="1.4" fill="#00E5FF"/>
+  <rect x="56.5" y="98" width="7" height="7" rx="1.4" fill="#448AFF"/>
+  <rect x="15" y="56.5" width="7" height="7" rx="1.4" fill="#448AFF"/>
+  <rect x="98" y="56.5" width="7" height="7" rx="1.4" fill="#00E5FF"/>
+  <!-- data pulse dots traveling traces (animated in app) -->
+  <circle cx="60" cy="30" r="1.8" fill="#00E5FF"/>
+  <circle cx="30" cy="60" r="1.8" fill="#448AFF"/>
+  <!-- chip body -->
+  <rect x="38" y="38" width="44" height="44" rx="8" fill="#161B35" stroke="#448AFF" stroke-width="2.5"/>
+  <rect x="46" y="46" width="28" height="28" rx="4.5" fill="#0A0E21"/>
+  <path stroke="#1A1F3D" stroke-width="1.2" d="M46 55.3h28M46 64.6h28M55.3 46v28M64.6 46v28"/>
+  <!-- breathing purple core -->
+  <circle cx="60" cy="60" r="8.5" fill="#B388FF" opacity=".25"/>
+  <circle cx="60" cy="60" r="3.4" fill="#B388FF"/>
+  <!-- dust -->
+  <path fill="#00E5FF" stroke="#00E5FF" stroke-width=".5" d="M30 34c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+  <path fill="#448AFF" stroke="#448AFF" stroke-width=".5" d="M92 88c.414-.021.824-.327.801-.776-.023-.448-.462-.71-.877-.689-.414.022-.824.327-.8.776.022.449.461.71.876.689Z"/>
+</svg>

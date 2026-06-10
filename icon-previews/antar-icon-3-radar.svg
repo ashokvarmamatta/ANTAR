@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs>
+    <clipPath id="mask3"><circle cx="54" cy="54" r="36"/></clipPath>
+    <linearGradient id="sweep3" x1="54" y1="28" x2="76" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFAB40" stop-opacity=".55"/><stop offset="1" stop-color="#FFAB40" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#mask3)">
+    <!-- background layer (full bleed) -->
+    <rect width="108" height="108" fill="#1A120B"/>
+    <circle cx="54" cy="54" r="30" fill="#241A10"/>
+    <!-- radar rings -->
+    <circle cx="54" cy="54" r="26" fill="none" stroke="#C2643C" stroke-width="1.5"/>
+    <circle cx="54" cy="54" r="17" fill="none" stroke="#C2643C" stroke-width="1.2" opacity=".7"/>
+    <circle cx="54" cy="54" r="8" fill="none" stroke="#C2643C" stroke-width="1" opacity=".5"/>
+    <!-- crosshair -->
+    <path stroke="#C2643C" stroke-width="1" opacity=".4" d="M54 28v52M28 54h52"/>
+    <!-- sweep wedge with leading edge -->
+    <path fill="url(#sweep3)" d="M54 54 L54 28 A26 26 0 0 1 76.5 41 Z"/>
+    <path stroke="#FFAB40" stroke-width="2" stroke-linecap="round" d="M54 54 L76.5 41"/>
+    <circle cx="54" cy="54" r="2.4" fill="#FFAB40"/>
+    <!-- gold blips -->
+    <circle cx="44" cy="66" r="1.8" fill="#F4C44E"/>
+    <circle cx="67" cy="63" r="1.5" fill="#F4C44E" opacity=".7"/>
+    <!-- the one pop: teal contact blip inside the sweep -->
+    <circle cx="64" cy="38" r="5.2" fill="#2FC8C8" opacity=".3"/>
+    <circle cx="64" cy="38" r="2.2" fill="#2FC8C8"/>
+  </g>
+</svg>
