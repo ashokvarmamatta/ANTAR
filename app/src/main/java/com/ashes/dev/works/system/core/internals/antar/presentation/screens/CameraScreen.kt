@@ -60,6 +60,43 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
             }
         }
 
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(AntarOrange.copy(alpha = 0.1f))
+                    .border(1.dp, AntarOrange.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                    .padding(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Warning",
+                        tint = AntarOrange,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Pixel Binning Notice",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = AntarOrange
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "These are not the real camera values since they are binned values.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+        }
+
         // Sensor Forensics
         item {
             PremiumCard {

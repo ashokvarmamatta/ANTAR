@@ -251,6 +251,8 @@ fun AppItem(
                             val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
                             if (intent != null) {
                                 context.startActivity(intent)
+                            } else {
+                                android.widget.Toast.makeText(context, "This app cannot be opened", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
