@@ -198,7 +198,6 @@ fun SettingsScreen(
                 PremiumCard {
                     SectionTitle(title = "About", icon = Icons.Outlined.Info)
                     InfoRow("App name", stringResource(id = R.string.app_name))
-                    InfoRow("Package", packageName)
                     InfoRow("Version", versionName)
                     Spacer(modifier = Modifier.height(8.dp))
                     SettingsRow(
