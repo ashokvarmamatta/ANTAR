@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.PrivacySheet
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
@@ -47,7 +50,6 @@ import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePref
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 
 private const val PRIVACY_POLICY_URL = "https://ashes-dev-works.web.app/antar/"
-private const val DATA_DELETION_URL = "https://ashokvarma.dev/antar/data-deletion"
 private const val DEVELOPER_URL = "https://ashokvarma.dev"
 
 @Composable
@@ -61,6 +63,17 @@ fun SettingsScreen(
 
     val themeMode by themeViewModel.themeMode.collectAsState()
     val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsState()
+    var showPrivacySheet by remember { mutableStateOf(false) }
+
+    if (showPrivacySheet) {
+        PrivacySheet(
+            onDismiss = { showPrivacySheet = false },
+            onReadPolicy = {
+                showPrivacySheet = false
+                openUrl(context, PRIVACY_POLICY_URL)
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -188,8 +201,8 @@ fun SettingsScreen(
                         icon = Icons.Outlined.Info,
                         accent = AntarCyan,
                         title = "What ANTAR collects",
-                        subtitle = "Read the data-deletion page",
-                        onClick = { openUrl(context, DATA_DELETION_URL) }
+                        subtitle = "Nothing leaves your device — see the summary",
+                        onClick = { showPrivacySheet = true }
                     )
                 }
             }
