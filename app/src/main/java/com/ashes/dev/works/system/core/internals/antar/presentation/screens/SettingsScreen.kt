@@ -46,7 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 
-private const val PRIVACY_POLICY_URL = "https://ashesgeminiapitest.web.app/privacy"
+private const val PRIVACY_POLICY_URL = "https://ashes-dev-works.web.app/antar/"
 private const val DATA_DELETION_URL = "https://ashokvarma.dev/antar/data-deletion"
 private const val DEVELOPER_URL = "https://ashokvarma.dev"
 

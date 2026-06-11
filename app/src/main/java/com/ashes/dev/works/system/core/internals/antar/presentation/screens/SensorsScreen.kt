@@ -7,8 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,6 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ashes.dev.works.system.core.internals.antar.domain.model.SensorDetail
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.SensorGlyph
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.SensorTypeIcon
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.accent
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.sensorGlyphFor
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SensorsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -48,11 +50,10 @@ fun SensorsScreen(viewModel: SensorsViewModel = koinViewModel()) {
                     modifier = Modifier.padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Sensors,
-                        contentDescription = null,
-                        modifier = Modifier.size(56.dp),
-                        tint = AntarGreen
+                    SensorTypeIcon(
+                        glyph = SensorGlyph.Node,
+                        accent = AntarGreen,
+                        modifier = Modifier.size(56.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
@@ -90,21 +91,22 @@ fun SensorItem(sensor: SensorDetail) {
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val glyph = sensorGlyphFor(sensor.type)
+            val accent = glyph.accent
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .background(
-                        color = AntarCyan.copy(alpha = 0.1f),
+                        color = accent.copy(alpha = 0.1f),
                         shape = CircleShape
                     )
-                    .border(0.5.dp, AntarCyan.copy(alpha = 0.2f), CircleShape),
+                    .border(0.5.dp, accent.copy(alpha = 0.2f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Sensors,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = AntarCyan
+                SensorTypeIcon(
+                    glyph = glyph,
+                    accent = accent,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
