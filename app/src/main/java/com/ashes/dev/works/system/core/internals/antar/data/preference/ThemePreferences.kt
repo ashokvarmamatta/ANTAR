@@ -13,6 +13,7 @@ class ThemePreferences(context: Context) {
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_DYNAMIC_COLORS = "dynamic_colors"
         private const val KEY_INTRO_SEEN = "intro_seen"
+        private const val KEY_APPS_DISCLOSURE_ACCEPTED = "apps_disclosure_accepted"
 
         const val MODE_SYSTEM = "system"
         const val MODE_LIGHT = "light"
@@ -42,13 +43,23 @@ class ThemePreferences(context: Context) {
 
     var themeModeStr: String
         get() = prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
-        set(value) = prefs.edit().putString(KEY_THEME_MODE, value).apply()
+        set(value) {
+            prefs.edit().putString(KEY_THEME_MODE, value).apply()
+            _themeMode.value = value
+        }
 
     var dynamicColorsEnabledBool: Boolean
         get() = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
-        set(value) = prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
+        set(value) {
+            prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
+            _dynamicColorsEnabled.value = value
+        }
 
     var introSeen: Boolean
         get() = prefs.getBoolean(KEY_INTRO_SEEN, false)
         set(value) = prefs.edit().putBoolean(KEY_INTRO_SEEN, value).apply()
+
+    var appsDisclosureAccepted: Boolean
+        get() = prefs.getBoolean(KEY_APPS_DISCLOSURE_ACCEPTED, false)
+        set(value) = prefs.edit().putBoolean(KEY_APPS_DISCLOSURE_ACCEPTED, value).apply()
 }

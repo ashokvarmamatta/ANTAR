@@ -127,7 +127,9 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
                     InfoRow("Design Capacity", "${it.designCapacity} mAh")
                     InfoRow("Estimated Max Capacity", "${it.estimatedMaxCapacity} mAh")
                     InfoRow("Remaining Capacity", "${it.remainingCapacity} mAh")
-                    InfoRow("Charge Cycles", "${it.chargeCycles}")
+                    if (it.chargeCycles > 0) {
+                        InfoRow("Charge Cycles", "${it.chargeCycles}")
+                    }
                     InfoRow("Current", "${it.current / 1000} mA")
                     InfoRow("Power", String.format("%.2f W", it.power))
             }
@@ -568,21 +570,23 @@ fun BatteryVisualization(level: Double, cycles: Int) {
         )
 
         // Cycle count badge positioned on the bottom edge of the circle
-        Surface(
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            shape = CircleShape,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = 0.dp)
-                .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
-        ) {
-            Text(
-                text = "$cycles Cycles",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-            )
+        if (cycles > 0) {
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 0.dp)
+                    .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+            ) {
+                Text(
+                    text = "$cycles Cycles",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }
