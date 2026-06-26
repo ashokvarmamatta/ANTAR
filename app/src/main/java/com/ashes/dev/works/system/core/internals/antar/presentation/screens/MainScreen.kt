@@ -1,9 +1,10 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
@@ -131,44 +136,41 @@ fun MainScreen(navController: NavController) {
                             }
                         }
                     }
-                    Box(modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                        // A single gradient pill that physically SLIDES between tabs, tracking the
-                        // swipe (interpolated from the live pager offset and the tabs' real layout
-                        // positions) — the motion the original ANTAR tab bar had.
-                        val density = LocalDensity.current
-                        val info = tabListState.layoutInfo
-                        // Target = the SELECTED tab's exact bounds, so the pill is always centred on
-                        // a real label. It springs to the new tab's bounds on change (a clean slide)
-                        // instead of stretching across the gap mid-swipe.
-                        val selected = info.visibleItemsInfo.firstOrNull { it.index == pagerState.currentPage }
-                        val pillSpec: AnimationSpec<Int> =
+                    val density = LocalDensity.current
+                    // Measured on-screen bounds of each tab (left & width in the strip's own
+                    // coordinate space). This is the only reliable source for aligning the pill —
+                    // it accounts for content padding, spacing and scroll automatically.
+                    val tabLefts = remember { mutableStateMapOf<Int, Float>() }
+                    val tabWidths = remember { mutableStateMapOf<Int, Float>() }
+                    var stripCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .onGloballyPositioned { stripCoords = it }
+                    ) {
+                        // Pill anchored to the SELECTED tab's measured bounds; springs there on
+                        // change so it's always perfectly centred on the active label.
+                        val targetLeft = tabLefts[pagerState.currentPage]
+                        val targetWidth = tabWidths[pagerState.currentPage]
+                        val pillSpec: AnimationSpec<Float> =
                             if (intensity == AnimationIntensity.LOW) snap() else AntarMotion.spatial()
-                        val animLeft by animateIntAsState(
-                            targetValue = selected?.offset ?: 0,
-                            animationSpec = pillSpec,
-                            label = "pillLeft"
-                        )
-                        val animWidth by animateIntAsState(
-                            targetValue = selected?.size ?: 0,
-                            animationSpec = pillSpec,
-                            label = "pillWidth"
-                        )
-                        if (animWidth > 0) {
+                        val animLeft by animateFloatAsState(targetLeft ?: 0f, pillSpec, label = "pillLeft")
+                        val animWidth by animateFloatAsState(targetWidth ?: 0f, pillSpec, label = "pillWidth")
+                        if ((targetWidth ?: 0f) > 0f) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
-                                    .offset { IntOffset(animLeft, 0) }
+                                    .offset { IntOffset(animLeft.roundToInt(), 0) }
                                     .height(36.dp)
                                     .width(with(density) { animWidth.toDp() })
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
-                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
-                                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.16f)
-                                            )
-                                        )
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                    .border(
+                                        0.5.dp,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                                        RoundedCornerShape(18.dp)
                                     )
                             )
                         }
@@ -195,6 +197,12 @@ fun MainScreen(navController: NavController) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
+                                        .onGloballyPositioned { coords ->
+                                            stripCoords?.let { strip ->
+                                                tabLefts[index] = strip.localPositionOf(coords, Offset.Zero).x
+                                                tabWidths[index] = coords.size.width.toFloat()
+                                            }
+                                        }
                                         .height(36.dp)
                                         .clip(RoundedCornerShape(18.dp))
                                         .bounceClick {
