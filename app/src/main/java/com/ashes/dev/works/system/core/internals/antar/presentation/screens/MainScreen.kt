@@ -1,5 +1,8 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
@@ -27,13 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.floor
-import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarMotion
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.bounceClick
 import kotlinx.coroutines.launch
@@ -135,31 +137,36 @@ fun MainScreen(navController: NavController) {
                         // positions) — the motion the original ANTAR tab bar had.
                         val density = LocalDensity.current
                         val info = tabListState.layoutInfo
-                        val pageOffset = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                        val low = if (intensity == AnimationIntensity.LOW) pagerState.currentPage else floor(pageOffset).toInt()
-                        val t = if (intensity == AnimationIntensity.LOW) 0f else (pageOffset - low)
-                        val lowerItem = info.visibleItemsInfo.firstOrNull { it.index == low }
-                        val upperItem = info.visibleItemsInfo.firstOrNull { it.index == low + 1 }
-                        if (lowerItem != null) {
-                            val leftL = lowerItem.offset.toFloat()
-                            val wL = lowerItem.size.toFloat()
-                            val leftU = (upperItem?.offset ?: lowerItem.offset).toFloat()
-                            val wU = (upperItem?.size ?: lowerItem.size).toFloat()
-                            val indLeft = leftL + (leftU - leftL) * t
-                            val indWidth = wL + (wU - wL) * t
+                        // Target = the SELECTED tab's exact bounds, so the pill is always centred on
+                        // a real label. It springs to the new tab's bounds on change (a clean slide)
+                        // instead of stretching across the gap mid-swipe.
+                        val selected = info.visibleItemsInfo.firstOrNull { it.index == pagerState.currentPage }
+                        val pillSpec: AnimationSpec<Int> =
+                            if (intensity == AnimationIntensity.LOW) snap() else AntarMotion.spatial()
+                        val animLeft by animateIntAsState(
+                            targetValue = selected?.offset ?: 0,
+                            animationSpec = pillSpec,
+                            label = "pillLeft"
+                        )
+                        val animWidth by animateIntAsState(
+                            targetValue = selected?.size ?: 0,
+                            animationSpec = pillSpec,
+                            label = "pillWidth"
+                        )
+                        if (animWidth > 0) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
-                                    .offset { IntOffset(indLeft.roundToInt(), 0) }
+                                    .offset { IntOffset(animLeft, 0) }
                                     .height(36.dp)
-                                    .width(with(density) { indWidth.toDp() })
+                                    .width(with(density) { animWidth.toDp() })
                                     .clip(RoundedCornerShape(18.dp))
                                     .background(
                                         Brush.horizontalGradient(
                                             colors = listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
-                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f),
-                                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
+                                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.16f)
                                             )
                                         )
                                     )
