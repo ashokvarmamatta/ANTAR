@@ -1,6 +1,5 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
@@ -20,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,9 +30,9 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.bounceClick
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.effectsSpec
 import kotlinx.coroutines.launch
 
 @Composable
@@ -135,26 +136,27 @@ fun MainScreen(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         itemsIndexed(screens, key = { _, screen -> screen.route }) { index, screen ->
-                            val isSelected = pagerState.currentPage == index
-                            val containerColor by animateColorAsState(
-                                targetValue = if (isSelected)
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                else
-                                    Color.Transparent,
-                                animationSpec = intensity.effectsSpec(),
-                                label = "tabContainer"
-                            )
-                            val textColor by animateColorAsState(
-                                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                animationSpec = intensity.effectsSpec(),
-                                label = "tabColor"
-                            )
+                            // Selection "amount" follows the live pager position, so the highlight
+                            // glides continuously between tabs as you swipe (or tap-scroll) — the
+                            // leaving tab fades its pill out while the arriving tab fades in.
+                            val pageOffset = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                            val raw = (1f - kotlin.math.abs(pageOffset - index)).coerceIn(0f, 1f)
+                            val fraction = if (intensity == AnimationIntensity.LOW) {
+                                if (pagerState.currentPage == index) 1f else 0f
+                            } else raw
 
-                            // Every tab shows its name; the active one is highlighted by an
-                            // animated pill + bold + colour. (No hide/expand.)
+                            val textColor = lerp(
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                MaterialTheme.colorScheme.primary,
+                                fraction
+                            )
+                            val containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f * fraction)
+                            val scale = 1f + 0.07f * fraction
+
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
+                                    .graphicsLayer { scaleX = scale; scaleY = scale }
                                     .height(36.dp)
                                     .clip(RoundedCornerShape(18.dp))
                                     .background(containerColor)
@@ -176,7 +178,7 @@ fun MainScreen(navController: NavController) {
                                     text = screen.title,
                                     color = textColor,
                                     fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontWeight = if (fraction > 0.5f) FontWeight.Bold else FontWeight.Medium,
                                     maxLines = 1
                                 )
                             }
