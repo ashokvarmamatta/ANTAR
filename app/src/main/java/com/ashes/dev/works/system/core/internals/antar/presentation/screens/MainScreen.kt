@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -100,7 +101,7 @@ fun MainScreen(navController: NavController) {
                             onClick = { navController.navigate(Screen.Settings.route) }
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Settings,
+                                painter = painterResource(Screen.Settings.iconRes),
                                 contentDescription = "Settings",
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -155,7 +156,7 @@ fun MainScreen(navController: NavController) {
                                     .padding(horizontal = if (isSelected) 14.dp else 9.dp)
                             ) {
                                 Icon(
-                                    imageVector = screen.icon,
+                                    painter = painterResource(screen.iconRes),
                                     contentDescription = screen.title,
                                     modifier = Modifier.size(18.dp),
                                     tint = textColor
