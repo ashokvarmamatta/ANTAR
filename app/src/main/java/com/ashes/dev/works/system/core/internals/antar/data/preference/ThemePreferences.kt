@@ -13,10 +13,15 @@ class ThemePreferences(context: Context) {
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_DYNAMIC_COLORS = "dynamic_colors"
         private const val KEY_INTRO_SEEN = "intro_seen"
+        private const val KEY_ANIMATION_INTENSITY = "animation_intensity"
 
         const val MODE_SYSTEM = "system"
         const val MODE_LIGHT = "light"
         const val MODE_DARK = "dark"
+
+        const val ANIM_LOW = "low"
+        const val ANIM_MEDIUM = "medium"
+        const val ANIM_HIGH = "high"
     }
 
     private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK)
@@ -25,6 +30,9 @@ class ThemePreferences(context: Context) {
     private val _dynamicColorsEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLORS, false))
     val dynamicColorsEnabled: StateFlow<Boolean> = _dynamicColorsEnabled.asStateFlow()
 
+    private val _animationIntensity = MutableStateFlow(prefs.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH)
+    val animationIntensity: StateFlow<String> = _animationIntensity.asStateFlow()
+
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             KEY_THEME_MODE -> {
@@ -32,6 +40,9 @@ class ThemePreferences(context: Context) {
             }
             KEY_DYNAMIC_COLORS -> {
                 _dynamicColorsEnabled.value = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
+            }
+            KEY_ANIMATION_INTENSITY -> {
+                _animationIntensity.value = prefs.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
             }
         }
     }
@@ -51,4 +62,8 @@ class ThemePreferences(context: Context) {
     var introSeen: Boolean
         get() = prefs.getBoolean(KEY_INTRO_SEEN, false)
         set(value) = prefs.edit().putBoolean(KEY_INTRO_SEEN, value).apply()
+
+    var animationIntensityStr: String
+        get() = prefs.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
+        set(value) = prefs.edit().putString(KEY_ANIMATION_INTENSITY, value).apply()
 }

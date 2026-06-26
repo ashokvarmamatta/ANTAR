@@ -7,6 +7,7 @@ class ThemeViewModel(private val themePreferences: ThemePreferences) : ViewModel
 
     val themeMode = themePreferences.themeMode
     val dynamicColorsEnabled = themePreferences.dynamicColorsEnabled
+    val animationIntensity = themePreferences.animationIntensity
 
     fun setThemeMode(mode: String) {
         themePreferences.themeModeStr = mode
@@ -14,5 +15,9 @@ class ThemeViewModel(private val themePreferences: ThemePreferences) : ViewModel
 
     fun setDynamicColorsEnabled(enabled: Boolean) {
         themePreferences.dynamicColorsEnabledBool = enabled
+    }
+
+    fun setAnimationIntensity(value: String) {
+        themePreferences.animationIntensityStr = value
     }
 }

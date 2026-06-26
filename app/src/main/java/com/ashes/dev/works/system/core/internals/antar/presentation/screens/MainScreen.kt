@@ -1,7 +1,11 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,7 +30,10 @@ import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarMotion
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.bounceClick
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.effectsSpec
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.spatialSpec
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,6 +55,15 @@ fun MainScreen(navController: NavController) {
 
     val pagerState = rememberPagerState(pageCount = { screens.size })
     val coroutineScope = rememberCoroutineScope()
+    val intensity = LocalAnimationIntensity.current
+
+    // Scroll the pager to a given screen (used by Dashboard quick cards).
+    val scrollToScreen: (Screen) -> Unit = { target ->
+        val targetIndex = screens.indexOf(target)
+        if (targetIndex >= 0) {
+            coroutineScope.launch { pagerState.animateScrollToPage(targetIndex) }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -164,17 +180,28 @@ fun MainScreen(navController: NavController) {
                                 ) {
                                     Icon(
                                         imageVector = screen.icon,
-                                        contentDescription = null,
+                                        contentDescription = screen.title,
                                         modifier = Modifier.size(16.dp),
                                         tint = textColor
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = screen.title,
-                                        color = textColor,
-                                        fontSize = 13.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
+                                    // The label expands in only for the active tab, so unselected
+                                    // tabs collapse to an icon-only pill.
+                                    AnimatedVisibility(
+                                        visible = isSelected,
+                                        enter = fadeIn(intensity.effectsSpec()) + expandHorizontally(intensity.spatialSpec()),
+                                        exit = fadeOut(intensity.effectsSpec()) + shrinkHorizontally(intensity.spatialSpec())
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = screen.title,
+                                                color = textColor,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -219,7 +246,7 @@ fun MainScreen(navController: NavController) {
                     }
                 } else {
                     when (screens[page]) {
-                        Screen.Dashboard -> DashboardScreen()
+                        Screen.Dashboard -> DashboardScreen(onNavigate = scrollToScreen)
                         Screen.Device -> DeviceScreen()
                         Screen.System -> SystemScreen()
                         Screen.Cpu -> CpuScreen()

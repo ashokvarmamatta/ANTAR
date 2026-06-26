@@ -35,13 +35,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
+import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
+fun DashboardScreen(
+    viewModel: DashboardViewModel = koinViewModel(),
+    onNavigate: (Screen) -> Unit = {}
+) {
     val dashboard by viewModel.dashboardInfo.collectAsStateWithLifecycle()
 
     dashboard?.let {
@@ -62,8 +66,16 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
             }
 
             item { RamCard(dashboard = it) }
-            item { StorageCard(dashboard = it) }
-            item { BatteryCard(dashboard = it) }
+            item {
+                Box(modifier = Modifier.fillMaxWidth().bounceClick { onNavigate(Screen.Storage) }) {
+                    StorageCard(dashboard = it)
+                }
+            }
+            item {
+                Box(modifier = Modifier.fillMaxWidth().bounceClick { onNavigate(Screen.Battery) }) {
+                    BatteryCard(dashboard = it)
+                }
+            }
 
             item {
                 Row(
@@ -73,7 +85,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Cpu) },
                         title = "PROCESSOR",
                         value = it.processorName,
                         subtitle = it.processorDetails,
@@ -81,7 +93,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         accentColor = AntarPurple
                     )
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Sensors) },
                         title = "SENSORS",
                         value = "${it.sensorCount} Available",
                         subtitle = "",
@@ -99,7 +111,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Apps) },
                         title = "APPLICATIONS",
                         value = "${it.appCount} Installed",
                         subtitle = "",
@@ -107,7 +119,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         accentColor = AntarBlue
                     )
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.System) },
                         title = "SYS HEALTH",
                         value = it.sysHealth,
                         subtitle = "Up: ${it.uptime}",

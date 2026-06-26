@@ -19,6 +19,8 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.components.E
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.NavGraph
 import com.ashes.dev.works.system.core.internals.antar.presentation.screens.intro.IntroScreen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.ANTARTheme
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
 import kotlinx.coroutines.delay
@@ -42,6 +44,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
             val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
+            val animationIntensityStr by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
+            val animationIntensity = when (animationIntensityStr) {
+                ThemePreferences.ANIM_LOW -> AnimationIntensity.LOW
+                ThemePreferences.ANIM_MEDIUM -> AnimationIntensity.MEDIUM
+                else -> AnimationIntensity.HIGH
+            }
 
             val darkTheme = when (themeMode) {
                 ThemePreferences.MODE_LIGHT -> false
@@ -85,20 +93,22 @@ class MainActivity : ComponentActivity() {
                     showExitDialog = true
                 }
 
-                Crossfade(
-                    targetState = rootState,
-                    animationSpec = tween(450),
-                    label = "root"
-                ) { state ->
-                    when (state) {
-                        RootState.Intro -> IntroScreen(
-                            onFinish = {
-                                themePreferences.introSeen = true
-                                introSeen = true
-                            }
-                        )
-                        RootState.Splash -> AnimatedSplash()
-                        RootState.Main -> NavGraph(navController = navController)
+                CompositionLocalProvider(LocalAnimationIntensity provides animationIntensity) {
+                    Crossfade(
+                        targetState = rootState,
+                        animationSpec = tween(450),
+                        label = "root"
+                    ) { state ->
+                        when (state) {
+                            RootState.Intro -> IntroScreen(
+                                onFinish = {
+                                    themePreferences.introSeen = true
+                                    introSeen = true
+                                }
+                            )
+                            RootState.Splash -> AnimatedSplash()
+                            RootState.Main -> NavGraph(navController = navController)
+                        }
                     }
                 }
             }

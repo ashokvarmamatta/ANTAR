@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Animation
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Palette
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.components.PrivacySheet
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGray
@@ -63,6 +65,7 @@ fun SettingsScreen(
 
     val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
+    val animationIntensity by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
     var showPrivacySheet by remember { mutableStateOf(false) }
 
     if (showPrivacySheet) {
@@ -182,6 +185,22 @@ fun SettingsScreen(
 
             item {
                 PremiumCard {
+                    SectionTitle(title = "Motion", icon = Icons.Outlined.Animation, accentColor = AntarBlue)
+                    Text(
+                        text = "How lively transitions and press feedback feel. Lower it for a calmer UI or older devices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    AnimationIntensitySelector(
+                        selected = animationIntensity,
+                        onSelected = { themeViewModel.setAnimationIntensity(it) }
+                    )
+                }
+            }
+
+            item {
+                PremiumCard {
                     SectionTitle(title = "Privacy & data", icon = Icons.Outlined.PrivacyTip, accentColor = AntarPurple)
                     SettingsRow(
                         icon = Icons.Outlined.PrivacyTip,
@@ -273,6 +292,55 @@ private fun ThemeModeSelector(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     color = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimationIntensitySelector(
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    val options = listOf(
+        ThemePreferences.ANIM_LOW to "Low",
+        ThemePreferences.ANIM_MEDIUM to "Medium",
+        ThemePreferences.ANIM_HIGH to "High"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        options.forEach { (value, label) ->
+            val isSelected = selected == value
+            val background = if (isSelected) AntarBlue.copy(alpha = 0.15f) else Color.Transparent
+            val borderModifier = if (isSelected) {
+                Modifier.border(0.5.dp, AntarBlue.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            } else {
+                Modifier
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(background)
+                    .then(borderModifier)
+                    .clickable { onSelected(value) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) AntarBlue else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
