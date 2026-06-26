@@ -10,6 +10,9 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -104,18 +107,24 @@ fun MainScreen(navController: NavController) {
                         }
                     }
 
-                    // Scrollable tab row — each item is a self-contained pill that animates its
-                    // OWN container colour + size together, so selection moves as one cohesive
-                    // spring (no separate sliding indicator fighting the label expand).
-                    ScrollableTabRow(
-                        selectedTabIndex = pagerState.currentPage,
-                        containerColor = Color.Transparent,
-                        edgePadding = 12.dp,
-                        divider = {},
-                        indicator = {},
-                        modifier = Modifier.height(48.dp)
+                    // Tab strip — a LazyRow of self-contained pills so we control spacing exactly.
+                    // (ScrollableTabRow forces a minimum tab width that pushed the icons too far
+                    // apart.) Each pill animates its OWN container colour + size together, so
+                    // selection moves as one cohesive spring.
+                    val tabListState = rememberLazyListState()
+                    LaunchedEffect(pagerState.currentPage) {
+                        tabListState.animateScrollToItem(pagerState.currentPage)
+                    }
+                    LazyRow(
+                        state = tabListState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        screens.forEachIndexed { index, screen ->
+                        itemsIndexed(screens, key = { _, screen -> screen.route }) { index, screen ->
                             val isSelected = pagerState.currentPage == index
                             val containerColor by animateColorAsState(
                                 targetValue = if (isSelected)
@@ -134,7 +143,6 @@ fun MainScreen(navController: NavController) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .padding(horizontal = 4.dp)
                                     .height(36.dp)
                                     .clip(RoundedCornerShape(18.dp))
                                     .background(containerColor)
@@ -144,12 +152,12 @@ fun MainScreen(navController: NavController) {
                                         }
                                     }
                                     .animateContentSize(animationSpec = AntarMotion.spatial())
-                                    .padding(horizontal = if (isSelected) 14.dp else 11.dp)
+                                    .padding(horizontal = if (isSelected) 14.dp else 9.dp)
                             ) {
                                 Icon(
                                     imageVector = screen.icon,
                                     contentDescription = screen.title,
-                                    modifier = Modifier.size(16.dp),
+                                    modifier = Modifier.size(18.dp),
                                     tint = textColor
                                 )
                                 // The label reveals only for the active tab; unselected tabs
