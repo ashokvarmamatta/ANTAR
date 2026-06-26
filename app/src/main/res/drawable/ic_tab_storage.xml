@@ -4,6 +4,10 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
+        android:pathData="M5 6C5 4.343 8.134 3 12 3S19 4.343 19 6V18C19 19.657 15.866 21 12 21S5 19.657 5 18Z"
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.22" />
+    <path
         android:pathData="M5 6C5 4.343 8.134 3 12 3S19 4.343 19 6S15.866 9 12 9S5 7.657 5 6Z M5 6V18C5 19.657 8.134 21 12 21S19 19.657 19 18V6 M19 12C19 13.657 15.866 15 12 15S5 13.657 5 12"
         android:strokeColor="#FFFFFFFF"
         android:strokeWidth="2"

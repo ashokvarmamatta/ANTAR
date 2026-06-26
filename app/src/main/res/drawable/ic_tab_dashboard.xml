@@ -4,7 +4,11 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M4 4H10V13H4Z M4 16H10V20H4Z M14 4H20V8H14Z M14 11H20V20H14Z"
+        android:pathData="M4 4H10V13H4Z M14 4H20V8H14Z M14 11H20V20H14Z M4 16H10V20H4Z"
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.22" />
+    <path
+        android:pathData="M4 4H10V13H4Z M14 4H20V8H14Z M14 11H20V20H14Z M4 16H10V20H4Z"
         android:strokeColor="#FFFFFFFF"
         android:strokeWidth="2"
         android:strokeLineCap="round"

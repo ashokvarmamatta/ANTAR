@@ -1,13 +1,8 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -34,11 +29,9 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarMotion
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.bounceClick
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.effectsSpec
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.spatialSpec
 import kotlinx.coroutines.launch
 
 @Composable
@@ -113,8 +106,24 @@ fun MainScreen(navController: NavController) {
                     // apart.) Each pill animates its OWN container colour + size together, so
                     // selection moves as one cohesive spring.
                     val tabListState = rememberLazyListState()
+                    // Keep the active tab on screen, but only scroll when it's actually near an
+                    // edge — otherwise neighbours (e.g. Dashboard) shouldn't be pushed off.
                     LaunchedEffect(pagerState.currentPage) {
-                        tabListState.animateScrollToItem(pagerState.currentPage)
+                        val target = pagerState.currentPage
+                        val info = tabListState.layoutInfo
+                        val item = info.visibleItemsInfo.firstOrNull { it.index == target }
+                        if (item == null) {
+                            tabListState.animateScrollToItem(target)
+                        } else {
+                            val margin = 72
+                            val leftOverflow = (item.offset - info.viewportStartOffset) - margin
+                            val rightOverflow = (item.offset + item.size) - (info.viewportEndOffset - margin)
+                            if (leftOverflow < 0) {
+                                tabListState.animateScrollBy(leftOverflow.toFloat())
+                            } else if (rightOverflow > 0) {
+                                tabListState.animateScrollBy(rightOverflow.toFloat())
+                            }
+                        }
                     }
                     LazyRow(
                         state = tabListState,
@@ -132,15 +141,17 @@ fun MainScreen(navController: NavController) {
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                                 else
                                     Color.Transparent,
-                                animationSpec = AntarMotion.effects(),
+                                animationSpec = intensity.effectsSpec(),
                                 label = "tabContainer"
                             )
                             val textColor by animateColorAsState(
                                 targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                animationSpec = AntarMotion.effects(),
+                                animationSpec = intensity.effectsSpec(),
                                 label = "tabColor"
                             )
 
+                            // Every tab shows its name; the active one is highlighted by an
+                            // animated pill + bold + colour. (No hide/expand.)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
@@ -152,8 +163,7 @@ fun MainScreen(navController: NavController) {
                                             pagerState.animateScrollToPage(index)
                                         }
                                     }
-                                    .animateContentSize(animationSpec = AntarMotion.spatial())
-                                    .padding(horizontal = if (isSelected) 14.dp else 9.dp)
+                                    .padding(horizontal = 12.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(screen.iconRes),
@@ -161,24 +171,14 @@ fun MainScreen(navController: NavController) {
                                     modifier = Modifier.size(18.dp),
                                     tint = textColor
                                 )
-                                // The label reveals only for the active tab; unselected tabs
-                                // collapse to an icon-only pill.
-                                AnimatedVisibility(
-                                    visible = isSelected,
-                                    enter = fadeIn(intensity.effectsSpec()) + expandHorizontally(intensity.spatialSpec()),
-                                    exit = fadeOut(intensity.effectsSpec()) + shrinkHorizontally(intensity.spatialSpec())
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = screen.title,
-                                            color = textColor,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1
-                                        )
-                                    }
-                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = screen.title,
+                                    color = textColor,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    maxLines = 1
+                                )
                             }
                         }
                     }

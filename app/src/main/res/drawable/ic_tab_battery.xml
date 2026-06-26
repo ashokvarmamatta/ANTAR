@@ -4,7 +4,11 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M4.5 8.5H16A1.5 1.5 0 0 1 17.5 10V14A1.5 1.5 0 0 1 16 15.5H4.5A1.5 1.5 0 0 1 3 14V10A1.5 1.5 0 0 1 4.5 8.5Z M19.5 11V13"
+        android:pathData="M4.5 8.5H16A1.5 1.5 0 0 1 17.5 10V14A1.5 1.5 0 0 1 16 15.5H4.5A1.5 1.5 0 0 1 3 14V10A1.5 1.5 0 0 1 4.5 8.5Z"
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.22" />
+    <path
+        android:pathData="M4.5 8.5H16A1.5 1.5 0 0 1 17.5 10V14A1.5 1.5 0 0 1 16 15.5H4.5A1.5 1.5 0 0 1 3 14V10A1.5 1.5 0 0 1 4.5 8.5Z M19.5 11V13 M6 10.8V13.2 M8.6 10.8V13.2 M11.2 10.8V13.2"
         android:strokeColor="#FFFFFFFF"
         android:strokeWidth="2"
         android:strokeLineCap="round"
