@@ -2,6 +2,7 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -103,104 +104,70 @@ fun MainScreen(navController: NavController) {
                         }
                     }
 
-                    // Premium scrollable tab row
+                    // Scrollable tab row — each item is a self-contained pill that animates its
+                    // OWN container colour + size together, so selection moves as one cohesive
+                    // spring (no separate sliding indicator fighting the label expand).
                     ScrollableTabRow(
                         selectedTabIndex = pagerState.currentPage,
                         containerColor = Color.Transparent,
                         edgePadding = 12.dp,
                         divider = {},
-                        indicator = { tabPositions ->
-                            if (pagerState.currentPage < tabPositions.size) {
-                                val currentTab = tabPositions[pagerState.currentPage]
-                                val targetPage = pagerState.targetPage
-                                val targetTab = tabPositions.getOrNull(targetPage) ?: currentTab
-                                val fraction = pagerState.currentPageOffsetFraction
-
-                                val indicatorStart: androidx.compose.ui.unit.Dp
-                                val indicatorEnd: androidx.compose.ui.unit.Dp
-
-                                if (fraction >= 0) {
-                                    indicatorStart = lerp(currentTab.left, targetTab.left, (fraction * 2f - 1f).coerceAtLeast(0f))
-                                    indicatorEnd = lerp(currentTab.right, targetTab.right, (fraction * 2f).coerceAtMost(1f))
-                                } else {
-                                    val absFraction = -fraction
-                                    indicatorStart = lerp(currentTab.left, targetTab.left, (absFraction * 2f).coerceAtMost(1f))
-                                    indicatorEnd = lerp(currentTab.right, targetTab.right, (absFraction * 2f - 1f).coerceAtLeast(0f))
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .wrapContentSize(Alignment.BottomStart)
-                                        .offset(x = indicatorStart)
-                                        .width(indicatorEnd - indicatorStart)
-                                        .height(36.dp)
-                                        .padding(horizontal = 4.dp)
-                                        .background(
-                                            brush = Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
-                                                )
-                                            ),
-                                            shape = RoundedCornerShape(18.dp)
-                                        )
-                                        .zIndex(1f)
-                                )
-                            }
-                        },
+                        indicator = {},
                         modifier = Modifier.height(48.dp)
                     ) {
                         screens.forEachIndexed { index, screen ->
                             val isSelected = pagerState.currentPage == index
+                            val containerColor by animateColorAsState(
+                                targetValue = if (isSelected)
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                else
+                                    Color.Transparent,
+                                animationSpec = AntarMotion.effects(),
+                                label = "tabContainer"
+                            )
                             val textColor by animateColorAsState(
                                 targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 animationSpec = AntarMotion.effects(),
                                 label = "tabColor"
                             )
 
-                            Box(
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
+                                    .padding(horizontal = 4.dp)
                                     .height(36.dp)
-                                    .padding(horizontal = 2.dp)
                                     .clip(RoundedCornerShape(18.dp))
+                                    .background(containerColor)
                                     .bounceClick {
                                         coroutineScope.launch {
                                             pagerState.animateScrollToPage(index)
                                         }
                                     }
-                                    .wrapContentSize(Alignment.Center)
-                                    .zIndex(2f),
-                                contentAlignment = Alignment.Center
+                                    .animateContentSize(animationSpec = AntarMotion.spatial())
+                                    .padding(horizontal = if (isSelected) 14.dp else 11.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 10.dp)
+                                Icon(
+                                    imageVector = screen.icon,
+                                    contentDescription = screen.title,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = textColor
+                                )
+                                // The label reveals only for the active tab; unselected tabs
+                                // collapse to an icon-only pill.
+                                AnimatedVisibility(
+                                    visible = isSelected,
+                                    enter = fadeIn(intensity.effectsSpec()) + expandHorizontally(intensity.spatialSpec()),
+                                    exit = fadeOut(intensity.effectsSpec()) + shrinkHorizontally(intensity.spatialSpec())
                                 ) {
-                                    Icon(
-                                        imageVector = screen.icon,
-                                        contentDescription = screen.title,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = textColor
-                                    )
-                                    // The label expands in only for the active tab, so unselected
-                                    // tabs collapse to an icon-only pill.
-                                    AnimatedVisibility(
-                                        visible = isSelected,
-                                        enter = fadeIn(intensity.effectsSpec()) + expandHorizontally(intensity.spatialSpec()),
-                                        exit = fadeOut(intensity.effectsSpec()) + shrinkHorizontally(intensity.spatialSpec())
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = screen.title,
-                                                color = textColor,
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1
-                                            )
-                                        }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = screen.title,
+                                            color = textColor,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1
+                                        )
                                     }
                                 }
                             }
@@ -264,8 +231,4 @@ fun MainScreen(navController: NavController) {
             }
         }
     }
-}
-
-private fun lerp(start: androidx.compose.ui.unit.Dp, stop: androidx.compose.ui.unit.Dp, fraction: Float): androidx.compose.ui.unit.Dp {
-    return start + (stop - start) * fraction
 }
