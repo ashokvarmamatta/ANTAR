@@ -19,13 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.floor
+import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
@@ -126,61 +129,89 @@ fun MainScreen(navController: NavController) {
                             }
                         }
                     }
-                    LazyRow(
-                        state = tabListState,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        itemsIndexed(screens, key = { _, screen -> screen.route }) { index, screen ->
-                            // Selection "amount" follows the live pager position, so the highlight
-                            // glides continuously between tabs as you swipe (or tap-scroll) — the
-                            // leaving tab fades its pill out while the arriving tab fades in.
-                            val pageOffset = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                            val raw = (1f - kotlin.math.abs(pageOffset - index)).coerceIn(0f, 1f)
-                            val fraction = if (intensity == AnimationIntensity.LOW) {
-                                if (pagerState.currentPage == index) 1f else 0f
-                            } else raw
-
-                            val textColor = lerp(
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                                MaterialTheme.colorScheme.primary,
-                                fraction
-                            )
-                            val containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f * fraction)
-                            val scale = 1f + 0.07f * fraction
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                    Box(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                        // A single gradient pill that physically SLIDES between tabs, tracking the
+                        // swipe (interpolated from the live pager offset and the tabs' real layout
+                        // positions) — the motion the original ANTAR tab bar had.
+                        val density = LocalDensity.current
+                        val info = tabListState.layoutInfo
+                        val pageOffset = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        val low = if (intensity == AnimationIntensity.LOW) pagerState.currentPage else floor(pageOffset).toInt()
+                        val t = if (intensity == AnimationIntensity.LOW) 0f else (pageOffset - low)
+                        val lowerItem = info.visibleItemsInfo.firstOrNull { it.index == low }
+                        val upperItem = info.visibleItemsInfo.firstOrNull { it.index == low + 1 }
+                        if (lowerItem != null) {
+                            val leftL = lowerItem.offset.toFloat()
+                            val wL = lowerItem.size.toFloat()
+                            val leftU = (upperItem?.offset ?: lowerItem.offset).toFloat()
+                            val wU = (upperItem?.size ?: lowerItem.size).toFloat()
+                            val indLeft = leftL + (leftU - leftL) * t
+                            val indWidth = wL + (wU - wL) * t
+                            Box(
                                 modifier = Modifier
-                                    .graphicsLayer { scaleX = scale; scaleY = scale }
+                                    .align(Alignment.CenterStart)
+                                    .offset { IntOffset(indLeft.roundToInt(), 0) }
                                     .height(36.dp)
+                                    .width(with(density) { indWidth.toDp() })
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(containerColor)
-                                    .bounceClick {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(index)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f),
+                                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+
+                        LazyRow(
+                            state = tabListState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            itemsIndexed(screens, key = { _, screen -> screen.route }) { index, screen ->
+                                // Icon/label colour cross-fades in step with the sliding pill.
+                                val pageOff = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                                val frac = if (intensity == AnimationIntensity.LOW) {
+                                    if (pagerState.currentPage == index) 1f else 0f
+                                } else (1f - kotlin.math.abs(pageOff - index)).coerceIn(0f, 1f)
+                                val textColor = lerp(
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                    MaterialTheme.colorScheme.primary,
+                                    frac
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .height(36.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .bounceClick {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(index)
+                                            }
                                         }
-                                    }
-                                    .padding(horizontal = 12.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(screen.iconRes),
-                                    contentDescription = screen.title,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = textColor
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = screen.title,
-                                    color = textColor,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (fraction > 0.5f) FontWeight.Bold else FontWeight.Medium,
-                                    maxLines = 1
-                                )
+                                        .padding(horizontal = 12.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(screen.iconRes),
+                                        contentDescription = screen.title,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = textColor
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = screen.title,
+                                        color = textColor,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (frac > 0.5f) FontWeight.Bold else FontWeight.Medium,
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         }
                     }
