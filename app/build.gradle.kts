@@ -28,6 +28,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            // Separate package id so the debug build installs alongside the release app
+            // without conflicting or wiping its data.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

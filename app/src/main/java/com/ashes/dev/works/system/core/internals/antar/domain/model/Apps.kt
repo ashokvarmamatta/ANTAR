@@ -1,12 +1,15 @@
 package com.ashes.dev.works.system.core.internals.antar.domain.model
 
 import android.graphics.drawable.Drawable
+import androidx.compose.runtime.Immutable
 
+@Immutable
 data class Apps(
     val appCount: String,
     val appList: List<AppDetail>
 )
 
+@Immutable
 data class AppDetail(
     val appName: String,
     val packageName: String,

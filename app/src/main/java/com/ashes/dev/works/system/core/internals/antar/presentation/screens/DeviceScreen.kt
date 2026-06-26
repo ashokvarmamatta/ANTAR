@@ -8,8 +8,8 @@ import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +23,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DeviceScreen(viewModel: DeviceViewModel = koinViewModel()) {
-    val device by viewModel.device.collectAsState()
+    val device by viewModel.device.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),

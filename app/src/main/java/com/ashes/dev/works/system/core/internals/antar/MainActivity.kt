@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
@@ -39,8 +40,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            val themeMode by themeViewModel.themeMode.collectAsState()
-            val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsState()
+            val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+            val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
 
             val darkTheme = when (themeMode) {
                 ThemePreferences.MODE_LIGHT -> false
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 var showExitDialog by remember { mutableStateOf(false) }
                 var introSeen by remember { mutableStateOf(themePreferences.introSeen) }
-                val dashboardData by dashboardViewModel.dashboardInfo.collectAsState()
+                val dashboardData by dashboardViewModel.dashboardInfo.collectAsStateWithLifecycle()
 
                 // Keep the splash visible for at least 3s once it appears (after the
                 // intro, or immediately on a normal launch), even if data loads sooner.

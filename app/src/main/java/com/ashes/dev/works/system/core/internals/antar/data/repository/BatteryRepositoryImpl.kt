@@ -27,26 +27,34 @@ class BatteryRepositoryImpl(
     override fun getBatteryInfo(): Flow<Battery> = callbackFlow {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
+        // These are effectively static for the life of a collection (design capacity never changes;
+        // estimated max capacity and cycle count drift only very slowly). Reflection / sysfs reads
+        // are expensive, so resolve them ONCE here instead of on every poll tick.
+        val designCapacity = getDesignCapacity(context)
+        val estimatedMaxCapacity = estimateMaxCapacity(context)
+        val chargeCycles = getBatteryCycleCount(context)
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                sendBatteryUpdate(intent, batteryManager)
+                sendBatteryUpdate(intent, batteryManager, designCapacity, estimatedMaxCapacity, chargeCycles)
             }
         }
 
         fun pollBattery() {
             val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             if (intent != null) {
-                sendBatteryUpdate(intent, batteryManager)
+                sendBatteryUpdate(intent, batteryManager, designCapacity, estimatedMaxCapacity, chargeCycles)
             }
         }
 
         context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        // Polling every 500ms to balance real-time feel and performance (prevents lagging)
+        // The receiver already pushes an update on every real battery change. We poll only to refresh
+        // live current/power/temperature; 2s keeps it responsive while cutting per-tick work ~4x.
         val pollJob = launch {
             while (true) {
                 pollBattery()
-                delay(500)
+                delay(2000)
             }
         }
 
@@ -92,7 +100,13 @@ class BatteryRepositoryImpl(
         batteryLogDao.insert(log)
     }
 
-    private fun kotlinx.coroutines.channels.ProducerScope<Battery>.sendBatteryUpdate(intent: Intent, batteryManager: BatteryManager) {
+    private fun kotlinx.coroutines.channels.ProducerScope<Battery>.sendBatteryUpdate(
+        intent: Intent,
+        batteryManager: BatteryManager,
+        designCapacity: Double,
+        estimatedMaxCapacity: Int,
+        chargeCycles: Int
+    ) {
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
         val batteryPct = if (scale > 0) (level * 100 / scale) else 0
@@ -108,10 +122,6 @@ class BatteryRepositoryImpl(
         val remainingCapacityUah = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
         val currentNowUa = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
         val powerWatt = (currentNowUa / 1_000_000.0) * (voltage / 1000.0)
-
-        val designCapacity = getDesignCapacity(context)
-        val estimatedMaxCapacity = estimateMaxCapacity(context)
-        val chargeCycles = getBatteryCycleCount(context)
 
         val preciseLevel = if (estimatedMaxCapacity > 0) {
             (remainingCapacityUah.toDouble() / 1000.0) / estimatedMaxCapacity.toDouble() * 100.0

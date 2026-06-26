@@ -29,12 +29,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.AppsViewModel
@@ -45,8 +47,8 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
-    val appsState by viewModel.appsState.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val appsState by viewModel.appsState.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val tabs = listOf("All", "System", "User")
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
@@ -207,12 +209,17 @@ fun AppItem(
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    var iconDrawable by remember(app.packageName) { mutableStateOf<Drawable?>(null) }
+    // Decode the icon once on a background thread and keep the ready-to-draw ImageBitmap in state,
+    // so we never re-decode a new Bitmap on every recomposition while the list scrolls.
+    var iconBitmap by remember(app.packageName) { mutableStateOf<ImageBitmap?>(null) }
 
     LaunchedEffect(app.packageName) {
         withContext(Dispatchers.IO) {
             try {
-                iconDrawable = context.packageManager.getApplicationIcon(app.packageName)
+                iconBitmap = context.packageManager
+                    .getApplicationIcon(app.packageName)
+                    .toBitmap()
+                    .asImageBitmap()
             } catch (_: Exception) {}
         }
     }
@@ -223,8 +230,8 @@ fun AppItem(
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
             .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-            .animateContentSize()
-            .clickable { onClick() }
+            .animateContentSize(animationSpec = AntarMotion.spatial())
+            .bounceClick(pressedScale = 0.98f) { onClick() }
     ) {
         Column {
             Row(
@@ -233,9 +240,9 @@ fun AppItem(
             ) {
                 // Full color app icons
                 Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    iconDrawable?.let { drawable ->
+                    iconBitmap?.let { bitmap ->
                         Image(
-                            bitmap = drawable.toBitmap().asImageBitmap(),
+                            bitmap = bitmap,
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxSize()

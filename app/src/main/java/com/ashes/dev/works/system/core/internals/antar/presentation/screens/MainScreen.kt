@@ -25,6 +25,8 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarMotion
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.bounceClick
 import kotlinx.coroutines.launch
 
 @Composable
@@ -138,7 +140,7 @@ fun MainScreen(navController: NavController) {
                             val isSelected = pagerState.currentPage == index
                             val textColor by animateColorAsState(
                                 targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                animationSpec = tween(300),
+                                animationSpec = AntarMotion.effects(),
                                 label = "tabColor"
                             )
 
@@ -147,7 +149,7 @@ fun MainScreen(navController: NavController) {
                                     .height(36.dp)
                                     .padding(horizontal = 2.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .clickable {
+                                    .bounceClick {
                                         coroutineScope.launch {
                                             pagerState.animateScrollToPage(index)
                                         }

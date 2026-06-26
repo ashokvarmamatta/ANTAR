@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLog
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryMetric
@@ -42,18 +43,18 @@ import java.util.Locale
 
 @Composable
 fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
-    val batteryInfo by viewModel.batteryInfo.collectAsState()
-    val capacityHistory by viewModel.capacityHistory.collectAsState()
-    val currentHistory by viewModel.currentHistory.collectAsState()
-    val powerHistory by viewModel.powerHistory.collectAsState()
-    val tempHistory by viewModel.tempHistory.collectAsState()
-    val selectedMetric by viewModel.selectedMetric.collectAsState()
-    val showMetricGraph by viewModel.showMetricGraph.collectAsState()
+    val batteryInfo by viewModel.batteryInfo.collectAsStateWithLifecycle()
+    val capacityHistory by viewModel.capacityHistory.collectAsStateWithLifecycle()
+    val currentHistory by viewModel.currentHistory.collectAsStateWithLifecycle()
+    val powerHistory by viewModel.powerHistory.collectAsStateWithLifecycle()
+    val tempHistory by viewModel.tempHistory.collectAsStateWithLifecycle()
+    val selectedMetric by viewModel.selectedMetric.collectAsStateWithLifecycle()
+    val showMetricGraph by viewModel.showMetricGraph.collectAsStateWithLifecycle()
 
-    val history24h by viewModel.history24h.collectAsState()
-    val history7d by viewModel.history7d.collectAsState()
-    val chargingSessions by viewModel.chargingSessions.collectAsState()
-    val selectedRange by viewModel.selectedHistoryRange.collectAsState()
+    val history24h by viewModel.history24h.collectAsStateWithLifecycle()
+    val history7d by viewModel.history7d.collectAsStateWithLifecycle()
+    val chargingSessions by viewModel.chargingSessions.collectAsStateWithLifecycle()
+    val selectedRange by viewModel.selectedHistoryRange.collectAsStateWithLifecycle()
 
     val scrollState = rememberScrollState()
 

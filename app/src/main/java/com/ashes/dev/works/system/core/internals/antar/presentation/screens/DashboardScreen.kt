@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
@@ -41,7 +42,7 @@ import java.util.Locale
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
-    val dashboard by viewModel.dashboardInfo.collectAsState()
+    val dashboard by viewModel.dashboardInfo.collectAsStateWithLifecycle()
 
     dashboard?.let {
         LazyColumn(

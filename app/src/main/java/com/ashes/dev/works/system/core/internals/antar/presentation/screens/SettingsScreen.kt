@@ -23,8 +23,8 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,8 +61,8 @@ fun SettingsScreen(
     val packageName = context.packageName
     val versionName = remember(packageName) { readVersionName(context) }
 
-    val themeMode by themeViewModel.themeMode.collectAsState()
-    val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsState()
+    val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+    val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
     var showPrivacySheet by remember { mutableStateOf(false) }
 
     if (showPrivacySheet) {

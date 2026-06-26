@@ -1,5 +1,8 @@
 package com.ashes.dev.works.system.core.internals.antar.domain.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Battery(
     val batteryLevel: Int,
     val preciseLevel: Double,

@@ -44,7 +44,7 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(viewModel.cameraIds) { id ->
+                items(viewModel.cameraIds, key = { it }) { id ->
                     val isSelected = viewModel.selectedCameraId == id
                     val placement = if (id == "0" || id == "2") "Back" else "Front"
 

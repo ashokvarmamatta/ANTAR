@@ -9,8 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,7 +28,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SensorsScreen(viewModel: SensorsViewModel = koinViewModel()) {
-    val sensorsState by viewModel.sensorsState.collectAsState()
+    val sensorsState by viewModel.sensorsState.collectAsStateWithLifecycle()
 
     if (sensorsState == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
