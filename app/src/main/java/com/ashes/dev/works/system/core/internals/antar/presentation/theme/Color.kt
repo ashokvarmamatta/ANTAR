@@ -18,8 +18,23 @@ val StaticAntarWhite = Color(0xFFF0F0F5)
 val StaticAntarGray = Color(0xFF8F93A2)
 val StaticAntarDimGray = Color(0xFF5A5E6F)
 
-// Dynamic theme-aware color properties
-val AntarCyan = StaticAntarCyan
+// User-selectable accent palette (index 0 = the default cyan, so default look is unchanged).
+val AntarAccentColors: List<Color> = listOf(
+    Color(0xFF00E5FF), // Cyan
+    Color(0xFF448AFF), // Blue
+    Color(0xFFB388FF), // Purple
+    Color(0xFF69F0AE), // Green
+    Color(0xFFFFAB40), // Orange
+    Color(0xFFFF80AB), // Pink
+    Color(0xFFFF5252), // Red
+    Color(0xFF00BFA5)  // Teal
+)
+
+// Brand accent — now follows the active colour scheme's primary, so the accent-colour
+// picker (and Material You) re-themes every "AntarCyan" surface in the app.
+val AntarCyan: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+
 val AntarTeal = StaticAntarTeal
 val AntarBlue = StaticAntarBlue
 val AntarPurple = StaticAntarPurple

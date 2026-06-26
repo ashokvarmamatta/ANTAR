@@ -11,6 +11,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -74,16 +75,26 @@ private val AntarLightColorScheme = lightColorScheme(
 fun ANTARTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    accentColor: Color = StaticAntarCyan,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val useDynamic = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val baseScheme = when {
+        useDynamic -> if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         darkTheme -> AntarColorScheme
         else -> AntarLightColorScheme
     }
+    // When not on Material You, the user's chosen accent drives the primary colour (and the
+    // related accent slots), so it propagates everywhere the app reads primary / AntarCyan.
+    val colorScheme = if (useDynamic) baseScheme else baseScheme.copy(
+        primary = accentColor,
+        primaryContainer = accentColor.copy(alpha = 0.30f).compositeOver(baseScheme.surface),
+        onPrimaryContainer = accentColor,
+        secondaryContainer = accentColor.copy(alpha = 0.20f).compositeOver(baseScheme.surface),
+        onSecondaryContainer = accentColor,
+        inversePrimary = accentColor
+    )
 
     val view = LocalView.current
     if (!view.isInEditMode) {

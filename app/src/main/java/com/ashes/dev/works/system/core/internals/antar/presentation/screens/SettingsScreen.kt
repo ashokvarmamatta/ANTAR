@@ -13,8 +13,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Animation
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.presentation.components.PrivacySheet
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarAccentColors
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarDark
@@ -66,6 +69,7 @@ fun SettingsScreen(
     val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
     val animationIntensity by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
+    val accentIndex by themeViewModel.accentColorIndex.collectAsStateWithLifecycle()
     var showPrivacySheet by remember { mutableStateOf(false) }
 
     if (showPrivacySheet) {
@@ -180,6 +184,26 @@ fun SettingsScreen(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Accent color",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (dynamicColors) "Turn off dynamic colors to use a custom accent"
+                        else "Tap a colour to set the app accent",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AccentColorRow(
+                        selectedIndex = accentIndex,
+                        enabled = !dynamicColors,
+                        onSelected = { themeViewModel.setAccentColorIndex(it) }
+                    )
                 }
             }
 
@@ -342,6 +366,45 @@ private fun AnimationIntensitySelector(
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     color = if (isSelected) AntarBlue else MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentColorRow(
+    selectedIndex: Int,
+    enabled: Boolean,
+    onSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AntarAccentColors.forEachIndexed { index, color ->
+            val isSelected = index == selectedIndex
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = if (enabled) 1f else 0.35f))
+                    .border(
+                        width = if (isSelected) 2.5.dp else 0.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                        shape = CircleShape
+                    )
+                    .clickable(enabled = enabled) { onSelected(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Outlined.Check,
+                        contentDescription = "Selected",
+                        tint = AntarDark,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

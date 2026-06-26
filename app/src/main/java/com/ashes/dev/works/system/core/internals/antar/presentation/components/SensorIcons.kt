@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarBlue
-import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.StaticAntarCyan
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarGreen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarOrange
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarPink
@@ -59,7 +59,7 @@ fun sensorGlyphFor(type: String): SensorGlyph {
 val SensorGlyph.accent: Color
     get() = when (this) {
         SensorGlyph.Accelerometer, SensorGlyph.Proximity,
-        SensorGlyph.Motion, SensorGlyph.Node -> AntarCyan
+        SensorGlyph.Motion, SensorGlyph.Node -> StaticAntarCyan
         SensorGlyph.Gyroscope, SensorGlyph.Rotation -> AntarBlue
         SensorGlyph.Magnetic, SensorGlyph.Gravity -> AntarPurple
         SensorGlyph.Light, SensorGlyph.Temperature -> AntarOrange

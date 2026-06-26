@@ -8,6 +8,7 @@ class ThemeViewModel(private val themePreferences: ThemePreferences) : ViewModel
     val themeMode = themePreferences.themeMode
     val dynamicColorsEnabled = themePreferences.dynamicColorsEnabled
     val animationIntensity = themePreferences.animationIntensity
+    val accentColorIndex = themePreferences.accentColorIndex
 
     fun setThemeMode(mode: String) {
         themePreferences.themeModeStr = mode
@@ -19,5 +20,9 @@ class ThemeViewModel(private val themePreferences: ThemePreferences) : ViewModel
 
     fun setAnimationIntensity(value: String) {
         themePreferences.animationIntensityStr = value
+    }
+
+    fun setAccentColorIndex(index: Int) {
+        themePreferences.accentColorIndexValue = index
     }
 }

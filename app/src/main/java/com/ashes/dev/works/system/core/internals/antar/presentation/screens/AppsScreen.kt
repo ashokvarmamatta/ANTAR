@@ -61,7 +61,7 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
                 CircularProgressIndicator(color = AntarCyan)
             }
         } else {
-            InstalledAppsDisclosure(onContinue = { viewModel.loadApps() })
+            InstalledAppsDisclosure(onContinue = { viewModel.giveConsent() })
         }
         return
     }

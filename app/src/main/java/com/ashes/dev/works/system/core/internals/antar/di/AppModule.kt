@@ -78,7 +78,7 @@ val appModule = module {
     viewModel { NetworkViewModel(get()) }
     viewModel { DisplayViewModel(get()) }
     viewModel { SensorsViewModel(get()) }
-    viewModel { AppsViewModel(get()) }
+    viewModel { AppsViewModel(get(), get()) }
     viewModel { LocationViewModel(get()) }
     viewModel { CameraViewModel(get()) }
     viewModel { DashboardViewModel(get()) }

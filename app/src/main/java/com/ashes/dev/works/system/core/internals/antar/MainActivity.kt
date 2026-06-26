@@ -20,6 +20,7 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.N
 import com.ashes.dev.works.system.core.internals.antar.presentation.screens.intro.IntroScreen
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.ANTARTheme
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.presentation.theme.AntarAccentColors
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
@@ -44,6 +45,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
             val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
+            val accentIndex by themeViewModel.accentColorIndex.collectAsStateWithLifecycle()
+            val accentColor = AntarAccentColors.getOrElse(accentIndex) { AntarAccentColors[0] }
             val animationIntensityStr by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
             val animationIntensity = when (animationIntensityStr) {
                 ThemePreferences.ANIM_LOW -> AnimationIntensity.LOW
@@ -57,7 +60,7 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
-            ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors) {
+            ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors, accentColor = accentColor) {
                 val navController = rememberNavController()
                 var showExitDialog by remember { mutableStateOf(false) }
                 var introSeen by remember { mutableStateOf(themePreferences.introSeen) }
