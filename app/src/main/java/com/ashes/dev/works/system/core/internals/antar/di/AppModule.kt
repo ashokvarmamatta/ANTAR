@@ -40,7 +40,7 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.Se
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.StorageViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {

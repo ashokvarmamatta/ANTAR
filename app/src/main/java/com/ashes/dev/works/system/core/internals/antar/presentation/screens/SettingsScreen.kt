@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Animation
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.StarRate
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -257,6 +258,14 @@ fun SettingsScreen(
                     InfoRow("Version", versionName)
                     Spacer(modifier = Modifier.height(8.dp))
                     SettingsRow(
+                        icon = Icons.Outlined.StarRate,
+                        accent = AntarPurple,
+                        title = "Rate App",
+                        subtitle = "Support us on Play Store",
+                        onClick = { rateApp(context) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SettingsRow(
                         icon = Icons.Outlined.Info,
                         accent = AntarCyan,
                         title = "Developer",
@@ -470,6 +479,23 @@ private fun openUrl(context: Context, url: String) {
         context.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
         Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun rateApp(context: Context) {
+    // We use the base package name explicitly because debug builds have a ".debug" suffix 
+    // which doesn't exist on the Play Store.
+    val appId = "com.ashes.dev.works.system.core.internals.antar"
+    val uri = Uri.parse("market://details?id=$appId")
+    val goToMarket = Intent(Intent.ACTION_VIEW, uri).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_NO_HISTORY or
+                Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+    }
+    try {
+        context.startActivity(goToMarket)
+    } catch (_: ActivityNotFoundException) {
+        openUrl(context, "https://play.google.com/store/apps/details?id=$appId")
     }
 }
 

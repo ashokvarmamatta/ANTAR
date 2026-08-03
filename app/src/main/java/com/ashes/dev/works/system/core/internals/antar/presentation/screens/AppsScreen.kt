@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -259,20 +260,22 @@ fun AppItem(
                         text = app.appName,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = app.packageName,
                         style = MaterialTheme.typography.bodySmall,
                         color = AntarGray,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Row(
                         modifier = Modifier.padding(top = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        LabelValue("Ver", app.version)
-                        LabelValue("API", app.apiLevelTag)
+                        LabelValue("Ver", app.version, Modifier.weight(1f, fill = false))
+                        LabelValue("API", app.apiLevelTag, Modifier.weight(1f, fill = false))
                     }
                 }
             }

@@ -39,19 +39,40 @@ class ThemePreferences(context: Context) {
     private val _accentColorIndex = MutableStateFlow(prefs.getInt(KEY_ACCENT_INDEX, 0))
     val accentColorIndex: StateFlow<Int> = _accentColorIndex.asStateFlow()
 
-    private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+    private val _appsConsentGiven = MutableStateFlow(prefs.getBoolean(KEY_APPS_CONSENT, false))
+    val appsConsentGivenFlow: StateFlow<Boolean> = _appsConsentGiven.asStateFlow()
+
+    private val _introSeen = MutableStateFlow(prefs.getBoolean(KEY_INTRO_SEEN, false))
+    val introSeenFlow: StateFlow<Boolean> = _introSeen.asStateFlow()
+
+    private val listener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
         when (key) {
             KEY_THEME_MODE -> {
-                _themeMode.value = prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
+                _themeMode.value = sp.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
             }
             KEY_DYNAMIC_COLORS -> {
-                _dynamicColorsEnabled.value = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
+                _dynamicColorsEnabled.value = sp.getBoolean(KEY_DYNAMIC_COLORS, false)
             }
             KEY_ANIMATION_INTENSITY -> {
-                _animationIntensity.value = prefs.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
+                _animationIntensity.value = sp.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
             }
             KEY_ACCENT_INDEX -> {
-                _accentColorIndex.value = prefs.getInt(KEY_ACCENT_INDEX, 0)
+                _accentColorIndex.value = sp.getInt(KEY_ACCENT_INDEX, 0)
+            }
+            KEY_APPS_CONSENT -> {
+                _appsConsentGiven.value = sp.getBoolean(KEY_APPS_CONSENT, false)
+            }
+            KEY_INTRO_SEEN -> {
+                _introSeen.value = sp.getBoolean(KEY_INTRO_SEEN, false)
+            }
+            null -> {
+                // If key is null, all preferences were changed or cleared
+                _themeMode.value = sp.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
+                _dynamicColorsEnabled.value = sp.getBoolean(KEY_DYNAMIC_COLORS, false)
+                _animationIntensity.value = sp.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
+                _accentColorIndex.value = sp.getInt(KEY_ACCENT_INDEX, 0)
+                _appsConsentGiven.value = sp.getBoolean(KEY_APPS_CONSENT, false)
+                _introSeen.value = sp.getBoolean(KEY_INTRO_SEEN, false)
             }
         }
     }
@@ -61,29 +82,59 @@ class ThemePreferences(context: Context) {
     }
 
     var themeModeStr: String
-        get() = prefs.getString(KEY_THEME_MODE, MODE_DARK) ?: MODE_DARK
-        set(value) = prefs.edit().putString(KEY_THEME_MODE, value).apply()
+        get() = _themeMode.value
+        set(value) {
+            if (_themeMode.value != value) {
+                prefs.edit().putString(KEY_THEME_MODE, value).apply()
+                _themeMode.value = value
+            }
+        }
 
     var dynamicColorsEnabledBool: Boolean
-        get() = prefs.getBoolean(KEY_DYNAMIC_COLORS, false)
-        set(value) = prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
+        get() = _dynamicColorsEnabled.value
+        set(value) {
+            if (_dynamicColorsEnabled.value != value) {
+                prefs.edit().putBoolean(KEY_DYNAMIC_COLORS, value).apply()
+                _dynamicColorsEnabled.value = value
+            }
+        }
 
     var introSeen: Boolean
-        get() = prefs.getBoolean(KEY_INTRO_SEEN, false)
-        set(value) = prefs.edit().putBoolean(KEY_INTRO_SEEN, value).apply()
+        get() = _introSeen.value
+        set(value) {
+            if (_introSeen.value != value) {
+                prefs.edit().putBoolean(KEY_INTRO_SEEN, value).apply()
+                _introSeen.value = value
+            }
+        }
 
     var animationIntensityStr: String
-        get() = prefs.getString(KEY_ANIMATION_INTENSITY, ANIM_HIGH) ?: ANIM_HIGH
-        set(value) = prefs.edit().putString(KEY_ANIMATION_INTENSITY, value).apply()
+        get() = _animationIntensity.value
+        set(value) {
+            if (_animationIntensity.value != value) {
+                prefs.edit().putString(KEY_ANIMATION_INTENSITY, value).apply()
+                _animationIntensity.value = value
+            }
+        }
 
     var accentColorIndexValue: Int
-        get() = prefs.getInt(KEY_ACCENT_INDEX, 0)
-        set(value) = prefs.edit().putInt(KEY_ACCENT_INDEX, value).apply()
+        get() = _accentColorIndex.value
+        set(value) {
+            if (_accentColorIndex.value != value) {
+                prefs.edit().putInt(KEY_ACCENT_INDEX, value).apply()
+                _accentColorIndex.value = value
+            }
+        }
 
     // Apps screen: one-time consent + a lightweight cache of the scanned app list.
     var appsConsentGiven: Boolean
-        get() = prefs.getBoolean(KEY_APPS_CONSENT, false)
-        set(value) = prefs.edit().putBoolean(KEY_APPS_CONSENT, value).apply()
+        get() = _appsConsentGiven.value
+        set(value) {
+            if (_appsConsentGiven.value != value) {
+                prefs.edit().putBoolean(KEY_APPS_CONSENT, value).apply()
+                _appsConsentGiven.value = value
+            }
+        }
 
     var cachedAppsRaw: String
         get() = prefs.getString(KEY_APPS_CACHE, "") ?: ""

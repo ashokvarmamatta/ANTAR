@@ -9,6 +9,7 @@ import android.os.Build
 import android.telephony.TelephonyManager
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Network
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.NetworkRepository
+import java.net.Inet6Address
 
 class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
     override fun getNetwork(): Network {
@@ -58,7 +59,7 @@ class NetworkRepositoryImpl(private val context: Context) : NetworkRepository {
             dns1 = intToIp(dhcpInfo.dns1),
             dns2 = intToIp(dhcpInfo.dns2),
             ip = intToIp(dhcpInfo.ipAddress),
-            ipv6 = linkProperties?.linkAddresses?.filter { it.address is java.net.Inet6Address }?.joinToString { it.address.hostAddress } ?: "- - -",
+            ipv6 = linkProperties?.linkAddresses?.filter { it.address is Inet6Address }?.mapNotNull { it.address.hostAddress }?.joinToString() ?: "- - -",
             wifiInterface = linkProperties?.interfaceName ?: "- - -",
             linkSpeed = "${wifiInfo.linkSpeed} Mbps",
             frequency = "${wifiInfo.frequency} MHz",
