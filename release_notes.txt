@@ -1,9 +1,9 @@
-✨ Latest Android Support: Fully optimized for Android 15+ with SDK 37 support.
-🔄 Instant Theme Switching: Fixed an issue where theme changes required a restart—colors and dark mode now reflect instantly across the app.
-🚀 Fluid Motion: New Spring Motion system for ultra-smooth, responsive UI transitions.
-🎨 Custom Accents: Added a manual accent color picker in Settings for personalized styling.
-⚡ Performance Tuning: New Animation Intensity control and enabled aggressive R8 optimizations for a faster, lighter app.
-📊 Refined Dashboard: Improved battery visualizations and real-time sensor monitoring.
-🔒 Privacy First: New in-app Privacy Summary to keep your data transparent and local.
-✍️ Visual Polish: Hand-drawn custom icons for all sensor types and hardware components.
-🏗️ Core Upgrades: Migrated to Kotlin 2.4.10 and AGP 9.0 for peak stability and modern build performance.
+✨ Android 15+ (SDK 37) support.
+🔄 Instant Themes: Fixed restart bug—colors reflect immediately.
+🚀 Fluid Motion: New Spring Motion system for smooth UI transitions.
+🎨 Custom Accents: Added manual color picker to Settings.
+⚡ Performance: New Animation Intensity control & R8 optimization.
+📊 Dashboard: Refined battery and sensor visualizations.
+🔒 Privacy: New in-app Privacy Summary for transparency.
+✍️ Visuals: Hand-drawn custom icons for all sensors.
+🏗️ Core: Stability and performance upgrades.
