@@ -49,6 +49,14 @@ android {
     }
 }
 
+// The Baseline Profile plugin builds nonMinifiedRelease/benchmarkRelease variants and installs them
+// on the device. A separate package id keeps them from replacing (or uninstalling) an installed
+// release build signed with another key.
+androidComponents {
+    onVariants(selector().withBuildType("nonMinifiedRelease")) { it.applicationId.set("com.ashes.dev.works.system.core.internals.antar.profile") }
+    onVariants(selector().withBuildType("benchmarkRelease")) { it.applicationId.set("com.ashes.dev.works.system.core.internals.antar.profile") }
+}
+
 ksp {
     // Exported schema JSON is the baseline every future Room Migration is tested against — commit it.
     arg("room.schemaLocation", "$projectDir/schemas")

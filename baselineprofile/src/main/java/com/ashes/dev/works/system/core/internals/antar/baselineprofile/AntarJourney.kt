@@ -6,7 +6,8 @@ import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
 
 /** Package of the build under test (the release variant the profile ships in). */
-const val TARGET_PACKAGE = "com.ashes.dev.works.system.core.internals.antar"
+/** Package id of the profiling builds (set in app/build.gradle.kts), so a store/release install is never touched. */
+const val TARGET_PACKAGE = "com.ashes.dev.works.system.core.internals.antar.profile"
 
 private const val UI_TIMEOUT_MS = 10_000L
 private const val TAB_COUNT = 12
