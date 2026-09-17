@@ -1,7 +1,8 @@
 name: Build & Release APK
 
-# Branch flow: test -> dev -> prod. Every push to prod builds the release APK and publishes
-# a GitHub Release tagged v<versionName>. Bump versionName in app/build.gradle.kts to release.
+# Branch flow: test -> dev -> prod. Every push to prod builds the installable APK and attaches it
+# to the GitHub Release tagged v<versionName> as ANTAR.apk (created on a new versionName, updated
+# otherwise). Bump versionName in app/build.gradle.kts to cut a new release.
 on:
   push:
     branches:
@@ -39,8 +40,18 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
+      - name: Install the fixed debug signing key
+        # Same key on every build, so a newer ANTAR.apk installs over an older one.
+        env:
+          KEYSTORE_B64: ${{ secrets.ANTAR_DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+
+      - name: Build APK
+        run: |
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ANTAR.apk
 
       - name: Read version
         id: version
@@ -54,27 +65,24 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Upload Release APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: antar-release-${{ steps.version.outputs.name }}
-          path: app/build/outputs/apk/release/*.apk
-
-      - name: Upload R8 mapping (needed to deobfuscate crashes from this exact build)
-        uses: actions/upload-artifact@v4
-        with:
-          name: antar-release-mapping-${{ steps.version.outputs.name }}
-          path: app/build/outputs/mapping/release/mapping.txt
-          retention-days: 90
+          name: ANTAR-${{ steps.version.outputs.name }}
+          path: ANTAR.apk
 
       - name: Create GitHub Release
-        # One release per versionName; pushes to prod without a version bump only build.
         if: steps.version.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ANTAR ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          files: |
-            app/build/outputs/apk/release/*.apk
+          files: ANTAR.apk
           generate_release_notes: true
+
+      - name: Update APK on the existing release
+        if: steps.version.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.version.outputs.tag }}" ANTAR.apk --clobber

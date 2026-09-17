@@ -41,12 +41,14 @@ Settings: theme (system/light/dark), dynamic colours, accent colour, animation i
 
 ## Install
 
-1. Open **[Releases](https://github.com/ashokvarmamatta/ANTAR/releases/latest)**.
-2. Download `app-release-unsigned.apk`.
+1. **[Download ANTAR.apk](https://github.com/ashokvarmamatta/ANTAR/releases/latest/download/ANTAR.apk)** (latest release).
+2. Open it on your phone and allow installing from this source when Android asks.
 
-The release APK is **unsigned**, and Android refuses to install unsigned APKs. Either sign it yourself
-(`apksigner sign --ks <your-keystore> app-release-unsigned.apk`) or [build from source](#build) and run it from
-Android Studio. Requires Android 7.0 (API 24) or newer. No account needed; works fully offline.
+Requires Android 7.0 (API 24) or newer. No account needed; works fully offline. Every release is signed with the
+same key, so a newer `ANTAR.apk` installs over the previous one.
+
+The APK is a debug build of the `prod` branch. If you want a release build signed with your own key,
+[build from source](#build) and run `./gradlew assembleRelease` with your signing config.
 
 ## Screenshots
 
@@ -198,8 +200,8 @@ Libraries: Jetpack Compose (BOM 2026.09.00) with Material 3 · Navigation Compos
 Room 2.8.5 (KSP 2.3.12) · WorkManager 2.11.2 · Kotlin Coroutines 1.11.0 · Accompanist Permissions 0.37.3 ·
 Core SplashScreen 1.2.0.
 
-Branches: work lands on `test`, moves to `dev`, then `prod`. Every push to `prod` builds the release APK and
-publishes a GitHub Release tagged `v<versionName>`.
+Branches: work lands on `test`, moves to `dev`, then `prod`. Every push to `prod` builds `ANTAR.apk` and attaches
+it to the GitHub Release tagged `v<versionName>`.
 
 ## Structure
 
