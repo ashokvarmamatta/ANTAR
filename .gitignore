@@ -42,9 +42,9 @@ marketing-videos/
 keystore.properties
 
 # Not needed to build the app — kept in the private research repo
-/README.md
 /release_notes.txt
 /screenshots/
+/readme-kit/
 /audits/
 /.idea/
 /.agent/
