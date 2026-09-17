@@ -40,3 +40,12 @@ marketing-videos/
 *.jks
 *.keystore
 keystore.properties
+
+# Not needed to build the app — kept in the private research repo
+/README.md
+/release_notes.txt
+/screenshots/
+/audits/
+/.idea/
+/.agent/
+/.kotlin/
