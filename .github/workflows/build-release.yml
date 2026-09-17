@@ -46,7 +46,8 @@ jobs:
           KEYSTORE_B64: ${{ secrets.ANTAR_DEBUG_KEYSTORE_B64 }}
         run: |
           mkdir -p ~/.android
-          echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          echo "$KEYSTORE_B64" | base64 -d --ignore-garbage > ~/.android/debug.keystore
+          keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey > /dev/null
 
       - name: Build APK
         run: |
