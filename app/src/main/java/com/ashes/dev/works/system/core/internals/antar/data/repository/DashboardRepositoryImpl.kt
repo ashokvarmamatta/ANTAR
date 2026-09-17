@@ -1,6 +1,6 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
-import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.data.local.preferences.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.AppsRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository

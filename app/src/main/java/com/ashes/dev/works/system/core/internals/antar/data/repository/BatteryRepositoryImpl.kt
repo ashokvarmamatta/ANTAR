@@ -6,8 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
-import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLog
-import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLogDao
+import com.ashes.dev.works.system.core.internals.antar.data.local.db.BatteryLog
+import com.ashes.dev.works.system.core.internals.antar.data.local.db.BatteryLogDao
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
 import kotlinx.coroutines.Dispatchers

@@ -6,8 +6,8 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLog
-import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLogDao
+import com.ashes.dev.works.system.core.internals.antar.data.local.db.BatteryLog
+import com.ashes.dev.works.system.core.internals.antar.data.local.db.BatteryLogDao
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit

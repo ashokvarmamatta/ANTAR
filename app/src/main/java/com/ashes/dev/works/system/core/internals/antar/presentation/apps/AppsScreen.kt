@@ -1,0 +1,329 @@
+package com.ashes.dev.works.system.core.internals.antar.presentation.apps
+
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LabelValue
+
+import android.content.Intent
+import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
+    val appsState by viewModel.appsState.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val tabs = listOf("All", "System", "User")
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
+    var expandedAppPackageName by rememberSaveable { mutableStateOf<String?>(null) }
+
+    if (appsState == null) {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = AntarCyan)
+            }
+        } else {
+            InstalledAppsDisclosure(onContinue = { viewModel.giveConsent() })
+        }
+        return
+    }
+
+    val apps = appsState!!
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.weight(1f)) {
+                tabs.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
+                        onClick = { selectedTabIndex = index },
+                        selected = selectedTabIndex == index,
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = AntarCyan.copy(alpha = 0.15f),
+                            activeContentColor = AntarCyan
+                        )
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(onClick = { isSearchExpanded = !isSearchExpanded }) {
+                Icon(
+                    imageVector = if (isSearchExpanded) Icons.Default.Close else Icons.Default.Search,
+                    contentDescription = "Toggle Search",
+                    tint = AntarCyan
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = isSearchExpanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                placeholder = { Text("Search apps...", color = AntarGray) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AntarCyan) },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AntarCyan,
+                    unfocusedBorderColor = AntarDimGray.copy(alpha = 0.3f)
+                )
+            )
+        }
+
+        val filteredApps = remember(selectedTabIndex, apps.appList, searchQuery) {
+            apps.appList.filter { app ->
+                val matchesCategory = when (selectedTabIndex) {
+                    1 -> app.isSystemApp
+                    2 -> !app.isSystemApp
+                    else -> true
+                }
+                val matchesSearch = app.appName.contains(searchQuery, ignoreCase = true) ||
+                        app.packageName.contains(searchQuery, ignoreCase = true)
+                matchesCategory && matchesSearch
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                Text(
+                    text = "${filteredApps.size} Apps",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AntarGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            items(filteredApps, key = { it.packageName }) { app ->
+                AppItem(
+                    app = app,
+                    isExpanded = expandedAppPackageName == app.packageName,
+                    onClick = { expandedAppPackageName = if (expandedAppPackageName == app.packageName) null else app.packageName }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InstalledAppsDisclosure(onContinue: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Apps,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = AntarCyan
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "Installed apps inventory",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "ANTAR reads the list of installed apps only when you open this screen, so it can show app names, package names, versions, target SDK levels, architecture, and system-app status.",
+            style = MaterialTheme.typography.bodySmall,
+            color = AntarGray
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "The inventory is displayed locally for device auditing. It is not stored, uploaded, shared, or used for advertising or analytics.",
+            style = MaterialTheme.typography.bodySmall,
+            color = AntarGray
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onContinue,
+            colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
+        ) {
+            Text("Continue", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun AppItem(
+    app: AppDetail,
+    isExpanded: Boolean,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    // Decode the icon once on a background thread and keep the ready-to-draw ImageBitmap in state,
+    // so we never re-decode a new Bitmap on every recomposition while the list scrolls.
+    var iconBitmap by remember(app.packageName) { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(app.packageName) {
+        withContext(Dispatchers.IO) {
+            try {
+                iconBitmap = context.packageManager
+                    .getApplicationIcon(app.packageName)
+                    .toBitmap()
+                    .asImageBitmap()
+            } catch (_: Exception) {}
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .animateContentSize(animationSpec = AntarMotion.spatial())
+            .bounceClick(pressedScale = 0.98f) { onClick() }
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Full color app icons
+                Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    iconBitmap?.let { bitmap ->
+                        Image(
+                            bitmap = bitmap,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(10.dp)),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = app.appName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = app.packageName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        LabelValue("Ver", app.version, Modifier.weight(1f, fill = false))
+                        LabelValue("API", app.apiLevelTag, Modifier.weight(1f, fill = false))
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", app.packageName, null)
+                            }
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("App Info")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
+                            if (intent != null) {
+                                context.startActivity(intent)
+                            } else {
+                                android.widget.Toast.makeText(context, "This app cannot be opened", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AntarCyan, contentColor = AntarDark)
+                    ) {
+                        Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Open", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}

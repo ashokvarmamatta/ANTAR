@@ -1,7 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.di
 
 import androidx.room.Room
-import com.ashes.dev.works.system.core.internals.antar.data.db.AntarDatabase
+import com.ashes.dev.works.system.core.internals.antar.data.local.db.AntarDatabase
 import com.ashes.dev.works.system.core.internals.antar.data.repository.AppsRepositoryImpl
 import com.ashes.dev.works.system.core.internals.antar.data.repository.BatteryRepositoryImpl
 import com.ashes.dev.works.system.core.internals.antar.data.repository.CameraRepositoryImpl
@@ -26,20 +26,20 @@ import com.ashes.dev.works.system.core.internals.antar.domain.repository.Network
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SensorsRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.StorageRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SystemRepository
-import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.AppsViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.BatteryViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CameraViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.CpuViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DashboardViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DeviceViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.DisplayViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.LocationViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.NetworkViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SensorsViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.StorageViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
-import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
+import com.ashes.dev.works.system.core.internals.antar.data.local.preferences.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.presentation.apps.AppsViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.BatteryViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.camera.CameraViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.cpu.CpuViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.dashboard.DashboardViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.device.DeviceViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.display.DisplayViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.location.LocationViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.network.NetworkViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.sensors.SensorsViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.storage.StorageViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.system.SystemViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.app.ThemeViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

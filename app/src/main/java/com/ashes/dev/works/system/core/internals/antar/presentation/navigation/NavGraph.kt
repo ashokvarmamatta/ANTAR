@@ -12,8 +12,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.ashes.dev.works.system.core.internals.antar.presentation.screens.MainScreen
-import com.ashes.dev.works.system.core.internals.antar.presentation.screens.SettingsScreen
+import com.ashes.dev.works.system.core.internals.antar.presentation.main.MainScreen
+import com.ashes.dev.works.system.core.internals.antar.presentation.settings.SettingsScreen
 
 // Spring-driven slide for screen-to-screen motion so navigation flows instead of cutting.
 private val slideSpring = spring<IntOffset>(

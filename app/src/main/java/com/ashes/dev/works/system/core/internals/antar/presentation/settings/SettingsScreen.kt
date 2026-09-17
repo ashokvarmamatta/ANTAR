@@ -1,0 +1,533 @@
+package com.ashes.dev.works.system.core.internals.antar.presentation.settings
+
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
+
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.widget.Toast
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Animation
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.StarRate
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.ui.PrivacySheet
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarAccentColors
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarDark
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarRed
+import org.koin.androidx.compose.koinViewModel
+import com.ashes.dev.works.system.core.internals.antar.data.local.preferences.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.presentation.app.ThemeViewModel
+
+private const val PRIVACY_POLICY_URL = "https://ashes-dev-works.web.app/antar/"
+private const val DEVELOPER_URL = "https://ashokvarma.dev"
+
+@Composable
+fun SettingsScreen(
+    navController: NavController,
+    themeViewModel: ThemeViewModel = koinViewModel()
+) {
+    val context = LocalContext.current
+    val packageName = context.packageName
+    val versionName = remember(packageName) { readVersionName(context) }
+
+    val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+    val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
+    val animationIntensity by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
+    val accentIndex by themeViewModel.accentColorIndex.collectAsStateWithLifecycle()
+    var showPrivacySheet by rememberSaveable { mutableStateOf(false) }
+
+    if (showPrivacySheet) {
+        PrivacySheet(
+            onDismiss = { showPrivacySheet = false },
+            onReadPolicy = {
+                showPrivacySheet = false
+                openUrl(context, PRIVACY_POLICY_URL)
+            }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            Surface(color = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = "Settings",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 2.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            item {
+                GradientHeaderCard {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            text = "ANTAR",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
+                        )
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Version $versionName",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AntarGray
+                        )
+                    }
+                }
+            }
+
+            item {
+                PremiumCard {
+                    SectionTitle(title = "App theme", icon = Icons.Outlined.Palette, accentColor = AntarCyan)
+                    
+                    ThemeModeSelector(
+                        selectedMode = themeMode,
+                        onModeSelected = { themeViewModel.setThemeMode(it) }
+                    )
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Dynamic colors",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Wallpaper match (Material You)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AntarGray
+                                )
+                            }
+                            Switch(
+                                checked = dynamicColors,
+                                onCheckedChange = { themeViewModel.setDynamicColorsEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = AntarCyan,
+                                    checkedTrackColor = AntarCyan.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Accent color",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (dynamicColors) "Turn off dynamic colors to use a custom accent"
+                        else "Tap a colour to set the app accent",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AccentColorRow(
+                        selectedIndex = accentIndex,
+                        enabled = !dynamicColors,
+                        onSelected = { themeViewModel.setAccentColorIndex(it) }
+                    )
+                }
+            }
+
+            item {
+                PremiumCard {
+                    SectionTitle(title = "Motion", icon = Icons.Outlined.Animation, accentColor = AntarBlue)
+                    Text(
+                        text = "How lively transitions and press feedback feel. Lower it for a calmer UI or older devices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AntarGray,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    AnimationIntensitySelector(
+                        selected = animationIntensity,
+                        onSelected = { themeViewModel.setAnimationIntensity(it) }
+                    )
+                }
+            }
+
+            item {
+                PremiumCard {
+                    SectionTitle(title = "Privacy & data", icon = Icons.Outlined.PrivacyTip, accentColor = AntarPurple)
+                    SettingsRow(
+                        icon = Icons.Outlined.PrivacyTip,
+                        accent = AntarPurple,
+                        title = "Privacy policy",
+                        subtitle = PRIVACY_POLICY_URL.removePrefix("https://"),
+                        onClick = { openUrl(context, PRIVACY_POLICY_URL) }
+                    )
+                    SettingsRow(
+                        icon = Icons.Outlined.DeleteForever,
+                        accent = AntarRed,
+                        title = "Request data deletion",
+                        subtitle = "ANTAR stores nothing off-device — open app info to clear local data",
+                        onClick = { openAppInfoSettings(context) }
+                    )
+                    SettingsRow(
+                        icon = Icons.Outlined.Info,
+                        accent = AntarCyan,
+                        title = "What ANTAR collects",
+                        subtitle = "Nothing leaves your device — see the summary",
+                        onClick = { showPrivacySheet = true }
+                    )
+                }
+            }
+
+            item {
+                PremiumCard {
+                    SectionTitle(title = "About", icon = Icons.Outlined.Info)
+                    InfoRow("App name", stringResource(id = R.string.app_name))
+                    InfoRow("Version", versionName)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SettingsRow(
+                        icon = Icons.Outlined.StarRate,
+                        accent = AntarPurple,
+                        title = "Rate App",
+                        subtitle = "Support us on Play Store",
+                        onClick = { rateApp(context) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SettingsRow(
+                        icon = Icons.Outlined.Info,
+                        accent = AntarCyan,
+                        title = "Developer",
+                        subtitle = DEVELOPER_URL.removePrefix("https://"),
+                        onClick = { openUrl(context, DEVELOPER_URL) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeModeSelector(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit
+) {
+    val modes = listOf(
+        ThemePreferences.MODE_SYSTEM to "System",
+        ThemePreferences.MODE_LIGHT to "Light",
+        ThemePreferences.MODE_DARK to "Dark"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        modes.forEach { (mode, label) ->
+            val isSelected = selectedMode == mode
+            val background = if (isSelected) {
+                AntarCyan.copy(alpha = 0.15f)
+            } else {
+                Color.Transparent
+            }
+            val borderModifier = if (isSelected) {
+                Modifier.border(0.5.dp, AntarCyan.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            } else {
+                Modifier
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(background)
+                    .then(borderModifier)
+                    .clickable { onModeSelected(mode) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) AntarCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimationIntensitySelector(
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    val options = listOf(
+        ThemePreferences.ANIM_LOW to "Low",
+        ThemePreferences.ANIM_MEDIUM to "Medium",
+        ThemePreferences.ANIM_HIGH to "High"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        options.forEach { (value, label) ->
+            val isSelected = selected == value
+            val background = if (isSelected) AntarBlue.copy(alpha = 0.15f) else Color.Transparent
+            val borderModifier = if (isSelected) {
+                Modifier.border(0.5.dp, AntarBlue.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            } else {
+                Modifier
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(background)
+                    .then(borderModifier)
+                    .clickable { onSelected(value) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) AntarBlue else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentColorRow(
+    selectedIndex: Int,
+    enabled: Boolean,
+    onSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AntarAccentColors.forEachIndexed { index, color ->
+            val isSelected = index == selectedIndex
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = if (enabled) 1f else 0.35f))
+                    .border(
+                        width = if (isSelected) 2.5.dp else 0.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                        shape = CircleShape
+                    )
+                    .clickable(enabled = enabled) { onSelected(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Outlined.Check,
+                        contentDescription = "Selected",
+                        tint = AntarDark,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    accent: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(accent.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = AntarGray
+            )
+        }
+        Icon(
+            imageVector = Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = AntarGray,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+private fun openUrl(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun rateApp(context: Context) {
+    // We use the base package name explicitly because debug builds have a ".debug" suffix 
+    // which doesn't exist on the Play Store.
+    val appId = "com.ashes.dev.works.system.core.internals.antar"
+    val uri = Uri.parse("market://details?id=$appId")
+    val goToMarket = Intent(Intent.ACTION_VIEW, uri).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_NO_HISTORY or
+                Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+    }
+    try {
+        context.startActivity(goToMarket)
+    } catch (_: ActivityNotFoundException) {
+        openUrl(context, "https://play.google.com/store/apps/details?id=$appId")
+    }
+}
+
+private fun openAppInfoSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "Can't open app settings", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun readVersionName(context: Context): String {
+    return try {
+        val pm = context.packageManager
+        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getPackageInfo(context.packageName, 0)
+        }
+        info.versionName ?: "1.0"
+    } catch (_: Exception) {
+        "1.0"
+    }
+}
