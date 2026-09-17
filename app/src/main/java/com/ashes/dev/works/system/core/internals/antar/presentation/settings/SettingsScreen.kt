@@ -120,7 +120,11 @@ fun SettingsScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         // Fixed header owns the top inset; only the grid below scrolls.
         Surface(color = MaterialTheme.colorScheme.background) {
             Row(

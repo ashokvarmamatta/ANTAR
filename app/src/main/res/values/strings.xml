@@ -7,7 +7,7 @@
     <!-- Accessibility label of the copy button; %1$s is the row label -->
     <string name="common_copy_value">Copy %1$s</string>
     <!-- Inline "Label:" prefix; %1$s is the label -->
-    <string name="common_label_value_prefix">%1$s:\u0020</string>
+    <string name="common_label_value_prefix">"%1$s: "</string>
     <string name="common_retry">Try again</string>
     <string name="common_yes">Yes</string>
     <string name="common_no">No</string>
@@ -137,7 +137,7 @@
     <!-- %1$f battery voltage in volts -->
     <string name="dashboard_voltage">%1$.3f V</string>
     <!-- Separator between short facts on one line -->
-    <string name="dashboard_separator"> • </string>
+    <string name="dashboard_separator">" • "</string>
     <string name="dashboard_processor">PROCESSOR</string>
     <!-- %1$s core count text (e.g. "8 Cores"), %2$d current frequency in MHz -->
     <string name="dashboard_cores_and_frequency">%1$s · %2$d MHz</string>
