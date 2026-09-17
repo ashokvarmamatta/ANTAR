@@ -79,25 +79,31 @@ Captured from v1.5.0 on a POCO X6 Pro 5G (Android 16).
 
 | Permission | Why it is needed |
 |---|---|
-| `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | GPS coordinates, satellite status and the address on the Location tab; Wi-Fi security type on the Network tab |
-| `NEARBY_WIFI_DEVICES` (`neverForLocation`) | Wi-Fi details on the Network tab (Android 13+) |
-| `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` | connection type, IP, DNS and gateway |
+| `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | GPS coordinates, satellites and the address on the Location tab; the Wi-Fi network name and security type on the Network tab |
+| `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` | connection type, IP, DNS, gateway and Wi-Fi link details |
 | `QUERY_ALL_PACKAGES` | the installed-apps list on the Apps tab |
 
-Location and nearby-Wi-Fi are requested only after an in-app explanation, and the installed-apps list is read
-only after you accept a one-time disclosure on the Apps tab (until then the dashboard shows `- - -` for the app
-count).
+Every permission is asked for from an in-app explanation first; after a permanent denial the button opens the
+app's system settings instead. The Network tab shows its connection details without any permission; only the
+Wi-Fi network identity needs location. Approximate location is enough for coordinates; satellites need precise.
+The installed-apps list is read only after you accept a one-time disclosure on the Apps tab.
 
 The app declares **no `INTERNET` permission**, so nothing it reads can be sent anywhere. What it stores, on the
 device only:
 
-- settings, plus a cached copy of the installed-apps list so the Apps tab opens instantly (SharedPreferences)
+- settings (Preferences DataStore)
 - a battery log every 15 minutes, kept for 30 days (Room database `antar_db`)
+- a cached copy of the installed-apps list in the no-backup folder, so it is never included in backups
 
-Android Auto Backup is enabled (`allowBackup="true"`), so these files are included in your device's Google
-backup. Uninstalling the app deletes them from the phone.
+Android Auto Backup is enabled (`allowBackup="true"`), so settings and the battery log are included in your
+device's Google backup. Uninstalling the app deletes them from the phone.
 
 ## How it works
+
+The code follows one layout: `core/` (error model, design system, shared UI), `domain/` (pure-Kotlin models,
+repository interfaces, one use case per action), `data/` (repositories that read Android APIs on an injected IO
+dispatcher and return `AppResult`), `presentation/<screen>/` (a ViewModel and a sealed `UiState` per screen) and
+`di/` (Koin modules, checked by a unit test).
 
 ### Live battery readings that stop when you leave
 `ACTION_BATTERY_CHANGED` only fires when the level or charger changes, but current and power move every second,
@@ -128,9 +134,9 @@ override fun getBatteryInfo(): Flow<Battery> = callbackFlow {
         pollJob.cancel()
     }
 }.distinctUntilChanged() // Only emit when the Battery data actually changes
-    .flowOn(Dispatchers.IO) // PowerProfile reflection, sticky-intent and sysfs reads stay off main
+    .flowOn(io) // PowerProfile reflection, sticky-intent and sysfs reads stay off main
 ```
-Full code: [BatteryRepositoryImpl.kt, lines 29–68](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/BatteryRepositoryImpl.kt#L29-L68)
+Full code: [BatteryRepositoryImpl.kt, lines 43–84](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/BatteryRepositoryImpl.kt#L43-L84)
 
 The ViewModels share it with `SharingStarted.WhileSubscribed(5000)`, so the receiver and the poll are torn down
 5 seconds after the screen is no longer visible.
@@ -152,7 +158,7 @@ fun geocodeIfMoved(location: AndroidLocation) {
             tryEmitLocation()
         }
     } else {
-        launch(Dispatchers.IO) {
+        launch(io) {
             address = try {
                 @Suppress("DEPRECATION")
                 geocoder.getFromLocation(location.latitude, location.longitude, 1)
@@ -165,22 +171,22 @@ fun geocodeIfMoved(location: AndroidLocation) {
     }
 }
 ```
-Full code: [LocationRepositoryImpl.kt, lines 76–97](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/LocationRepositoryImpl.kt#L76-L97)
+Full code: [LocationRepositoryImpl.kt, lines 96–117](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/LocationRepositoryImpl.kt#L96-L117)
 
 ### 30 days of battery history from a background worker
-A WorkManager job, scheduled every 15 minutes in `AntarApp.kt`, stores one reading and trims anything older than
-30 days:
+A WorkManager job, scheduled every 15 minutes in `AntarApp.kt` and created by Koin, asks the repository to log one
+reading and trims anything older than 30 days:
 
 <!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/worker/BatteryLogWorker.kt -->
 ```kotlin
 override suspend fun doWork(): Result {
     return try {
-        // …
-        dao.insert(log)
+        // No battery state to read right now: try again later, within the same retry cap.
+        if (!batteryRepository.logCurrentBattery()) return retryOrFail()
 
         // Purge logs older than 30 days
         val thirtyDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
-        dao.deleteOlderThan(thirtyDaysAgo)
+        batteryRepository.deleteLogsOlderThan(thirtyDaysAgo)
 
         Result.success()
     } catch (e: CancellationException) {
@@ -191,71 +197,81 @@ override suspend fun doWork(): Result {
     }
 }
 ```
-Full code: [BatteryLogWorker.kt, lines 23–68](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/worker/BatteryLogWorker.kt#L23-L68)
+Full code: [BatteryLogWorker.kt, lines 16–32](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/worker/BatteryLogWorker.kt#L16-L32)
 
 The Battery tab reads it back as a Room `Flow` for the 24 h and 7 day charts and the charging-session list.
 
-### No package scan before consent
-The dashboard's app count comes from the same package query the Apps tab uses, so it waits for the disclosure:
+### A dashboard that waits for consent
+The dashboard is assembled by a use case from the other features. Static facts are read once, battery and uptime
+drive live updates, and the installed-app count is only read after the Apps disclosure is accepted:
 
-<!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/DashboardRepositoryImpl.kt -->
+<!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/domain/usecase/ObserveDashboardUseCase.kt -->
 ```kotlin
-override fun getDashboardInfo(): Flow<Dashboard> {
-    return combine(
-        deviceRepository.getDeviceFlow(),
-        batteryRepository.getBatteryInfo()
-    ) { device, battery ->
-        withContext(Dispatchers.IO) {
+operator fun invoke(): Flow<DashboardSummary> = flow {
+    val device = getDeviceInfo().getOrNull()
+    val system = getSystemInfo().getOrNull()
+    val cpu = getCpuInfo().getOrNull()
+    val sensorCount = getSensors().getOrNull()?.size
+
+    val appCount = observeSettings()
+        .map { it.appsConsentGiven }
+        .distinctUntilChanged()
+        .map { consented -> if (consented) getInstalledAppCount().getOrNull() else null }
+
+    emitAll(
+        combine(observeBattery(), observeUptime(), appCount) { battery, uptime, apps ->
+            val storage = getStorageInfo().getOrNull()
             // …
-            // The installed-apps disclosure is shown on the Apps screen; until the user has agreed
-            // there, don't enumerate packages at all — not even just to count them.
-            if (cachedApps == null && preferences.appsConsentGiven) {
-                cachedApps = "${appsRepository.getAppCount()} apps"
-            }
-            // …
-        }
-    }.conflate().flowOn(Dispatchers.IO)
+        }.conflate()
+    )
 }
 ```
-Full code: [DashboardRepositoryImpl.kt, lines 36–93](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/DashboardRepositoryImpl.kt#L36-L93)
+Full code: [ObserveDashboardUseCase.kt, lines 29–58](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/domain/usecase/ObserveDashboardUseCase.kt#L29-L58)
+
+Any part that cannot be read becomes `null`, and its card hides instead of showing an invented value.
 
 ## Build
-
-Clone `https://github.com/ashokvarmamatta/ANTAR.git`, then from the project folder:
 
 ```bash
 ./gradlew assembleDebug
 ./gradlew testDebugUnitTest
 ```
 
-The debug APK lands in `app/build/outputs/apk/debug/`.
+The debug APK lands in `app/build/outputs/apk/debug/`. The unit tests include a Koin check that every
+dependency in the graph resolves.
 
 Toolchain: JDK 25 · Gradle 9.6.0 (wrapper) · Android Gradle Plugin 9.4.0 · Kotlin 2.4.20 · compileSdk/targetSdk 37 ·
 minSdk 24. No API keys or config files are needed.
 
-Libraries: Jetpack Compose (BOM 2026.09.00) with Material 3 · Navigation Compose 2.10.1 · Koin 4.2.2 ·
-Room 2.8.5 (KSP 2.3.12) · WorkManager 2.11.2 · Kotlin Coroutines 1.11.0 · Accompanist Permissions 0.37.3 ·
-Core SplashScreen 1.2.0.
+Libraries: Jetpack Compose (BOM 2026.09.00) with Material 3 and Material 3 adaptive 1.3.0 · Navigation Compose
+2.10.1 · Koin 4.2.2 · Room 2.8.5 (KSP 2.3.12) · DataStore 1.2.1 · WorkManager 2.11.2 · Kotlin Coroutines 1.11.0 ·
+Accompanist Permissions 0.37.3 · Core SplashScreen 1.2.0 · ProfileInstaller 1.4.1.
+
+Baseline Profile: `./gradlew :app:generateReleaseBaselineProfile` on a connected Android 13+ device records the
+startup and tab-swipe journey; `:baselineprofile:connectedBenchmarkReleaseAndroidTest` measures cold start with
+and without it.
 
 Branches: work lands on `test`, moves to `dev`, then `prod`. Every push to `prod` builds `ANTAR.apk` and attaches
 it to the GitHub Release tagged `v<versionName>`.
 
 ## Structure
 
-88 Kotlin files, 10,037 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
+144 Kotlin files, 13,996 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
 
 | Package | Owns |
 |---|---|
-| `presentation/screens/` | one Compose screen per tab, the pager host (`MainScreen.kt`), Settings, intro |
-| `presentation/viewmodel/` | a ViewModel per screen, exposing `StateFlow`s |
-| `presentation/theme/`, `components/` | colours, typography, motion, splash, dialogs, sensor icons |
-| `domain/model/`, `domain/repository/` | data classes and repository interfaces per feature |
-| `data/repository/` | the Android API readers (BatteryManager, LocationManager, Camera2, PackageManager, `/proc`, sysfs) |
-| `data/db/`, `data/worker/` | Room battery log and the WorkManager logger |
-| `data/preference/` | settings and the Apps cache |
-| `di/AppModule.kt` | Koin wiring |
+| `core/common/` | `AppResult` / `AppError` error model, `UiText` |
+| `core/designsystem/` | theme, colours, typography, motion tokens and helpers, shared cards and rows |
+| `core/ui/` | adaptive card grid, permission priming, splash, dialogs, formatters |
+| `domain/model/`, `domain/repository/`, `domain/usecase/` | typed models, repository interfaces, one use case per action |
+| `data/repository/` | Android API readers (BatteryManager, LocationManager, ConnectivityManager, Camera2, PackageManager, `/proc`, sysfs) |
+| `data/local/` | Room battery log, DataStore settings, installed-apps cache |
+| `data/worker/`, `data/mapper/` | WorkManager battery logger, entity to domain mapping |
+| `presentation/<screen>/` | one Compose screen, ViewModel and sealed `UiState` per tab, plus Settings and onboarding |
+| `di/` | Koin modules: dispatchers, database, DataStore, repositories, use cases, ViewModels, workers |
 
-Tests: 5 unit tests (including a Koin module check) and 3 instrumented Compose tests.
+The `:baselineprofile` module holds the profile generator and the startup benchmark. Tests: 5 unit tests
+(including the Koin graph check) and 3 instrumented Compose tests.
 
 ---
 
