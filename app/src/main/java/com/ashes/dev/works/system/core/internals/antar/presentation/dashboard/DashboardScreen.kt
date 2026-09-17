@@ -85,7 +85,7 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.b
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.effectsSpec
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.core.ui.formatBytes
 import com.ashes.dev.works.system.core.internals.antar.core.ui.formatPercent
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery

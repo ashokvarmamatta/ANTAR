@@ -1,9 +1,9 @@
-package com.ashes.dev.works.system.core.internals.antar.core.ui
+package com.ashes.dev.works.system.core.internals.antar.core.designsystem.component
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,13 +24,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,34 +39,62 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.pressScale
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
+/** Every user-facing string of a [PermissionPrimingDialog], already resolved by the caller. */
+@Immutable
+data class PermissionPrimingText(
+    val title: String,
+    val points: List<String>,
+    val allowLabel: String,
+    val notNowLabel: String
+)
+
+/** Every user-facing string of a [PermissionGate], already resolved by the caller. */
+@Immutable
+data class PermissionGateText(
+    val title: String,
+    val body: String,
+    val deniedBody: String,
+    val grantLabel: String,
+    val openSettingsLabel: String,
+    val priming: PermissionPrimingText
+)
+
+object PermissionGateDefaults {
+    val DialogShape: Shape = RoundedCornerShape(28.dp)
+
+    /** Opens this app's system settings page, where a permanently denied permission can be granted. */
+    fun openAppSettings(context: Context) {
+        context.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+}
+
 /**
  * Shows [content] once [isGranted] holds; until then an explanation card. The system permission
  * dialog is only ever launched from the "Allow" button of the in-app priming dialog, never cold.
- * After a denial that Android will no longer re-ask for, the call to action becomes "Open settings"
- * instead of a button that silently does nothing.
+ * After a denial that Android will no longer re-ask for, the call to action opens the app's
+ * settings instead of a button that silently does nothing.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionGate(
     permissions: List<String>,
     icon: ImageVector,
-    @StringRes title: Int,
-    @StringRes body: Int,
-    @StringRes primingTitle: Int,
-    primingPoints: List<Int>,
+    text: PermissionGateText,
     modifier: Modifier = Modifier,
     isGranted: (MultiplePermissionsState) -> Boolean = { it.allPermissionsGranted },
     content: @Composable () -> Unit
@@ -98,14 +126,14 @@ fun PermissionGate(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = stringResource(title),
+            text = text.title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(if (permanentlyDenied) R.string.permission_denied_body else body),
+            text = if (permanentlyDenied) text.deniedBody else text.body,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -114,26 +142,14 @@ fun PermissionGate(
         val interactionSource = remember { MutableInteractionSource() }
         Button(
             onClick = {
-                if (permanentlyDenied) {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                } else {
-                    showPriming = true
-                }
+                if (permanentlyDenied) PermissionGateDefaults.openAppSettings(context) else showPriming = true
             },
             interactionSource = interactionSource,
-            modifier = Modifier.pressScale(interactionSource),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            modifier = Modifier.pressScale(interactionSource)
         ) {
             Text(
-                text = stringResource(if (permanentlyDenied) R.string.permission_open_settings else R.string.permission_grant),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                text = if (permanentlyDenied) text.openSettingsLabel else text.grantLabel,
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -141,8 +157,7 @@ fun PermissionGate(
     if (showPriming) {
         PermissionPrimingDialog(
             icon = icon,
-            title = primingTitle,
-            points = primingPoints,
+            text = text.priming,
             onAllow = {
                 showPriming = false
                 state.launchMultiplePermissionRequest()
@@ -152,18 +167,18 @@ fun PermissionGate(
     }
 }
 
-/** The reusable priming dialog: icon disc, title, why, reassurance points, Allow and Not now. */
+/** The priming dialog: icon disc, title, reassurance points, Allow and Not now. */
 @Composable
 fun PermissionPrimingDialog(
     icon: ImageVector,
-    @StringRes title: Int,
-    points: List<Int>,
+    text: PermissionPrimingText,
     onAllow: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    shape: Shape = PermissionGateDefaults.DialogShape
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
+            shape = shape,
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp
         ) {
@@ -184,14 +199,14 @@ fun PermissionPrimingDialog(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(title),
+                    text = text.title,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                points.forEach { point ->
+                text.points.forEach { point ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -206,7 +221,7 @@ fun PermissionPrimingDialog(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = stringResource(point),
+                            text = point,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -219,13 +234,9 @@ fun PermissionPrimingDialog(
                     interactionSource = allowSource,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pressScale(allowSource),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                        .pressScale(allowSource)
                 ) {
-                    Text(stringResource(R.string.permission_allow), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                    Text(text.allowLabel, fontWeight = FontWeight.Bold)
                 }
                 val laterSource = remember { MutableInteractionSource() }
                 TextButton(
@@ -233,7 +244,7 @@ fun PermissionPrimingDialog(
                     interactionSource = laterSource,
                     modifier = Modifier.pressScale(laterSource)
                 ) {
-                    Text(stringResource(R.string.permission_not_now), color = MaterialTheme.colorScheme.primary)
+                    Text(text.notNowLabel)
                 }
             }
         }

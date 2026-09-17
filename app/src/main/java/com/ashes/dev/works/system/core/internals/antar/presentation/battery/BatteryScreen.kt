@@ -19,15 +19,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import org.koin.androidx.compose.koinViewModel
 

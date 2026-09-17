@@ -1,4 +1,4 @@
-package com.ashes.dev.works.system.core.internals.antar.core.ui
+package com.ashes.dev.works.system.core.internals.antar.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

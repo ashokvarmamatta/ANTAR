@@ -50,12 +50,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGreen
@@ -65,7 +65,7 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.L
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.pressScale
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.core.ui.PermissionGate
 import com.ashes.dev.works.system.core.internals.antar.core.ui.PermissionPrimingDialog
 import com.ashes.dev.works.system.core.internals.antar.domain.model.GnssConstellation

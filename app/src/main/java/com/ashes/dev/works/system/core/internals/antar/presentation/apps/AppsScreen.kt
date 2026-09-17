@@ -76,8 +76,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
 import com.ashes.dev.works.system.core.internals.antar.core.common.NO_VALUE
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LabelValue
+import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.core.ui.LabelValue
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarDark
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarDimGray
@@ -89,7 +89,7 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.p
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.shimmer
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.spatialSpec
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppFilter
 import org.koin.androidx.compose.koinViewModel
