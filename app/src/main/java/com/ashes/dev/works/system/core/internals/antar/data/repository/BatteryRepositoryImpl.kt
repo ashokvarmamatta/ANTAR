@@ -127,13 +127,13 @@ class BatteryRepositoryImpl(
         val powerWatt = (currentNowUa / 1_000_000.0) * (voltage / 1000.0)
 
         val preciseLevel = if (estimatedMaxCapacity > 0) {
-            (remainingCapacityUah.toDouble() / 1000.0) / estimatedMaxCapacity.toDouble() * 100.0
+            ((remainingCapacityUah.toDouble() / 1000.0) / estimatedMaxCapacity.toDouble() * 100.0).coerceAtMost(100.0)
         } else {
             batteryPct.toDouble()
-        }
+        }.coerceAtMost(100.0)
 
         val batteryHealthStatus = if (designCapacity != -1.0 && estimatedMaxCapacity != -1) {
-            val percentage = (estimatedMaxCapacity.toDouble() / designCapacity * 100).toInt()
+            val percentage = (estimatedMaxCapacity.toDouble() / designCapacity * 100).toInt().coerceAtMost(100)
             when {
                 percentage > 95 -> "Excellent ($percentage%)"
                 percentage > 90 -> "Very Good ($percentage%)"
