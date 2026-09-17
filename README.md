@@ -256,13 +256,13 @@ it to the GitHub Release tagged `v<versionName>`.
 
 ## Structure
 
-144 Kotlin files, 13,996 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
+148 Kotlin files, 14,296 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
 
 | Package | Owns |
 |---|---|
 | `core/common/` | `AppResult` / `AppError` error model, `UiText` |
-| `core/designsystem/` | theme, colours, typography, motion tokens and helpers, shared cards and rows |
-| `core/ui/` | adaptive card grid, permission priming, splash, dialogs, formatters |
+| `core/designsystem/` | theme, colours, typography, motion tokens and helpers; `component/` is a reusable component library (rows, cards, chips, loading and error states, permission gate, adaptive grid) that takes plain strings and theme colours, so it can be copied into another app |
+| `core/ui/` | ANTAR's string-resource bindings for the components, splash, dialogs, formatters |
 | `domain/model/`, `domain/repository/`, `domain/usecase/` | typed models, repository interfaces, one use case per action |
 | `data/repository/` | Android API readers (BatteryManager, LocationManager, ConnectivityManager, Camera2, PackageManager, `/proc`, sysfs) |
 | `data/local/` | Room battery log, DataStore settings, installed-apps cache |
@@ -270,8 +270,8 @@ it to the GitHub Release tagged `v<versionName>`.
 | `presentation/<screen>/` | one Compose screen, ViewModel and sealed `UiState` per tab, plus Settings and onboarding |
 | `di/` | Koin modules: dispatchers, database, DataStore, repositories, use cases, ViewModels, workers |
 
-The `:baselineprofile` module holds the profile generator and the startup benchmark. Tests: 5 unit tests
-(including the Koin graph check) and 3 instrumented Compose tests.
+The `:baselineprofile` module holds the profile generator and the startup benchmark. Tests: 9 unit tests
+(including the Koin graph check and a component-library boundary check) and 3 instrumented Compose tests.
 
 ---
 
