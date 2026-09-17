@@ -254,6 +254,33 @@ and without it.
 Branches: work lands on `test`, moves to `dev`, then `prod`. Every push to `prod` builds `ANTAR.apk` and attaches
 it to the GitHub Release tagged `v<versionName>`.
 
+## Test results
+
+Last full run: 17 September 2026, on the `test` branch, on a POCO X6 Pro 5G (MediaTek Dimensity 8300,
+Android 16) over wireless debugging.
+
+| Check | Result |
+|---|---|
+| Unit tests (`testDebugUnitTest`) | 9 of 9 pass, including the Koin graph check and the component-library boundary check |
+| Lint (`lintDebug`) | pass |
+| Instrumented UI tests on the phone | 3 of 3 pass: app context, dashboard loads then System tab opens, shared UI components |
+| Baseline Profile generation | pass: 27,602 rules each in `baseline-prof.txt` and `startup-prof.txt` |
+| Cold start, no ahead-of-time compilation | median 558.5 ms (min 497.2, max 635.1) |
+| Cold start, with the Baseline Profile | median 506.8 ms (min 452.3, max 561.4), about 9% faster |
+| Manual pass on the phone | all 12 tabs, settings migration, Settings Apply, light and dark theme; no crashes |
+| Hardcoded-string and motion audits | 0 hardcoded strings; every screen has motion |
+
+Cold start is `timeToInitialDisplayMs` from Macrobenchmark, 10 runs each, release build. The Baseline
+Profile ships in release builds; the `ANTAR.apk` on the Releases page is a debug build and does not use it.
+
+Run the on-device tests yourself (connect one device and allow the install prompts):
+
+```bash
+./gradlew :app:connectedDebugAndroidTest
+./gradlew :app:generateReleaseBaselineProfile
+./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest
+```
+
 ## Structure
 
 148 Kotlin files, 14,296 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
