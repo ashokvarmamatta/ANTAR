@@ -105,24 +105,32 @@ so the stream combines the broadcast with a 2-second poll:
 
 <!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/BatteryRepositoryImpl.kt -->
 ```kotlin
-        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+override fun getBatteryInfo(): Flow<Battery> = callbackFlow {
+    val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+    // …
+    val receiver = object : BroadcastReceiver() {
+        // …
+    }
+    // …
+    context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        // The receiver already pushes an update on every real battery change. We poll only to refresh
-        // live current/power/temperature; 2s keeps it responsive while cutting per-tick work ~4x.
-        val pollJob = launch {
-            while (true) {
-                pollBattery()
-                delay(2000)
-            }
+    // The receiver already pushes an update on every real battery change. We poll only to refresh
+    // live current/power/temperature; 2s keeps it responsive while cutting per-tick work ~4x.
+    val pollJob = launch {
+        while (true) {
+            pollBattery()
+            delay(2000)
         }
+    }
 
-        awaitClose {
-            context.unregisterReceiver(receiver)
-            pollJob.cancel()
-        }
-    }.distinctUntilChanged() // Only emit when the Battery data actually changes
-        .flowOn(Dispatchers.IO) // PowerProfile reflection, sticky-intent and sysfs reads stay off main
+    awaitClose {
+        context.unregisterReceiver(receiver)
+        pollJob.cancel()
+    }
+}.distinctUntilChanged() // Only emit when the Battery data actually changes
+    .flowOn(Dispatchers.IO) // PowerProfile reflection, sticky-intent and sysfs reads stay off main
 ```
+Full code: [BatteryRepositoryImpl.kt, lines 29–68](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/BatteryRepositoryImpl.kt#L29-L68)
 
 The ViewModels share it with `SharingStarted.WhileSubscribed(5000)`, so the receiver and the poll are torn down
 5 seconds after the screen is no longer visible.
@@ -134,18 +142,30 @@ a slow network. Geocoding runs asynchronously and only after the position moves 
 
 <!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/LocationRepositoryImpl.kt -->
 ```kotlin
-        fun geocodeIfMoved(location: AndroidLocation) {
-            val last = lastGeocoded
-            if (last != null && last.distanceTo(location) < GEOCODE_MIN_DISTANCE_M) return
-            lastGeocoded = location
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                geocoder.getFromLocation(location.latitude, location.longitude, 1) { results ->
-                    address = results.firstOrNull()?.getAddressLine(0) ?: "- - -"
-                    tryEmitLocation()
-                }
-            } else {
-                launch(Dispatchers.IO) {
+fun geocodeIfMoved(location: AndroidLocation) {
+    val last = lastGeocoded
+    if (last != null && last.distanceTo(location) < GEOCODE_MIN_DISTANCE_M) return
+    lastGeocoded = location
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        geocoder.getFromLocation(location.latitude, location.longitude, 1) { results ->
+            address = results.firstOrNull()?.getAddressLine(0) ?: "- - -"
+            tryEmitLocation()
+        }
+    } else {
+        launch(Dispatchers.IO) {
+            address = try {
+                @Suppress("DEPRECATION")
+                geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    ?.firstOrNull()?.getAddressLine(0) ?: "- - -"
+            } catch (e: Exception) {
+                "- - -"
+            }
+            tryEmitLocation()
+        }
+    }
+}
 ```
+Full code: [LocationRepositoryImpl.kt, lines 76–97](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/LocationRepositoryImpl.kt#L76-L97)
 
 ### 30 days of battery history from a background worker
 A WorkManager job, scheduled every 15 minutes in `AntarApp.kt`, stores one reading and trims anything older than
@@ -153,20 +173,25 @@ A WorkManager job, scheduled every 15 minutes in `AntarApp.kt`, stores one readi
 
 <!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/worker/BatteryLogWorker.kt -->
 ```kotlin
-            dao.insert(log)
+override suspend fun doWork(): Result {
+    return try {
+        // …
+        dao.insert(log)
 
-            // Purge logs older than 30 days
-            val thirtyDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
-            dao.deleteOlderThan(thirtyDaysAgo)
+        // Purge logs older than 30 days
+        val thirtyDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
+        dao.deleteOlderThan(thirtyDaysAgo)
 
-            Result.success()
-        } catch (e: CancellationException) {
-            throw e // WorkManager stopped us — that's not a failure to retry
-        } catch (e: Exception) {
-            // A persistent error (disk full, corrupt DB) must not retry forever every period.
-            if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
-        }
+        Result.success()
+    } catch (e: CancellationException) {
+        throw e // WorkManager stopped us — that's not a failure to retry
+    } catch (e: Exception) {
+        // A persistent error (disk full, corrupt DB) must not retry forever every period.
+        if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
+    }
+}
 ```
+Full code: [BatteryLogWorker.kt, lines 23–68](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/worker/BatteryLogWorker.kt#L23-L68)
 
 The Battery tab reads it back as a Room `Flow` for the 24 h and 7 day charts and the charging-session list.
 
@@ -175,12 +200,24 @@ The dashboard's app count comes from the same package query the Apps tab uses, s
 
 <!-- src: app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/DashboardRepositoryImpl.kt -->
 ```kotlin
-                // The installed-apps disclosure is shown on the Apps screen; until the user has agreed
-                // there, don't enumerate packages at all — not even just to count them.
-                if (cachedApps == null && preferences.appsConsentGiven) {
-                    cachedApps = "${appsRepository.getAppCount()} apps"
-                }
+override fun getDashboardInfo(): Flow<Dashboard> {
+    return combine(
+        deviceRepository.getDeviceFlow(),
+        batteryRepository.getBatteryInfo()
+    ) { device, battery ->
+        withContext(Dispatchers.IO) {
+            // …
+            // The installed-apps disclosure is shown on the Apps screen; until the user has agreed
+            // there, don't enumerate packages at all — not even just to count them.
+            if (cachedApps == null && preferences.appsConsentGiven) {
+                cachedApps = "${appsRepository.getAppCount()} apps"
+            }
+            // …
+        }
+    }.conflate().flowOn(Dispatchers.IO)
+}
 ```
+Full code: [DashboardRepositoryImpl.kt, lines 36–93](app/src/main/java/com/ashes/dev/works/system/core/internals/antar/data/repository/DashboardRepositoryImpl.kt#L36-L93)
 
 ## Build
 
