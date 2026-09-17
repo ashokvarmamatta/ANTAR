@@ -11,6 +11,7 @@ import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLogDao
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
 class BatteryLogWorker(
     context: Context,
@@ -58,8 +59,15 @@ class BatteryLogWorker(
             dao.deleteOlderThan(thirtyDaysAgo)
 
             Result.success()
+        } catch (e: CancellationException) {
+            throw e // WorkManager stopped us — that's not a failure to retry
         } catch (e: Exception) {
-            Result.retry()
+            // A persistent error (disk full, corrupt DB) must not retry forever every period.
+            if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
         }
+    }
+
+    private companion object {
+        const val MAX_RETRIES = 3
     }
 }

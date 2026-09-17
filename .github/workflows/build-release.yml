@@ -18,10 +18,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
 
       - name: Setup Gradle
@@ -48,12 +48,18 @@ jobs:
           name: antar-release
           path: app/build/outputs/apk/release/*.apk
 
+      - name: Upload R8 mapping (needed to deobfuscate crashes from this exact build)
+        uses: actions/upload-artifact@v4
+        with:
+          name: antar-release-mapping
+          path: app/build/outputs/mapping/release/mapping.txt
+          retention-days: 90
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           target_commitish: ${{ github.sha }}
           files: |
-            app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/release/*.apk
           generate_release_notes: true

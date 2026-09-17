@@ -14,16 +14,19 @@ import android.location.LocationManager
 import android.location.OnNmeaMessageListener
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Location
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Satellite
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.LocationRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import java.util.Locale
+
+private const val GEOCODE_MIN_DISTANCE_M = 25f
 
 class LocationRepositoryImpl(private val context: Context) : LocationRepository {
 
@@ -61,15 +64,43 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
         var pdop: String? = null
         var hdop: String? = null
         var vdop: String? = null
+        var address = "- - -"
+        var lastGeocoded: AndroidLocation? = null
 
         fun tryEmitLocation() {
-            currentLocation?.let { trySend(it.toLocationModel(geocoder, currentGnssStatus, pdop, hdop, vdop)) }
+            currentLocation?.let { trySend(it.toLocationModel(currentGnssStatus, pdop, hdop, vdop, address)) }
+        }
+
+        // Reverse geocoding can hit the network and block for seconds, so it never runs on the
+        // callback (main) thread, and only re-runs once the position has moved meaningfully.
+        fun geocodeIfMoved(location: AndroidLocation) {
+            val last = lastGeocoded
+            if (last != null && last.distanceTo(location) < GEOCODE_MIN_DISTANCE_M) return
+            lastGeocoded = location
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocation(location.latitude, location.longitude, 1) { results ->
+                    address = results.firstOrNull()?.getAddressLine(0) ?: "- - -"
+                    tryEmitLocation()
+                }
+            } else {
+                launch(Dispatchers.IO) {
+                    address = try {
+                        @Suppress("DEPRECATION")
+                        geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                            ?.firstOrNull()?.getAddressLine(0) ?: "- - -"
+                    } catch (e: Exception) {
+                        "- - -"
+                    }
+                    tryEmitLocation()
+                }
+            }
         }
 
         val locationListener = object : LocationListener {
             override fun onLocationChanged(location: AndroidLocation) {
                 currentLocation = location
                 tryEmitLocation()
+                geocodeIfMoved(location)
             }
             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
             override fun onProviderEnabled(provider: String) {}
@@ -121,9 +152,15 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
         currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         tryEmitLocation()
+        currentLocation?.let { geocodeIfMoved(it) }
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0f, locationListener)
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0f, locationListener)
+        // A provider missing on this device (e.g. no NETWORK_PROVIDER) throws IllegalArgumentException.
+        val providers = locationManager.allProviders
+        for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
+            if (provider in providers) {
+                locationManager.requestLocationUpdates(provider, 2000, 0f, locationListener)
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             locationManager.registerGnssStatusCallback(context.mainExecutor, gnssStatusCallback)
@@ -144,9 +181,7 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
 }
 
 @RequiresApi(Build.VERSION_CODES.N)
-private fun AndroidLocation.toLocationModel(geocoder: Geocoder, gnssStatus: GnssStatus?, pdop: String?, hdop: String?, vdop: String?): Location {
-    val TAG = "LocationRepository"
-
+private fun AndroidLocation.toLocationModel(gnssStatus: GnssStatus?, pdop: String?, hdop: String?, vdop: String?, address: String): Location {
     val satellites = gnssStatus?.let { status ->
         (0 until status.satelliteCount).map {
             Satellite(
@@ -176,21 +211,6 @@ private fun AndroidLocation.toLocationModel(geocoder: Geocoder, gnssStatus: Gnss
     
     val speedAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasSpeedAccuracy()) "${String.format(Locale.US, "%.2f", speedAccuracyMetersPerSecond)} m/s" else "0.0 m/s"
     val bearingAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasBearingAccuracy()) String.format(Locale.US, "%.2f", bearingAccuracyDegrees) else "- - -"
-    val address = try {
-        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-        addresses?.firstOrNull()?.getAddressLine(0) ?: "- - -"
-    } catch (e: Exception) {
-        "- - -"
-    }
-
-    Log.d(TAG, "Latitude: $latitude, Longitude: $longitude, Altitude: $altitude")
-    Log.d(TAG, "Speed: $speed, Speed Accuracy: $speedAccuracy")
-    Log.d(TAG, "Bearing: $bearing, Bearing Accuracy: $bearingAccuracy")
-    Log.d(TAG, "Horizontal Accuracy (hvAccurate): $accuracy")
-    Log.d(TAG, "PDOP: $pdop, HDOP: $hdop, VDOP: $vdop")
-    Log.d(TAG, "Number of Satellites in fix: $satellitesInFix / $totalSatellites")
-    Log.d(TAG, "Address: $address")
-
     return Location(
         satellites = satellites,
         latitude = String.format(Locale.US, "%.6f", latitude),

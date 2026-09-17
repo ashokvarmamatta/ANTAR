@@ -34,3 +34,8 @@ marketing-videos/
 /firebase.json
 /public/
 /playstore/
+
+# Signing material — never commit
+*.jks
+*.keystore
+keystore.properties

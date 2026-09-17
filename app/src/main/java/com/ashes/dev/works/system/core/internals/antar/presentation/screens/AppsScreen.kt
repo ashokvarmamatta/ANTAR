@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,10 +51,10 @@ fun AppsScreen(viewModel: AppsViewModel = koinViewModel()) {
     val appsState by viewModel.appsState.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val tabs = listOf("All", "System", "User")
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    var searchQuery by remember { mutableStateOf("") }
-    var isSearchExpanded by remember { mutableStateOf(false) }
-    var expandedAppPackageName by remember { mutableStateOf<String?>(null) }
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
+    var expandedAppPackageName by rememberSaveable { mutableStateOf<String?>(null) }
 
     if (appsState == null) {
         if (isLoading) {

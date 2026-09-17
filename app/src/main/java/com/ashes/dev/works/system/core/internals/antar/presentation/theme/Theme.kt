@@ -99,11 +99,9 @@ fun ANTARTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
+            // Bars stay transparent (enableEdgeToEdge in MainActivity) and the Compose background
+            // draws behind them; only the icon contrast follows the theme.
             val window = (view.context as Activity).window
-            val currentBackground = colorScheme.background.toArgb()
-            window.statusBarColor = currentBackground
-            window.navigationBarColor = currentBackground
-            
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme

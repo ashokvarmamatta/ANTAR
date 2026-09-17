@@ -132,7 +132,7 @@ private fun DrawScope.drawSensorGlyph(glyph: SensorGlyph, structure: Color, acce
             line(accent, 6.9f, 6.3f, 9.1f, 6.3f); line(accent, 14.9f, 6.3f, 17.1f, 6.3f)
             val field = Path().apply {
                 moveTo(4.4f * u, 11.5f * u)
-                quadraticBezierTo(12f * u, 18.8f * u, 19.6f * u, 11.5f * u)
+                quadraticTo(12f * u, 18.8f * u, 19.6f * u, 11.5f * u)
             }
             drawPath(field, accent.copy(alpha = .75f), style = stroke())
         }
@@ -164,7 +164,7 @@ private fun DrawScope.drawSensorGlyph(glyph: SensorGlyph, structure: Color, acce
             polyline(accent, 8.8f, 11.6f, 12f, 14.8f, 15.2f, 11.6f, w = 2f * u)
             val ground = Path().apply {
                 moveTo(4f * u, 19.8f * u)
-                quadraticBezierTo(12f * u, 16.4f * u, 20f * u, 19.8f * u)
+                quadraticTo(12f * u, 16.4f * u, 20f * u, 19.8f * u)
             }
             drawPath(ground, structure, style = stroke(2f * u))
         }
@@ -233,8 +233,8 @@ private fun DrawScope.drawSensorGlyph(glyph: SensorGlyph, structure: Color, acce
             drawPath(drop, structure, style = stroke(1.7f * u))
             val wave = Path().apply {
                 moveTo(8.4f * u, 14.6f * u)
-                quadraticBezierTo(10.2f * u, 13.1f * u, 12f * u, 14.6f * u)
-                quadraticBezierTo(13.8f * u, 16.1f * u, 15.6f * u, 14.6f * u)
+                quadraticTo(10.2f * u, 13.1f * u, 12f * u, 14.6f * u)
+                quadraticTo(13.8f * u, 16.1f * u, 15.6f * u, 14.6f * u)
             }
             drawPath(wave, accent, style = stroke(1.6f * u))
         }

@@ -24,7 +24,8 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
 
     override fun getSystem(): System {
         if (::cachedSystem.isInitialized) {
-            return cachedSystem
+            // Everything else is static for the process lifetime; uptime is not.
+            return cachedSystem.copy(systemUptime = formatUptime(SystemClock.elapsedRealtime()))
         }
 
         val drmInfo = getWidevineInfo()
@@ -161,7 +162,7 @@ class SystemRepositoryImpl(private val context: Context) : SystemRepository {
     private fun formatUptime(uptimeMillis: Long): String {
         val days = uptimeMillis / (24 * 60 * 60 * 1000)
         val hours = (uptimeMillis % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
-        val minutes = (uptimeMillis % (60 * 1000)) / (60 * 1000)
+        val minutes = (uptimeMillis % (60 * 60 * 1000)) / (60 * 1000)
         val seconds = (uptimeMillis % (60 * 1000)) / 1000
         return "${days}d ${hours}h ${minutes}m ${seconds}s"
     }

@@ -14,6 +14,9 @@ import java.util.Locale
 
 class StorageRepositoryImpl(private val context: Context) : StorageRepository {
 
+    // RAM type is fixed hardware; resolving it forks up to 6 `getprop` processes, so do it once.
+    private val cachedRamType: String by lazy { getRamType() }
+
     override fun getStorage(): Storage {
         // RAM Info
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -48,7 +51,7 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
             freeMemory = formatSize(freeRam),
             usedTotalMemory = "${formatSize(usedRam)} / ${formatSize(totalRam)}",
             usagePercentageRam = "${(usedRam.toDouble() / totalRam.toDouble() * 100).toInt()}%",
-            ramType = getRamType(),
+            ramType = cachedRamType,
             
             internalStoragePath = externalDir.absolutePath, // Usually /storage/emulated/0
             usedTotalFreeInternal = "${formatSize(usedExternal)} / ${formatSize(totalExternal)} / ${formatSize(freeExternal)}",
@@ -108,7 +111,7 @@ class StorageRepositoryImpl(private val context: Context) : StorageRepository {
             } catch (e: Exception) {}
         }
 
-        return "LPDDR4X" // Fallback to a common type if detection fails, or "Unknown"
+        return "Unknown" // Never guess a type — a device-info app must not report invented hardware
     }
 
     private fun getSystemProperty(key: String): String {

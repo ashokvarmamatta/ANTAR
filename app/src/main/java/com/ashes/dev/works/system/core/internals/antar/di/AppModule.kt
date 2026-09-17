@@ -40,14 +40,15 @@ import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.Se
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.StorageViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.SystemViewModel
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.ThemeViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
     // Database
     single {
+        // No destructive fallback: a schema bump without a Migration must fail loudly in testing,
+        // never silently wipe the user's 30-day battery history in production.
         Room.databaseBuilder(get(), AntarDatabase::class.java, "antar_db")
-            .fallbackToDestructiveMigration(false)
             .build()
     }
     single { get<AntarDatabase>().batteryLogDao() }
@@ -67,7 +68,7 @@ val appModule = module {
     single<AppsRepository> { AppsRepositoryImpl(get()) }
     single<LocationRepository> { LocationRepositoryImpl(get()) }
     single<CameraRepository> { CameraRepositoryImpl(get()) }
-    single<DashboardRepository> { DashboardRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
+    single<DashboardRepository> { DashboardRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get()) }
 
     // ViewModels
     viewModel { DeviceViewModel(get()) }

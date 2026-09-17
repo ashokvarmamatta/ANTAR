@@ -7,8 +7,8 @@ import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -31,9 +31,6 @@ data class ChargingSession(
 )
 
 class BatteryViewModel(private val batteryRepository: BatteryRepository) : ViewModel() {
-
-    private val _batteryInfo = MutableStateFlow<Battery?>(null)
-    val batteryInfo = _batteryInfo.asStateFlow()
 
     private val _currentHistory = MutableStateFlow<List<Int>>(emptyList())
     val currentHistory = _currentHistory.asStateFlow()
@@ -70,18 +67,19 @@ class BatteryViewModel(private val batteryRepository: BatteryRepository) : ViewM
     val chargingSessions = history7d.map { logs -> extractChargingSessions(logs) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Live readings only flow while the Battery screen is collecting (WhileSubscribed), so the
+    // receiver + 2s poll stop in the background. The rolling histories live in the ViewModel and
+    // survive a pause; they just don't grow while nobody is watching.
+    val batteryInfo: StateFlow<Battery?> = batteryRepository.getBatteryInfo()
+        .onEach { battery ->
+            _currentHistory.value = (_currentHistory.value + battery.current).takeLast(100)
+            _powerHistory.value = (_powerHistory.value + battery.power).takeLast(100)
+            _tempHistory.value = (_tempHistory.value + battery.temperature).takeLast(100)
+            _capacityHistory.value = (_capacityHistory.value + battery.remainingCapacity).takeLast(100)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     init {
-        batteryRepository.getBatteryInfo()
-            .onEach { battery ->
-                _batteryInfo.value = battery
-
-                _currentHistory.value = (_currentHistory.value + battery.current).takeLast(100)
-                _powerHistory.value = (_powerHistory.value + battery.power).takeLast(100)
-                _tempHistory.value = (_tempHistory.value + battery.temperature).takeLast(100)
-                _capacityHistory.value = (_capacityHistory.value + battery.remainingCapacity).takeLast(100)
-            }
-            .launchIn(viewModelScope)
-
         // Log battery on app open so we get an immediate data point
         viewModelScope.launch {
             batteryRepository.logCurrentBattery()

@@ -43,7 +43,7 @@ fun CpuScreen(viewModel: CpuViewModel = koinViewModel()) {
         val nestedScrollConnection = remember {
             object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    return if (source == NestedScrollSource.Drag) available else Offset.Zero
+                    return if (source == NestedScrollSource.UserInput) available else Offset.Zero
                 }
             }
         }

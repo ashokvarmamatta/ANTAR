@@ -13,10 +13,9 @@ import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Satellite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Location
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.presentation.theme.*
 import com.ashes.dev.works.system.core.internals.antar.presentation.viewmodel.LocationViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -41,9 +40,9 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
     )
-    var showLocationDisclosure by remember { mutableStateOf(false) }
+    var showLocationDisclosure by rememberSaveable { mutableStateOf(false) }
 
-    val isGpsEnabled by viewModel.isGpsEnabled().collectAsState(initial = true)
+    val isGpsEnabled by viewModel.isGpsEnabled.collectAsStateWithLifecycle()
 
     Column {
         if (!isGpsEnabled && locationPermissionsState.allPermissionsGranted) {
@@ -64,16 +63,7 @@ fun LocationScreen(viewModel: LocationViewModel = koinViewModel()) {
         }
 
         if (locationPermissionsState.allPermissionsGranted) {
-            val location by viewModel.getLocation().collectAsState(
-                initial = Location(
-                    satellites = emptyList(), latitude = "- - -",
-                    longitude = "- - -", altitude = "- - -", seaLevelAltitude = "- - -",
-                    speed = "- - -", speedAccurate = "- - -", pdop = "- - -",
-                    timeToFirstFix = "", ehvDop = "- - -", hvAccurate = "- - -",
-                    numberOfSatellites = "- - -", bearing = "- - -", bearingAccurate = "- - -",
-                    address = "- - -"
-                )
-            )
+            val location by viewModel.location.collectAsStateWithLifecycle()
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),

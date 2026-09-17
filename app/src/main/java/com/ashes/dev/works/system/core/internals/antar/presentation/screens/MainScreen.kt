@@ -259,14 +259,18 @@ fun MainScreen(navController: NavController) {
             pageSpacing = 0.dp
         ) { page ->
             key(screens[page].route) {
-                val isLocationScreen = screens[page] == Screen.Location
+                // Location (GPS) and Apps (installed-package scan) only compose on their own page,
+                // never as the pre-composed neighbour — both disclosures promise "only when you open it".
+                val isOnDemandScreen = screens[page] == Screen.Location || screens[page] == Screen.Apps
                 val isCurrentPage = pagerState.currentPage == page
 
-                if (isLocationScreen) {
-                    if (isCurrentPage) {
+                if (isOnDemandScreen) {
+                    if (!isCurrentPage) {
+                        Box(Modifier.fillMaxSize())
+                    } else if (screens[page] == Screen.Location) {
                         LocationScreen()
                     } else {
-                        Box(Modifier.fillMaxSize())
+                        AppsScreen()
                     }
                 } else {
                     when (screens[page]) {

@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
@@ -43,7 +45,9 @@ import java.util.Locale
 
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = koinViewModel(),
+    // Activity-scoped: the same instance MainActivity already uses for the splash gate, so the
+    // dashboard pipeline (battery receiver, poll, storage reads) runs once, not twice.
+    viewModel: DashboardViewModel = koinViewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity),
     onNavigate: (Screen) -> Unit = {}
 ) {
     val dashboard by viewModel.dashboardInfo.collectAsStateWithLifecycle()

@@ -1,5 +1,6 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
+import com.ashes.dev.works.system.core.internals.antar.data.preference.ThemePreferences
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.AppsRepository
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
@@ -23,7 +24,8 @@ class DashboardRepositoryImpl(
     private val sensorsRepository: SensorsRepository,
     private val appsRepository: AppsRepository,
     private val batteryRepository: BatteryRepository,
-    private val cpuRepository: CpuRepository
+    private val cpuRepository: CpuRepository,
+    private val preferences: ThemePreferences
 ) : DashboardRepository {
 
     private var cachedSensors: String? = null
@@ -44,13 +46,15 @@ class DashboardRepositoryImpl(
                 if (cachedSensors == null) {
                     cachedSensors = sensorsRepository.getSensors().sensorCountMessage.replace(" available", "")
                 }
-                if (cachedApps == null) {
-                    cachedApps = appsRepository.getApps().appCount.replace(" installed", "")
+                // The installed-apps disclosure is shown on the Apps screen; until the user has agreed
+                // there, don't enumerate packages at all — not even just to count them.
+                if (cachedApps == null && preferences.appsConsentGiven) {
+                    cachedApps = "${appsRepository.getAppCount()} apps"
                 }
                 if (cachedCpuName == null) {
                     val cpu = cpuRepository.getCpu()
                     cachedCpuName = cpu.socName
-                    cachedCpuDetails = "Octa-core ${cpu.frequency}"
+                    cachedCpuDetails = "${cpu.cores}-core ${cpu.frequency}"
                 }
 
                 val ramUsageParts = storage.usedTotalMemory.split(" / ")
@@ -85,6 +89,6 @@ class DashboardRepositoryImpl(
                     uptime = system.systemUptime
                 )
             }
-        }.conflate().flowOn(Dispatchers.Default)
+        }.conflate().flowOn(Dispatchers.IO)
     }
 }

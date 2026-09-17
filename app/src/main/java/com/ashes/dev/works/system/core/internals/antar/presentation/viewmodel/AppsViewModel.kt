@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class AppsViewModel(
     private val appsRepository: AppsRepository,
@@ -47,6 +48,11 @@ class AppsViewModel(
                 val fresh = appsRepository.getApps()
                 _appsState.value = fresh
                 prefs.cachedAppsRaw = encodeApps(fresh.appList)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: RuntimeException) {
+                // PackageManager can die mid-scan ("Package manager has died") on devices with very
+                // many packages. Keep the cached list if we have one instead of crashing the app.
             } finally {
                 _isLoading.value = false
             }

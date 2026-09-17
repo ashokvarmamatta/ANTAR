@@ -9,6 +9,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -62,13 +63,13 @@ class MainActivity : ComponentActivity() {
 
             ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors, accentColor = accentColor) {
                 val navController = rememberNavController()
-                var showExitDialog by remember { mutableStateOf(false) }
+                var showExitDialog by rememberSaveable { mutableStateOf(false) }
                 var introSeen by remember { mutableStateOf(themePreferences.introSeen) }
                 val dashboardData by dashboardViewModel.dashboardInfo.collectAsStateWithLifecycle()
 
                 // Keep the splash visible for at least 3s once it appears (after the
                 // intro, or immediately on a normal launch), even if data loads sooner.
-                var splashMinTimeElapsed by remember { mutableStateOf(false) }
+                var splashMinTimeElapsed by rememberSaveable { mutableStateOf(false) }
                 LaunchedEffect(introSeen) {
                     if (introSeen) {
                         delay(3000)

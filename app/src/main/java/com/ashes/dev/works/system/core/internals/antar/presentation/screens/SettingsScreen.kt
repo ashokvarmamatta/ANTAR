@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
@@ -70,7 +71,7 @@ fun SettingsScreen(
     val dynamicColors by themeViewModel.dynamicColorsEnabled.collectAsStateWithLifecycle()
     val animationIntensity by themeViewModel.animationIntensity.collectAsStateWithLifecycle()
     val accentIndex by themeViewModel.accentColorIndex.collectAsStateWithLifecycle()
-    var showPrivacySheet by remember { mutableStateOf(false) }
+    var showPrivacySheet by rememberSaveable { mutableStateOf(false) }
 
     if (showPrivacySheet) {
         PrivacySheet(

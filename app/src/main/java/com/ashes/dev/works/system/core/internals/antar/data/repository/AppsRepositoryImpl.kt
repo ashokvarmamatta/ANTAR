@@ -2,16 +2,30 @@ package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Apps
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.AppsRepository
 
 class AppsRepositoryImpl(private val context: Context) : AppsRepository {
+    override fun getAppCount(): Int = installedPackages().size
+
+    private fun installedPackages(): List<PackageInfo> {
+        val packageManager = context.packageManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getInstalledPackages(0)
+        }
+    }
+
     override fun getApps(): Apps {
         val packageManager = context.packageManager
-        val packages = packageManager.getInstalledPackages(0)
-        
+        val packages = installedPackages()
+
         val appList = packages.mapNotNull { packageInfo ->
             val appInfo = packageInfo.applicationInfo ?: return@mapNotNull null
             val appName = packageManager.getApplicationLabel(appInfo).toString()

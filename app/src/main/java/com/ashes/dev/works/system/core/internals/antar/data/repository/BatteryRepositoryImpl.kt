@@ -10,11 +10,13 @@ import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLog
 import com.ashes.dev.works.system.core.internals.antar.data.db.BatteryLogDao
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
@@ -63,6 +65,7 @@ class BatteryRepositoryImpl(
             pollJob.cancel()
         }
     }.distinctUntilChanged() // Only emit when the Battery data actually changes
+        .flowOn(Dispatchers.IO) // PowerProfile reflection, sticky-intent and sysfs reads stay off main
 
     override fun getBatteryHistory(sinceMillis: Long): Flow<List<BatteryLog>> {
         return batteryLogDao.getLogsSince(sinceMillis)

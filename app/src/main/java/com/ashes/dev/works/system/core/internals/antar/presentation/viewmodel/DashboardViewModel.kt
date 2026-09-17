@@ -4,21 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DashboardRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 
-class DashboardViewModel(private val dashboardRepository: DashboardRepository) : ViewModel() {
+class DashboardViewModel(dashboardRepository: DashboardRepository) : ViewModel() {
 
-    private val _dashboardInfo = MutableStateFlow<Dashboard?>(null)
-    val dashboardInfo = _dashboardInfo.asStateFlow()
-
-    init {
-        dashboardRepository.getDashboardInfo()
-            .onEach { dashboard ->
-                _dashboardInfo.value = dashboard
-            }
-            .launchIn(viewModelScope)
-    }
+    // WhileSubscribed: the battery receiver + 2s poll behind this stop 5s after the UI goes to the
+    // background, instead of running for as long as the ViewModel lives.
+    val dashboardInfo: StateFlow<Dashboard?> = dashboardRepository.getDashboardInfo()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 }

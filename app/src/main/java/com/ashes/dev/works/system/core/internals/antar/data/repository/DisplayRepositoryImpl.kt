@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.WindowManager
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Display
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DisplayRepository
@@ -71,7 +72,8 @@ class DisplayRepositoryImpl(private val context: Context) : DisplayRepository {
             xdpi = String.format(Locale.US, "%.3f", displayMetrics.xdpi),
             ydpi = String.format(Locale.US, "%.3f", displayMetrics.ydpi),
             logicalDensity = displayMetrics.density.toString(),
-            scaledDensity = displayMetrics.scaledDensity.toString(),
+            // scaledDensity is deprecated and wrong under Android 14+ non-linear font scaling.
+            scaledDensity = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, displayMetrics).toString(),
             fontScale = context.resources.configuration.fontScale.toString()
         )
     }

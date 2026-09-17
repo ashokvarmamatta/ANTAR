@@ -28,7 +28,7 @@ class AntarApp : Application() {
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "battery_log_worker",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE, // interval/constraint changes reach existing installs
             workRequest
         )
     }
