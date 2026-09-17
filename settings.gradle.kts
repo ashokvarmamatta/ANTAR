@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ANTAR"
 include(":app")
- 
+include(":baselineprofile")

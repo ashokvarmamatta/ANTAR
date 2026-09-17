@@ -5,8 +5,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.ashes.dev.works.system.core.internals.antar.data.worker.BatteryLogWorker
-import com.ashes.dev.works.system.core.internals.antar.di.appModule
+import com.ashes.dev.works.system.core.internals.antar.di.appModules
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.GlobalContext.startKoin
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +16,9 @@ class AntarApp : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@AntarApp)
-            modules(appModule)
+            // Koin creates workers, so BatteryLogWorker gets its repository by constructor.
+            workManagerFactory()
+            modules(appModules)
         }
 
         scheduleBatteryLogging()

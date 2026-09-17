@@ -1,14 +1,20 @@
 package com.ashes.dev.works.system.core.internals.antar.core.ui
 
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.bounceClick
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.pressScale
+import androidx.compose.ui.res.stringResource
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.ambientFloat
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarMotion
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,9 +48,9 @@ import androidx.compose.ui.window.Dialog
 private fun PowerIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "power")
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.15f, 0.4f,
-        infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
 
@@ -107,7 +113,7 @@ fun ExitDialog(
                 Spacer(Modifier.height(20.dp))
 
                 Text(
-                    text = "Leave ANTAR?",
+                    text = stringResource(R.string.exit_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = cs.onSurface
@@ -116,7 +122,7 @@ fun ExitDialog(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = "Your device stats will be right here\nwhen you come back.",
+                    text = stringResource(R.string.exit_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = cs.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -128,14 +134,17 @@ fun ExitDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val stayInteraction = remember { MutableInteractionSource() }
                     OutlinedButton(
                         onClick = onDismiss,
+                        interactionSource = stayInteraction,
                         modifier = Modifier
                             .weight(1f)
-                            .height(50.dp),
+                            .height(50.dp)
+                            .pressScale(stayInteraction),
                         shape = RoundedCornerShape(25.dp)
                     ) {
-                        Text("Stay", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.exit_stay), fontWeight = FontWeight.SemiBold)
                     }
 
                     Box(
@@ -144,10 +153,10 @@ fun ExitDialog(
                             .height(50.dp)
                             .clip(RoundedCornerShape(25.dp))
                             .background(Brush.linearGradient(listOf(cs.primary, cs.secondary)))
-                            .clickable(onClick = onConfirm),
+                            .bounceClick(onClick = onConfirm),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Exit", color = cs.onPrimary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.exit_confirm), color = cs.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }

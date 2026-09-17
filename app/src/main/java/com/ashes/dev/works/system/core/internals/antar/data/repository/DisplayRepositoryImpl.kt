@@ -1,80 +1,99 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.content.Context
+import android.content.res.Configuration
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.provider.Settings
 import android.util.DisplayMetrics
 import android.util.TypedValue
+import android.view.Display
 import android.view.WindowManager
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Display
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.common.appResultOf
+import com.ashes.dev.works.system.core.internals.antar.domain.model.BrightnessMode
+import com.ashes.dev.works.system.core.internals.antar.domain.model.DisplayInfo
+import com.ashes.dev.works.system.core.internals.antar.domain.model.ScreenOrientation
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DisplayRepository
-import java.util.Locale
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlin.math.sqrt
 
-class DisplayRepositoryImpl(private val context: Context) : DisplayRepository {
-    override fun getDisplay(): Display {
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val displayMetrics = DisplayMetrics()
-        
-        @Suppress("DEPRECATION")
-        val display = windowManager.defaultDisplay
-        @Suppress("DEPRECATION")
-        display.getRealMetrics(displayMetrics)
+class DisplayRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : DisplayRepository {
 
-        val x = (displayMetrics.widthPixels / displayMetrics.xdpi).toDouble()
-        val y = (displayMetrics.heightPixels / displayMetrics.ydpi).toDouble()
-        val screenInches = sqrt(x * x + y * y)
-        
-        val physicalWidth = (displayMetrics.widthPixels / displayMetrics.xdpi) * 25.4
-        val physicalHeight = (displayMetrics.heightPixels / displayMetrics.ydpi) * 25.4
+    override suspend fun getDisplayInfo(): AppResult<DisplayInfo> = withContext(io) {
+        appResultOf {
+            val displayManager = context.getSystemService(DisplayManager::class.java)
+            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+            val metrics = context.resources.displayMetrics
+            val (widthPx, heightPx) = realSize(display)
 
-        val brightnessMode = try {
-            val mode = Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE)
-            if (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) "Automatic" else "Manual"
-        } catch (_: Exception) {
-            "Unknown"
+            val widthIn = widthPx / metrics.xdpi.toDouble()
+            val heightIn = heightPx / metrics.ydpi.toDouble()
+
+            DisplayInfo(
+                name = display.name,
+                widthPx = widthPx,
+                heightPx = heightPx,
+                diagonalInches = sqrt(widthIn * widthIn + heightIn * heightIn),
+                physicalWidthMm = widthIn * MM_PER_INCH,
+                physicalHeightMm = heightIn * MM_PER_INCH,
+                orientation = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    ScreenOrientation.LANDSCAPE
+                } else {
+                    ScreenOrientation.PORTRAIT
+                },
+                refreshRateHz = display.refreshRate,
+                isHdr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) display.isHdr else null,
+                brightnessMode = readBrightnessMode(),
+                screenTimeoutSeconds = runCatching {
+                    Settings.System.getLong(context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT) / 1000
+                }.getOrNull(),
+                densityDpi = metrics.densityDpi,
+                densityBucket = densityBucket(metrics.densityDpi),
+                xdpi = metrics.xdpi,
+                ydpi = metrics.ydpi,
+                density = metrics.density,
+                // scaledDensity is deprecated and wrong under Android 14+ non-linear font scaling.
+                scaledDensity = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, metrics),
+                fontScale = context.resources.configuration.fontScale
+            )
+        }
+    }
+
+    /** Full panel size in pixels, independent of the app window (split screen, freeform). */
+    private fun realSize(display: Display): Pair<Int, Int> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = context.getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds
+            bounds.width() to bounds.height()
+        } else {
+            val real = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            display.getRealMetrics(real)
+            real.widthPixels to real.heightPixels
         }
 
-        val screenTimeout = try {
-            val timeout = Settings.System.getLong(context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
-            "${timeout / 1000}s"
-        } catch (_: Exception) {
-            "Unknown"
+    private fun readBrightnessMode(): BrightnessMode? = runCatching {
+        when (Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE)) {
+            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC -> BrightnessMode.AUTOMATIC
+            else -> BrightnessMode.MANUAL
         }
+    }.getOrNull()
 
-        val densityBucket = when (displayMetrics.densityDpi) {
-            DisplayMetrics.DENSITY_LOW -> "ldpi"
-            DisplayMetrics.DENSITY_MEDIUM -> "mdpi"
-            DisplayMetrics.DENSITY_HIGH -> "hdpi"
-            DisplayMetrics.DENSITY_XHIGH -> "xhdpi"
-            DisplayMetrics.DENSITY_XXHIGH -> "xxhdpi"
-            DisplayMetrics.DENSITY_XXXHIGH -> "xxxhdpi"
-            else -> "unknown"
-        }
+    private fun densityBucket(dpi: Int): String? = when (dpi) {
+        DisplayMetrics.DENSITY_LOW -> "ldpi"
+        DisplayMetrics.DENSITY_MEDIUM -> "mdpi"
+        DisplayMetrics.DENSITY_HIGH -> "hdpi"
+        DisplayMetrics.DENSITY_XHIGH -> "xhdpi"
+        DisplayMetrics.DENSITY_XXHIGH -> "xxhdpi"
+        DisplayMetrics.DENSITY_XXXHIGH -> "xxxhdpi"
+        else -> null
+    }
 
-        return Display(
-            name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) display.name else "Default",
-            screenHeight = displayMetrics.heightPixels.toString(),
-            screenWidth = displayMetrics.widthPixels.toString(),
-            screenSize = String.format(Locale.US, "%.2f\"", screenInches),
-            physicalSize = String.format(Locale.US, "%.1f x %.1f mm", physicalWidth, physicalHeight),
-            defaultOrientation = if (context.resources.configuration.orientation == 1) "Portrait" else "Landscape",
-            refreshRate = String.format(Locale.US, "%.2f Hz", display.refreshRate),
-            hdr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                display.isHdr.toString()
-            } else {
-                "Not Supported"
-            },
-            brightnessMode = brightnessMode,
-            screenTimeout = screenTimeout,
-            displayBucket = densityBucket,
-            displayDpi = displayMetrics.densityDpi.toString(),
-            xdpi = String.format(Locale.US, "%.3f", displayMetrics.xdpi),
-            ydpi = String.format(Locale.US, "%.3f", displayMetrics.ydpi),
-            logicalDensity = displayMetrics.density.toString(),
-            // scaledDensity is deprecated and wrong under Android 14+ non-linear font scaling.
-            scaledDensity = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 1f, displayMetrics).toString(),
-            fontScale = context.resources.configuration.fontScale.toString()
-        )
+    private companion object {
+        const val MM_PER_INCH = 25.4
     }
 }

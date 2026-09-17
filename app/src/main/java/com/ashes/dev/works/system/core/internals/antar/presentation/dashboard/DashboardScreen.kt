@@ -1,26 +1,48 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.dashboard
 
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientProgressBar
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-
-import androidx.compose.animation.core.*
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material.icons.outlined.Verified
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,22 +51,49 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Dashboard
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.common.NO_VALUE
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientProgressBar
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarDimGray
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGreen
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarMotion
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarOrange
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPink
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarRed
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.ambientFloat
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.bounceClick
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.effectsSpec
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
+import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.core.ui.formatBytes
+import com.ashes.dev.works.system.core.internals.antar.core.ui.formatPercent
+import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
+import com.ashes.dev.works.system.core.internals.antar.domain.model.DashboardSummary
+import com.ashes.dev.works.system.core.internals.antar.domain.model.MemoryUsage
+import com.ashes.dev.works.system.core.internals.antar.domain.model.VolumeUsage
 import com.ashes.dev.works.system.core.internals.antar.presentation.navigation.Screen
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.*
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
 
 @Composable
 fun DashboardScreen(
@@ -53,38 +102,68 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = koinViewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity),
     onNavigate: (Screen) -> Unit = {}
 ) {
-    val dashboard by viewModel.dashboardInfo.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    dashboard?.let {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            item {
-                // Device name & OS badge
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-                ) {
-                    PremiumChip(text = it.deviceName)
-                    PremiumChip(text = "Android ${it.osVersion}", accent = true)
+    AnimatedContent(
+        targetState = uiState,
+        contentKey = { it::class },
+        transitionSpec = LocalAnimationIntensity.current.contentSwap(),
+        label = "dashboardState"
+    ) { state ->
+        when (state) {
+            DashboardUiState.Loading -> LoadingSkeleton()
+            is DashboardUiState.Content -> DashboardContent(state.summary, onNavigate)
+        }
+    }
+}
+
+@Composable
+private fun DashboardContent(summary: DashboardSummary, onNavigate: (Screen) -> Unit) {
+    AdaptiveCardGrid {
+        item(key = "chips", span = StaggeredGridItemSpan.FullLine) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .staggeredEntry(0),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                summary.deviceName?.let { PremiumChip(text = it) }
+                summary.androidVersion?.let {
+                    PremiumChip(text = stringResource(R.string.dashboard_android_version, it), accent = true)
                 }
             }
+        }
 
-            item { RamCard(dashboard = it) }
-            item {
-                Box(modifier = Modifier.fillMaxWidth().bounceClick { onNavigate(Screen.Storage) }) {
-                    StorageCard(dashboard = it)
-                }
+        summary.ram?.let { ram ->
+            item(key = "ram") { RamCard(ram = ram, modifier = Modifier.staggeredEntry(1)) }
+        }
+        summary.internalStorage?.let { storage ->
+            item(key = "storage") {
+                StorageCard(
+                    storage = storage,
+                    modifier = Modifier
+                        .staggeredEntry(2)
+                        .bounceClick { onNavigate(Screen.Storage) }
+                )
             }
-            item {
-                Box(modifier = Modifier.fillMaxWidth().bounceClick { onNavigate(Screen.Battery) }) {
-                    BatteryCard(dashboard = it)
-                }
+        }
+        summary.battery?.let { battery ->
+            item(key = "battery") {
+                BatteryCard(
+                    battery = battery,
+                    modifier = Modifier
+                        .staggeredEntry(3)
+                        .bounceClick { onNavigate(Screen.Battery) }
+                )
             }
+        }
 
-            item {
+        item(key = "quick", span = StaggeredGridItemSpan.FullLine) {
+            Column(
+                modifier = Modifier.staggeredEntry(4),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -92,25 +171,33 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Cpu) },
-                        title = "PROCESSOR",
-                        value = it.processorName,
-                        subtitle = it.processorDetails,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .bounceClick { onNavigate(Screen.Cpu) },
+                        title = R.string.dashboard_processor,
+                        value = summary.socName ?: NO_VALUE,
+                        subtitle = summary.coreCount?.let { cores ->
+                            val coreText = pluralStringResource(R.plurals.cpu_core_count, cores, cores)
+                            summary.cpuFrequencyKhz?.let {
+                                stringResource(R.string.dashboard_cores_and_frequency, coreText, it / KHZ_PER_MHZ)
+                            } ?: coreText
+                        },
                         icon = Icons.Outlined.Memory,
                         accentColor = AntarPurple
                     )
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Sensors) },
-                        title = "SENSORS",
-                        value = "${it.sensorCount} Available",
-                        subtitle = "",
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .bounceClick { onNavigate(Screen.Sensors) },
+                        title = R.string.dashboard_sensors,
+                        value = summary.sensorCount?.let { pluralStringResource(R.plurals.sensors_count, it, it) } ?: NO_VALUE,
+                        subtitle = null,
                         icon = Icons.Outlined.Sensors,
                         accentColor = AntarGreen
                     )
                 }
-            }
-
-            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -118,19 +205,25 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.Apps) },
-                        title = "APPLICATIONS",
-                        value = "${it.appCount} Installed",
-                        subtitle = "",
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .bounceClick { onNavigate(Screen.Apps) },
+                        title = R.string.dashboard_applications,
+                        value = summary.appCount?.let { pluralStringResource(R.plurals.apps_count, it, it) } ?: NO_VALUE,
+                        subtitle = if (summary.appCount == null) stringResource(R.string.dashboard_apps_tap_to_allow) else null,
                         icon = Icons.Outlined.Apps,
                         accentColor = AntarBlue
                     )
                     QuickInfoCard(
-                        modifier = Modifier.weight(1f).fillMaxHeight().bounceClick { onNavigate(Screen.System) },
-                        title = "SYS HEALTH",
-                        value = it.sysHealth,
-                        subtitle = "Up: ${it.uptime}",
-                        icon = Icons.Outlined.Verified,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .bounceClick { onNavigate(Screen.System) },
+                        title = R.string.dashboard_uptime,
+                        value = summary.uptimeMillis?.let { formatUptime(it) } ?: NO_VALUE,
+                        subtitle = summary.androidVersion?.let { stringResource(R.string.dashboard_android_version, it) },
+                        icon = Icons.Outlined.Schedule,
                         accentColor = AntarCyan
                     )
                 }
@@ -139,108 +232,88 @@ fun DashboardScreen(
     }
 }
 
+@Composable
+private fun formatUptime(millis: Long): String {
+    val totalSeconds = millis / 1000
+    return stringResource(
+        R.string.system_value_uptime,
+        totalSeconds / 86_400,
+        (totalSeconds % 86_400) / 3_600,
+        (totalSeconds % 3_600) / 60,
+        totalSeconds % 60
+    )
+}
+
 // ── RAM Card ─────────────────────────────────────────────────────────
 
 @Composable
-private fun RamCard(dashboard: Dashboard) {
-    val ramPct = dashboard.ramUsagePercentage.toFloat()
-    val animatedPct by animateFloatAsState(
-        targetValue = ramPct,
-        animationSpec = tween(1500, easing = FastOutSlowInEasing),
+private fun RamCard(ram: MemoryUsage, modifier: Modifier = Modifier) {
+    val fraction by animateFloatAsState(
+        targetValue = ram.usedFraction,
+        animationSpec = LocalAnimationIntensity.current.effectsSpec(),
         label = "ram"
     )
-
-    val totalRam = remember(dashboard.totalMemory) {
-        dashboard.totalMemory.replace(" GB", "").toFloatOrNull() ?: 1f
-    }
-    val usedRam = (totalRam * animatedPct) / 100
-    val freeRam = totalRam - usedRam
-
-    val primaryColor = AntarCyan
-    val secondaryColor = AntarBlue
-    val tertiaryColor = AntarPurple
     val trackColor = AntarDimGray.copy(alpha = 0.3f)
+    // Theme-following colours are read in composition, not inside the Canvas draw lambda.
+    val arcColors = listOf(AntarCyan, AntarBlue, AntarPurple)
 
-    GradientHeaderCard {
+    GradientHeaderCard(modifier = modifier) {
         Row(
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circular RAM gauge
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val strokeWidth = 10.dp.toPx()
                     val radius = (size.minDimension - strokeWidth) / 2
-
-                    // Track
-                    drawCircle(
-                        color = trackColor,
-                        radius = radius,
-                        style = Stroke(width = strokeWidth)
-                    )
-                    // Progress arc
+                    drawCircle(color = trackColor, radius = radius, style = Stroke(width = strokeWidth))
                     drawArc(
-                        brush = Brush.sweepGradient(
-                            colors = listOf(primaryColor, secondaryColor, tertiaryColor)
-                        ),
+                        brush = Brush.sweepGradient(colors = arcColors),
                         startAngle = -90f,
-                        sweepAngle = 360f * (animatedPct / 100f),
+                        sweepAngle = 360f * fraction,
                         useCenter = false,
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
                         topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
                         size = Size(size.width - strokeWidth, size.height - strokeWidth)
                     )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${animatedPct.toInt()}",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AntarCyan
-                    )
-                    Text(
-                        text = "%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = AntarGray
-                    )
-                }
+                Text(
+                    text = formatPercent(fraction),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = AntarCyan
+                )
             }
 
             Spacer(modifier = Modifier.width(20.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "RAM",
+                    text = stringResource(R.string.dashboard_ram),
                     style = MaterialTheme.typography.labelMedium,
                     color = AntarCyan,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text = "${dashboard.totalMemory} Total",
+                    text = stringResource(R.string.dashboard_total, formatBytes(ram.totalBytes)),
                     style = MaterialTheme.typography.bodySmall,
                     color = AntarGray
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-
-                GradientProgressBar(
-                    progress = animatedPct / 100f,
-                    colors = listOf(primaryColor, secondaryColor)
-                )
-
+                GradientProgressBar(progress = fraction, colors = listOf(AntarCyan, AntarBlue))
                 Spacer(modifier = Modifier.height(8.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${String.format(Locale.US, "%.1f", usedRam)} GB Used",
+                        text = stringResource(R.string.dashboard_used, formatBytes(ram.usedBytes)),
                         style = MaterialTheme.typography.labelSmall,
                         color = AntarGray
                     )
                     Text(
-                        text = "${String.format(Locale.US, "%.1f", freeRam)} GB Free",
+                        text = stringResource(R.string.dashboard_free, formatBytes(ram.availableBytes)),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = AntarCyan
@@ -254,30 +327,29 @@ private fun RamCard(dashboard: Dashboard) {
 // ── Storage Card ─────────────────────────────────────────────────────
 
 @Composable
-private fun StorageCard(dashboard: Dashboard) {
-    val progress = dashboard.internalStoragePercentage.toFloat() / 100f
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(1200, easing = FastOutSlowInEasing),
+private fun StorageCard(storage: VolumeUsage, modifier: Modifier = Modifier) {
+    val fraction by animateFloatAsState(
+        targetValue = storage.usedFraction,
+        animationSpec = LocalAnimationIntensity.current.effectsSpec(),
         label = "storage"
     )
 
-    PremiumCard {
+    PremiumCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "INTERNAL STORAGE",
+                    text = stringResource(R.string.dashboard_internal_storage),
                     style = MaterialTheme.typography.labelMedium,
                     color = AntarPurple,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 )
                 Text(
-                    text = "${dashboard.internalStoragePercentage}% Used",
+                    text = stringResource(R.string.dashboard_percent_used, formatPercent(storage.usedFraction)),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -291,13 +363,7 @@ private fun StorageCard(dashboard: Dashboard) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        GradientProgressBar(
-            progress = animatedProgress,
-            height = 10.dp,
-            colors = listOf(AntarPurple, AntarPink)
-        )
-
+        GradientProgressBar(progress = fraction, height = 10.dp, colors = listOf(AntarPurple, AntarPink))
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(
@@ -305,12 +371,12 @@ private fun StorageCard(dashboard: Dashboard) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "${dashboard.usedStorage} Used",
+                text = stringResource(R.string.dashboard_used, formatBytes(storage.usedBytes)),
                 style = MaterialTheme.typography.bodySmall,
                 color = AntarGray
             )
             Text(
-                text = "Total ${dashboard.totalStorage}",
+                text = stringResource(R.string.dashboard_total, formatBytes(storage.totalBytes)),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -322,50 +388,53 @@ private fun StorageCard(dashboard: Dashboard) {
 // ── Battery Card ─────────────────────────────────────────────────────
 
 @Composable
-private fun BatteryCard(dashboard: Dashboard) {
-    val isCharging = dashboard.batteryStatus == "Charging"
-    val batteryLevel = dashboard.batteryLevel
-    val batteryColor = if (isCharging) AntarGreen else when {
-        batteryLevel > 50 -> AntarCyan
-        batteryLevel > 20 -> AntarOrange
+private fun BatteryCard(battery: Battery, modifier: Modifier = Modifier) {
+    val level = battery.preciseLevelPercent.toFloat()
+    val batteryColor = if (battery.isCharging) AntarGreen else when {
+        level > 50 -> AntarCyan
+        level > 20 -> AntarOrange
         else -> AntarRed
     }
-
     val animatedLevel by animateFloatAsState(
-        targetValue = batteryLevel,
-        animationSpec = tween(1500, easing = FastOutSlowInEasing),
+        targetValue = level,
+        animationSpec = LocalAnimationIntensity.current.effectsSpec(),
         label = "battery"
     )
+    val details = listOfNotNull(
+        stringResource(if (battery.isCharging) R.string.dashboard_charging else R.string.dashboard_discharging),
+        battery.temperatureDeciCelsius?.let { stringResource(R.string.dashboard_temperature, it / 10f) },
+        battery.voltageVolts?.let { stringResource(R.string.dashboard_voltage, it) }
+    )
 
-    PremiumCard {
+    PremiumCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "POWER SOURCE",
+                    text = stringResource(R.string.dashboard_power_source),
                     style = MaterialTheme.typography.labelMedium,
                     color = batteryColor,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 )
                 Text(
-                    text = "${animatedLevel.toInt()}% Charged",
+                    text = stringResource(R.string.dashboard_percent_charged, animatedLevel.toInt()),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${dashboard.batteryStatus} \u2022 ${dashboard.batteryTemp} \u2022 ${dashboard.batteryVoltage}",
+                    text = details.joinToString(stringResource(R.string.dashboard_separator)),
                     style = MaterialTheme.typography.bodySmall,
                     color = AntarGray
                 )
             }
 
             BatteryIcon(
-                isCharging = isCharging,
-                batteryLevel = batteryLevel,
+                isCharging = battery.isCharging,
+                batteryLevel = level,
                 batteryColor = batteryColor,
                 modifier = Modifier.size(width = 44.dp, height = 60.dp)
             )
@@ -377,35 +446,31 @@ private fun BatteryCard(dashboard: Dashboard) {
 
 @Composable
 private fun QuickInfoCard(
-    title: String,
+    @StringRes title: Int,
     value: String,
-    subtitle: String,
+    subtitle: String?,
     icon: ImageVector,
     accentColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val shape = RoundedCornerShape(20.dp)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(shape)
             .background(accentColor.copy(alpha = 0.06f))
-            .border(0.5.dp, accentColor.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
+            .border(0.5.dp, accentColor.copy(alpha = 0.15f), shape)
             .padding(16.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                icon,
-                contentDescription = title,
-                modifier = Modifier.size(26.dp),
-                tint = accentColor
-            )
+            Icon(icon, contentDescription = null, modifier = Modifier.size(26.dp), tint = accentColor)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = title,
+                text = stringResource(title),
                 style = MaterialTheme.typography.labelSmall,
                 color = AntarGray,
                 letterSpacing = 1.sp
@@ -416,20 +481,22 @@ private fun QuickInfoCard(
                 style = MaterialTheme.typography.titleSmall,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = subtitle.ifEmpty { " " },
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                text = subtitle.orEmpty(),
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
-                color = if (subtitle.isEmpty()) Color.Transparent else AntarGray,
-                maxLines = 1
+                color = AntarGray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
-// ── Premium Chip ─────────────────────────────────────────────────────
+// ── Chip ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun PremiumChip(text: String, accent: Boolean = false) {
@@ -440,7 +507,7 @@ private fun PremiumChip(text: String, accent: Boolean = false) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = chipColor,
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, borderColor)
+        border = BorderStroke(0.5.dp, borderColor)
     ) {
         Text(
             text = text,
@@ -455,32 +522,30 @@ private fun PremiumChip(text: String, accent: Boolean = false) {
 // ── Battery Icon ─────────────────────────────────────────────────────
 
 @Composable
-fun BatteryIcon(
+private fun BatteryIcon(
     isCharging: Boolean,
     batteryLevel: Float,
     modifier: Modifier = Modifier,
     batteryColor: Color = if (isCharging) AntarGreen else AntarCyan
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "battery")
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    val currentAlpha = if (isCharging) pulseAlpha else 1.0f
-
     Box(contentAlignment = Alignment.Center, modifier = modifier.padding(4.dp)) {
+        // The pulse exists only while charging, and its value is read inside the Canvas draw
+        // lambda, so it never recomposes the card.
+        val pulse = if (isCharging && LocalAnimationIntensity.current != AnimationIntensity.LOW) {
+            rememberInfiniteTransition(label = "battery").ambientFloat(
+                initialValue = 0.4f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(AntarMotion.AMBIENT_QUICK_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "pulse"
+            )
+        } else {
+            null
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidthPx = 2.5.dp.toPx()
             val cornerRadiusPx = 4.dp.toPx()
             val terminalHeightPx = 4.dp.toPx()
-
             val shellWidth = size.width
             val shellHeight = size.height - terminalHeightPx
 
@@ -494,13 +559,12 @@ fun BatteryIcon(
 
             val maxFillWidth = shellWidth - (strokeWidthPx * 2) - 4.dp.toPx()
             val maxFillHeight = shellHeight - (strokeWidthPx * 2) - 4.dp.toPx()
-
             val fillHeight = maxFillHeight * (batteryLevel / 100f)
             val fillTop = terminalHeightPx + shellHeight - fillHeight - strokeWidthPx - 2.dp.toPx()
             val fillLeft = strokeWidthPx + 2.dp.toPx()
 
             drawRoundRect(
-                color = batteryColor.copy(alpha = currentAlpha),
+                color = batteryColor.copy(alpha = pulse?.value ?: 1f),
                 topLeft = Offset(fillLeft, fillTop),
                 size = Size(maxFillWidth, fillHeight),
                 cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
@@ -517,8 +581,8 @@ fun BatteryIcon(
 
         if (isCharging) {
             Icon(
-                imageVector = Icons.Default.BatteryChargingFull,
-                contentDescription = null,
+                imageVector = Icons.Filled.BatteryChargingFull,
+                contentDescription = stringResource(R.string.dashboard_charging),
                 modifier = Modifier.size(20.dp),
                 tint = Color.White
             )
@@ -526,6 +590,4 @@ fun BatteryIcon(
     }
 }
 
-fun ClosedRange<Float>.random(): Float {
-    return kotlin.random.Random.nextFloat() * (endInclusive - start) + start
-}
+private const val KHZ_PER_MHZ = 1000L

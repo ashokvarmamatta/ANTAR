@@ -1,7 +1,8 @@
 package com.ashes.dev.works.system.core.internals.antar.domain.repository
 
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Cpu
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.domain.model.CpuInfo
 
 interface CpuRepository {
-    fun getCpu(): Cpu
+    suspend fun getCpuInfo(): AppResult<CpuInfo>
 }

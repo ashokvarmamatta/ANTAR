@@ -1,9 +1,12 @@
 package com.ashes.dev.works.system.core.internals.antar
 
 import android.content.Context
-import com.ashes.dev.works.system.core.internals.antar.di.appModule
+import androidx.lifecycle.SavedStateHandle
+import androidx.work.WorkerParameters
+import com.ashes.dev.works.system.core.internals.antar.di.appModules
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.dsl.module
 import org.koin.test.verify.verify
 
 /**
@@ -14,6 +17,8 @@ import org.koin.test.verify.verify
 class KoinModulesTest {
     @Test
     fun appModule_isComplete() {
-        appModule.verify(extraTypes = listOf(Context::class))
+        module { includes(appModules) }.verify(
+            extraTypes = listOf(Context::class, SavedStateHandle::class, WorkerParameters::class)
+        )
     }
 }

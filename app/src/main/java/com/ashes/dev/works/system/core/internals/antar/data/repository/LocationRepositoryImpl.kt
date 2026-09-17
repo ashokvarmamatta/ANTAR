@@ -1,6 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,28 +15,36 @@ import android.location.LocationManager
 import android.location.OnNmeaMessageListener
 import android.os.Build
 import android.os.Bundle
-import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
+import android.os.Handler
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.ashes.dev.works.system.core.internals.antar.core.common.NO_VALUE
+import com.ashes.dev.works.system.core.internals.antar.domain.model.GnssConstellation
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Location
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Satellite
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.LocationRepository
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val GEOCODE_MIN_DISTANCE_M = 25f
+private const val UPDATE_INTERVAL_MS = 2000L
 
-class LocationRepositoryImpl(private val context: Context) : LocationRepository {
+class LocationRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : LocationRepository {
 
-    override fun isGpsEnabled(): Flow<Boolean> = callbackFlow {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        
+    override fun observeGpsEnabled(): Flow<Boolean> = callbackFlow {
+        val locationManager = locationManager()
+
         val checkGps = {
-            val isEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            trySend(isEnabled)
+            trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
         }
 
         val receiver = object : BroadcastReceiver() {
@@ -47,16 +56,27 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
         }
 
         checkGps()
-        context.registerReceiver(receiver, IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION))
+        // A protected system broadcast: still delivered to a not-exported receiver.
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         awaitClose {
             context.unregisterReceiver(receiver)
         }
-    }
+    }.distinctUntilChanged().flowOn(io)
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun getLocation(): Flow<Location> = callbackFlow {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    // Lint cannot see the isGranted() checks below; GPS/GNSS calls only run with precise access.
+    @SuppressLint("MissingPermission")
+    override fun observeLocation(): Flow<Location> = callbackFlow {
+        val locationManager = locationManager()
+        val hasFine = isGranted(Manifest.permission.ACCESS_FINE_LOCATION)
+        val hasCoarse = isGranted(Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (!hasFine && !hasCoarse) throw SecurityException()
+
         val geocoder = Geocoder(context, Locale.getDefault())
 
         var currentLocation: AndroidLocation? = null
@@ -83,7 +103,7 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
                     tryEmitLocation()
                 }
             } else {
-                launch(Dispatchers.IO) {
+                launch(io) {
                     address = try {
                         @Suppress("DEPRECATION")
                         geocoder.getFromLocation(location.latitude, location.longitude, 1)
@@ -114,118 +134,120 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
             }
         }
 
+        // GSA sentences carry PDOP, HDOP and VDOP in fields 15-17, for any talker ($GPGSA, $GNGSA, $GLGSA...).
         val nmeaListener = OnNmeaMessageListener { message, _ ->
-            if (message.startsWith("\$GSA") || message.startsWith("\$GNGSA")) {
-                val parts = message.split(",")
-                if (parts.size > 15 && parts[15].isNotEmpty()) {
-                    pdop = parts[15]
-                }
-                if (parts.size > 16 && parts[16].isNotEmpty()) {
-                    hdop = parts[16]
-                }
-                if (parts.size > 17 && parts[17].isNotEmpty()) {
-                    val vdopPart = parts[17].split("*")
-                    if (vdopPart.isNotEmpty() && vdopPart[0].isNotEmpty()) {
-                        vdop = vdopPart[0]
-                    }
-                }
+            if (message.length > 6 && message.startsWith('$') && message.regionMatches(3, "GSA", 0, 3)) {
+                val parts = message.substringBefore('*').split(",")
+                parts.getOrNull(15)?.takeIf { it.isNotEmpty() }?.let { pdop = it }
+                parts.getOrNull(16)?.takeIf { it.isNotEmpty() }?.let { hdop = it }
+                parts.getOrNull(17)?.takeIf { it.isNotEmpty() }?.let { vdop = it }
             }
         }
 
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            trySend(Location(
-                satellites = emptyList(), latitude = "Denied",
-                longitude = "Denied", altitude = "Denied", seaLevelAltitude = "- - -",
-                speed = "Denied", speedAccurate = "- - -", pdop = "- - -",
-                timeToFirstFix = "- - -", ehvDop = "- - -", hvAccurate = "- - -",
-                numberOfSatellites = "- - -", bearing = "Denied", bearingAccurate = "- - -",
-                address = "- - -"
-            ))
-            close()
-            return@callbackFlow
-        }
+        // Approximate-only access may use the network provider; GPS, satellites and NMEA need precise.
+        val providers = locationManager.allProviders
+        val wantedProviders = buildList {
+            if (hasFine) add(LocationManager.GPS_PROVIDER)
+            add(LocationManager.NETWORK_PROVIDER)
+        }.filter { it in providers }
 
-        currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        currentLocation = wantedProviders.firstNotNullOfOrNull { locationManager.getLastKnownLocation(it) }
         tryEmitLocation()
         currentLocation?.let { geocodeIfMoved(it) }
 
-        // A provider missing on this device (e.g. no NETWORK_PROVIDER) throws IllegalArgumentException.
-        val providers = locationManager.allProviders
-        for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
-            if (provider in providers) {
-                locationManager.requestLocationUpdates(provider, 2000, 0f, locationListener)
-            }
+        // This body runs on the io dispatcher, which has no Looper: callbacks go to the main thread.
+        for (provider in wantedProviders) {
+            locationManager.requestLocationUpdates(provider, UPDATE_INTERVAL_MS, 0f, locationListener, Looper.getMainLooper())
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            locationManager.registerGnssStatusCallback(context.mainExecutor, gnssStatusCallback)
-            locationManager.addNmeaListener(context.mainExecutor, nmeaListener)
-        } else {
-            @Suppress("DEPRECATION")
-            locationManager.registerGnssStatusCallback(gnssStatusCallback)
-            @Suppress("DEPRECATION")
-            locationManager.addNmeaListener(nmeaListener)
+        if (hasFine) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                locationManager.registerGnssStatusCallback(context.mainExecutor, gnssStatusCallback)
+                locationManager.addNmeaListener(context.mainExecutor, nmeaListener)
+            } else {
+                val mainHandler = Handler(Looper.getMainLooper())
+                @Suppress("DEPRECATION")
+                locationManager.registerGnssStatusCallback(gnssStatusCallback, mainHandler)
+                @Suppress("DEPRECATION")
+                locationManager.addNmeaListener(nmeaListener, mainHandler)
+            }
         }
 
         awaitClose {
             locationManager.removeUpdates(locationListener)
-            locationManager.unregisterGnssStatusCallback(gnssStatusCallback)
-            locationManager.removeNmeaListener(nmeaListener)
+            if (hasFine) {
+                locationManager.unregisterGnssStatusCallback(gnssStatusCallback)
+                locationManager.removeNmeaListener(nmeaListener)
+            }
         }
-    }
+    }.flowOn(io)
+
+    private fun locationManager(): LocationManager =
+        context.getSystemService(LocationManager::class.java) ?: throw UnsupportedOperationException()
+
+    private fun isGranted(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
 
-@RequiresApi(Build.VERSION_CODES.N)
-private fun AndroidLocation.toLocationModel(gnssStatus: GnssStatus?, pdop: String?, hdop: String?, vdop: String?, address: String): Location {
+private fun AndroidLocation.toLocationModel(
+    gnssStatus: GnssStatus?,
+    pdop: String?,
+    hdop: String?,
+    vdop: String?,
+    address: String
+): Location {
     val satellites = gnssStatus?.let { status ->
-        (0 until status.satelliteCount).map {
+        (0 until status.satelliteCount).map { index ->
             Satellite(
-                constellation = when (status.getConstellationType(it)) {
-                    GnssStatus.CONSTELLATION_BEIDOU -> "Beidou"
-                    GnssStatus.CONSTELLATION_GPS -> "Navstar GPS"
-                    GnssStatus.CONSTELLATION_GALILEO -> "Galileo"
-                    GnssStatus.CONSTELLATION_GLONASS -> "Glonass"
-                    GnssStatus.CONSTELLATION_QZSS -> "QZSS"
-                    GnssStatus.CONSTELLATION_IRNSS -> "IRNSS"
-                    GnssStatus.CONSTELLATION_SBAS -> "SBAS"
-                    else -> "Unknown"
+                constellation = constellationOf(status.getConstellationType(index)),
+                svid = status.getSvid(index),
+                cn0DbHz = status.getCn0DbHz(index),
+                elevationDegrees = status.getElevationDegrees(index),
+                azimuthDegrees = status.getAzimuthDegrees(index),
+                carrierFrequencyHz = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && status.hasCarrierFrequencyHz(index)) {
+                    status.getCarrierFrequencyHz(index)
+                } else {
+                    null
                 },
-                svid = status.getSvid(it),
-                cn0DbHz = status.getCn0DbHz(it),
-                elevationDegrees = status.getElevationDegrees(it),
-                azimuthDegrees = status.getAzimuthDegrees(it),
-                hasEphemerisData = status.hasEphemerisData(it),
-                hasAlmanacData = status.hasAlmanacData(it),
-                usedInFix = status.usedInFix(it)
+                hasEphemerisData = status.hasEphemerisData(index),
+                hasAlmanacData = status.hasAlmanacData(index),
+                usedInFix = status.usedInFix(index)
             )
         }
-    } ?: emptyList()
+    }.orEmpty()
 
-    val totalSatellites = satellites.size
-    val satellitesInFix = satellites.count { it.usedInFix }
-    
-    val speedAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasSpeedAccuracy()) "${String.format(Locale.US, "%.2f", speedAccuracyMetersPerSecond)} m/s" else "0.0 m/s"
-    val bearingAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasBearingAccuracy()) String.format(Locale.US, "%.2f", bearingAccuracyDegrees) else "- - -"
+    val isOreo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     return Location(
+        latitude = latitude,
+        longitude = longitude,
+        altitudeMeters = if (hasAltitude()) altitude else null,
+        mslAltitudeMeters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && hasMslAltitude()) {
+            mslAltitudeMeters
+        } else {
+            null
+        },
+        speedMetersPerSecond = if (hasSpeed()) speed else null,
+        speedAccuracyMetersPerSecond = if (isOreo && hasSpeedAccuracy()) speedAccuracyMetersPerSecond else null,
+        horizontalAccuracyMeters = if (hasAccuracy()) accuracy else null,
+        verticalAccuracyMeters = if (isOreo && hasVerticalAccuracy()) verticalAccuracyMeters else null,
+        bearingDegrees = if (hasBearing()) bearing else null,
+        bearingAccuracyDegrees = if (isOreo && hasBearingAccuracy()) bearingAccuracyDegrees else null,
         satellites = satellites,
-        latitude = String.format(Locale.US, "%.6f", latitude),
-        longitude = String.format(Locale.US, "%.6f", longitude),
-        altitude = String.format(Locale.US, "%.2f", altitude),
-        seaLevelAltitude = "- - -",
-        speed = String.format(Locale.US, "%.2f", speed),
-        speedAccurate = speedAccuracy,
-        pdop = pdop ?: "- - -",
-        timeToFirstFix = "",
-        ehvDop = if(hdop != null && vdop != null) "H: $hdop, V: $vdop" else "- - -",
-        hvAccurate = String.format(Locale.US, "%.2f", accuracy),
-        numberOfSatellites = if (totalSatellites > 0) "$satellitesInFix / $totalSatellites" else "- - -",
-        bearing = String.format(Locale.US, "%.2f", bearing),
-        bearingAccurate = bearingAccuracy,
-        address = address
+        pdop = pdop?.toFloatOrNull(),
+        hdop = hdop?.toFloatOrNull(),
+        vdop = vdop?.toFloatOrNull(),
+        // The geocoding block above keeps its "- - -" placeholder; the domain model uses null instead.
+        address = address.takeUnless { it == NO_VALUE }
     )
+}
+
+private fun constellationOf(type: Int): GnssConstellation = when (type) {
+    GnssStatus.CONSTELLATION_GPS -> GnssConstellation.GPS
+    GnssStatus.CONSTELLATION_GLONASS -> GnssConstellation.GLONASS
+    GnssStatus.CONSTELLATION_GALILEO -> GnssConstellation.GALILEO
+    GnssStatus.CONSTELLATION_BEIDOU -> GnssConstellation.BEIDOU
+    GnssStatus.CONSTELLATION_QZSS -> GnssConstellation.QZSS
+    GnssStatus.CONSTELLATION_IRNSS -> GnssConstellation.IRNSS
+    GnssStatus.CONSTELLATION_SBAS -> GnssConstellation.SBAS
+    else -> GnssConstellation.UNKNOWN
 }

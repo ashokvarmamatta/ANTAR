@@ -3,58 +3,46 @@ package com.ashes.dev.works.system.core.internals.antar.data.repository
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import com.ashes.dev.works.system.core.internals.antar.domain.model.SensorDetail
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Sensors
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppError
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.common.appResultOf
+import com.ashes.dev.works.system.core.internals.antar.domain.model.SensorInfo
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.SensorsRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
-class SensorsRepositoryImpl(private val context: Context) : SensorsRepository {
-    override fun getSensors(): Sensors {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val nativeSensorList = sensorManager.getSensorList(Sensor.TYPE_ALL)
-        
-        val sensorList = nativeSensorList.map { sensor ->
-            SensorDetail(
-                name = sensor.name ?: "Unknown",
-                vendor = sensor.vendor ?: "Unknown",
-                type = getSensorTypeName(sensor.type),
-                version = sensor.version,
-                power = sensor.power,
-                resolution = sensor.resolution,
-                maximumRange = sensor.maximumRange,
-                minDelay = sensor.minDelay
-            )
-        }.sortedBy { it.name.lowercase() }
+class SensorsRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : SensorsRepository {
 
-        return Sensors(
-            sensorCountMessage = "${sensorList.size} sensors available",
-            sensorList = sensorList
-        )
-    }
+    override suspend fun getSensors(): AppResult<List<SensorInfo>> = withContext(io) {
+        val sensorManager = context.getSystemService(SensorManager::class.java)
+            ?: return@withContext AppResult.Failure(AppError.Unavailable)
 
-    private fun getSensorTypeName(type: Int): String {
-        return when (type) {
-            Sensor.TYPE_ACCELEROMETER -> "Accelerometer"
-            Sensor.TYPE_AMBIENT_TEMPERATURE -> "Ambient Temperature"
-            Sensor.TYPE_GAME_ROTATION_VECTOR -> "Game Rotation Vector"
-            Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> "Geomagnetic Rotation Vector"
-            Sensor.TYPE_GRAVITY -> "Gravity"
-            Sensor.TYPE_GYROSCOPE -> "Gyroscope"
-            Sensor.TYPE_GYROSCOPE_UNCALIBRATED -> "Gyroscope Uncalibrated"
-            Sensor.TYPE_HEART_BEAT -> "Heart Beat"
-            Sensor.TYPE_HEART_RATE -> "Heart Rate"
-            Sensor.TYPE_LIGHT -> "Light"
-            Sensor.TYPE_LINEAR_ACCELERATION -> "Linear Acceleration"
-            Sensor.TYPE_MAGNETIC_FIELD -> "Magnetic Field"
-            Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED -> "Magnetic Field Uncalibrated"
-            Sensor.TYPE_PRESSURE -> "Pressure"
-            Sensor.TYPE_PROXIMITY -> "Proximity"
-            Sensor.TYPE_RELATIVE_HUMIDITY -> "Relative Humidity"
-            Sensor.TYPE_ROTATION_VECTOR -> "Rotation Vector"
-            Sensor.TYPE_SIGNIFICANT_MOTION -> "Significant Motion"
-            Sensor.TYPE_STATIONARY_DETECT -> "Stationary Detect"
-            Sensor.TYPE_STEP_COUNTER -> "Step Counter"
-            Sensor.TYPE_STEP_DETECTOR -> "Step Detector"
-            else -> "Other ($type)"
+        appResultOf {
+            val seen = HashMap<String, Int>()
+            sensorManager.getSensorList(Sensor.TYPE_ALL)
+                .sortedBy { it.name?.lowercase().orEmpty() }
+                .map { sensor ->
+                    val base = "${sensor.type}|${sensor.name}|${sensor.vendor}|${sensor.isWakeUpSensor}"
+                    val occurrence = seen.getOrElse(base) { 0 }
+                    seen[base] = occurrence + 1
+                    SensorInfo(
+                        // Identical duplicates exist on some devices; the suffix keeps list keys unique.
+                        id = if (occurrence == 0) base else "$base#$occurrence",
+                        name = sensor.name?.takeIf { it.isNotBlank() },
+                        vendor = sensor.vendor?.takeIf { it.isNotBlank() },
+                        type = sensor.type,
+                        stringType = sensor.stringType?.takeIf { it.isNotBlank() },
+                        version = sensor.version,
+                        powerMilliAmps = sensor.power,
+                        resolution = sensor.resolution,
+                        maximumRange = sensor.maximumRange,
+                        minDelayMicros = sensor.minDelay,
+                        isWakeUp = sensor.isWakeUpSensor
+                    )
+                }
         }
     }
 }

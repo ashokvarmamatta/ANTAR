@@ -1,9 +1,10 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.intro
 
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.ambientFloat
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarMotion
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -80,14 +81,14 @@ private fun DrawScope.dust(g: Grid, px: Float, py: Float, color: Color, alpha: F
 fun DeviceIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "device")
-    val gauge by anim.animateFloat(
+    val gauge by anim.ambientFloat(
         0.3f, 0.85f,
-        infiniteRepeatable(tween(1700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_MEDIUM_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "gauge"
     )
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.18f, 0.42f,
-        infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
 
@@ -161,14 +162,14 @@ fun DeviceIllustration(modifier: Modifier = Modifier) {
 fun ChipIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "chip")
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.15f, 0.35f,
-        infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
-    val bars by anim.animateFloat(
+    val bars by anim.ambientFloat(
         0f, 1f,
-        infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_QUICK_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "bars"
     )
 
@@ -249,14 +250,14 @@ fun ChipIllustration(modifier: Modifier = Modifier) {
 fun SensorsIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "sensors")
-    val sweep by anim.animateFloat(
+    val sweep by anim.ambientFloat(
         0f, 360f,
-        infiniteRepeatable(tween(3600, easing = LinearEasing)),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_SWEEP_MS, easing = LinearEasing)),
         label = "sweep"
     )
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.2f, 0.45f,
-        infiniteRepeatable(tween(1000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
 
@@ -327,7 +328,7 @@ fun SensorsIllustration(modifier: Modifier = Modifier) {
 fun PrivacyIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "privacy")
-    val check by anim.animateFloat(
+    val check by anim.ambientFloat(
         0f, 1f,
         infiniteRepeatable(
             keyframes {
@@ -340,9 +341,9 @@ fun PrivacyIllustration(modifier: Modifier = Modifier) {
         ),
         label = "check"
     )
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.12f, 0.26f,
-        infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_MEDIUM_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
 

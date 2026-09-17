@@ -5,230 +5,254 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.opengl.GLES20
 import android.os.Build
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Cpu
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.common.appResultOf
+import com.ashes.dev.works.system.core.internals.antar.domain.model.CpuCore
+import com.ashes.dev.works.system.core.internals.antar.domain.model.CpuInfo
+import com.ashes.dev.works.system.core.internals.antar.domain.model.CpuInfoField
+import com.ashes.dev.works.system.core.internals.antar.domain.model.GpuInfo
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.CpuRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.lang.System.getProperty
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLContext
-import javax.microedition.khronos.egl.EGLDisplay
 import javax.microedition.khronos.egl.EGLSurface
 
-class CpuRepositoryImpl(private val context: Context) : CpuRepository {
+class CpuRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : CpuRepository {
 
-    private lateinit var cachedCpu: Cpu
+    /** Facts that cannot change while the process lives. Guarded by [cacheMutex]. */
+    private var cachedStatic: StaticCpu? = null
+    private val cacheMutex = Mutex()
 
-    override fun getCpu(): Cpu {
-        if (::cachedCpu.isInitialized) {
-            return cachedCpu
+    override suspend fun getCpuInfo(): AppResult<CpuInfo> = withContext(io) {
+        appResultOf {
+            val static = staticCpu()
+            CpuInfo(
+                socName = static.socName,
+                hardware = static.hardware,
+                coreCount = Runtime.getRuntime().availableProcessors(),
+                minFrequencyKhz = readPositiveLong(CPU0_FREQ_DIR + "cpuinfo_min_freq"),
+                maxFrequencyKhz = readPositiveLong(CPU0_FREQ_DIR + "cpuinfo_max_freq"),
+                currentFrequencyKhz = readPositiveLong(CPU0_FREQ_DIR + "scaling_cur_freq"),
+                architecture = static.architecture,
+                fabricationNm = static.fabricationNm,
+                supportedAbis = static.supportedAbis,
+                governor = readTrimmed(CPU0_FREQ_DIR + "scaling_governor") ?: static.cpuinfoGovernor,
+                features = static.features,
+                cores = static.cores,
+                gpu = GpuInfo(
+                    renderer = static.glRenderer,
+                    vendor = static.glVendor,
+                    openGlEsVersion = static.openGlEsVersion,
+                    openGlExtensions = static.glExtensions,
+                    vulkanHardwareLevel = static.vulkanHardwareLevel,
+                    maxFrequencyHz = firstPositiveLong(GPU_MAX_FREQ_PATHS),
+                    currentFrequencyHz = firstPositiveLong(GPU_CUR_FREQ_PATHS)
+                )
+            )
         }
+    }
 
-        val cpuInfoMap = getCpuInfoMap()
-        val cpuInfo = try {
-            parseCpuInfo(File("/proc/cpuinfo").readText())
-        } catch (e: Exception) {
-            Pair("- - -", emptyList())
-        }
+    /** Reads the static facts once. A failed read is not cached, so a retry reads again. */
+    private suspend fun staticCpu(): StaticCpu = cacheMutex.withLock {
+        cachedStatic ?: readStaticCpu().also { cachedStatic = it }
+    }
 
-        val minFreq = getCpuFreq("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq")
-        val maxFreq = getCpuFreq("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
-        val curFreq = getCpuFreq("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
-        val governor = try {
-            File("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor").readText().trim()
-        } catch (e: Exception) {
-            cpuInfoMap["CPU governor"] ?: "- - -"
-        }
-        val hardware = getSystemProperty("ro.board.platform").ifBlank { cpuInfoMap["Hardware"] ?: "- - -" }
-        val socInfo = getSocInfo(hardware)
+    /** Must run on [io]: it reads /proc, forks `getprop` and creates a throwaway EGL context. */
+    private fun readStaticCpu(): StaticCpu {
+        val cpuinfo = readText("/proc/cpuinfo").orEmpty()
+        val allFields = parseFields(cpuinfo)
+        val cpuinfoMap = allFields.associate { it.key to it.value }
 
+        val hardware = readSystemProperty("ro.board.platform") ?: cpuinfoMap["Hardware"]?.takeIf { it.isNotBlank() }
+        val knownSoc = hardware?.let { KNOWN_SOCS[it.lowercase()] }
+        val gl = readGlStrings()
 
-        val gpuInfo = getGpuInfo()
-        val maxGpuFreq = getGpuFrequency("max")
-        val curGpuFreq = getGpuFrequency("current")
-
-        cachedCpu = Cpu(
-            socName = socInfo.first,
-            cores = Runtime.getRuntime().availableProcessors().toString(),
-            frequencyRange = if (minFreq != "- - -" && maxFreq != "- - -") "$minFreq - $maxFreq" else "- - -",
-            processor = socInfo.first,
-            struct = getProperty("os.arch") ?: "- - -",
-            frequency = curFreq,
-            fabrication = socInfo.second,
-            supportedAbis = Build.SUPPORTED_ABIS.joinToString(),
-            cpuHardware = hardware,
-            cpuGovernor = governor,
-            features = cpuInfo.first,
-            procCpuinfo = cpuInfo.second,
-            gpuRenderer = gpuInfo["renderer"] ?: "- - -",
-            gpuVendor = gpuInfo["vendor"] ?: "- - -",
-            openGlEs = getOpenGlEsVersion(),
-            openGlExtensions = gpuInfo["extensions"] ?: "- - -",
-            vulkan = getVulkanSupport(),
-            gpuFrequency = maxGpuFreq,
-            currentGpuFrequency = curGpuFreq
+        return StaticCpu(
+            socName = knownSoc?.name ?: hardware,
+            hardware = hardware,
+            fabricationNm = knownSoc?.fabricationNm,
+            architecture = System.getProperty("os.arch")?.takeIf { it.isNotBlank() },
+            supportedAbis = Build.SUPPORTED_ABIS.toList(),
+            cpuinfoGovernor = cpuinfoMap["CPU governor"]?.takeIf { it.isNotBlank() },
+            features = allFields.firstOrNull { it.key == "Features" }
+                ?.value
+                ?.split(WHITESPACE)
+                ?.filter { it.isNotEmpty() }
+                .orEmpty(),
+            cores = parseCores(cpuinfo),
+            glRenderer = gl?.renderer,
+            glVendor = gl?.vendor,
+            glExtensions = gl?.extensions,
+            openGlEsVersion = context.getSystemService(ActivityManager::class.java)
+                ?.deviceConfigurationInfo
+                ?.glEsVersion
+                ?.takeIf { it.isNotBlank() },
+            vulkanHardwareLevel = vulkanHardwareLevel()
         )
-        return cachedCpu
     }
 
-    private fun parseCpuInfo(cpuInfo: String): Pair<String, List<Map<String, String>>> {
-        val features = cpuInfo.lines().firstOrNull { it.startsWith("Features") }?.substringAfter(":")?.trim()?.replace(" ", ", ") ?: "- - -"
-        val perCoreInfo = cpuInfo.split("\n\n").mapNotNull {
-            val lines = it.lines()
-            val processorLine = lines.firstOrNull { it.startsWith("processor") }
-            if (processorLine != null) {
-                val coreInfo = mutableMapOf<String, String>()
-                lines.forEach { line ->
-                    if (line.contains(":")) {
-                        val parts = line.split(":")
-                        if (parts.size == 2) {
-                            coreInfo[parts[0].trim()] = parts[1].trim()
-                        }
-                    }
-                }
-                coreInfo
-            } else {
-                null
-            }
+    private fun parseCores(cpuinfo: String): List<CpuCore> =
+        cpuinfo.split(BLANK_LINE).mapNotNull { block ->
+            val fields = parseFields(block)
+            val processor = fields.firstOrNull { it.key == "processor" }?.value?.toIntOrNull()
+            processor?.let { CpuCore(processor = it, fields = fields) }
         }
-        return Pair(features, perCoreInfo)
-    }
 
-
-    private fun getSocInfo(hardware: String): Pair<String, String> {
-        return when (hardware) {
-            "mt6897" -> "MediaTek Dimensity 7200" to "4nm"
-            else -> hardware to "- - -"
+    /** `key : value` lines; the value keeps any further colons. */
+    private fun parseFields(text: String): List<CpuInfoField> =
+        text.lines().mapNotNull { line ->
+            val colon = line.indexOf(':')
+            if (colon <= 0) return@mapNotNull null
+            val key = line.substring(0, colon).trim()
+            val value = line.substring(colon + 1).trim()
+            if (key.isEmpty()) null else CpuInfoField(key, value)
         }
-    }
 
-    private fun getGpuInfo(): Map<String, String> {
+    private fun readGlStrings(): GlStrings? {
+        val egl = EGLContext.getEGL() as? EGL10 ?: return null
+        val display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)
+        if (display == EGL10.EGL_NO_DISPLAY || !egl.eglInitialize(display, IntArray(2))) return null
+
+        var surface: EGLSurface = EGL10.EGL_NO_SURFACE
+        var glContext: EGLContext = EGL10.EGL_NO_CONTEXT
         return try {
-            val info = mutableMapOf<String, String>()
-            val egl = EGLContext.getEGL() as EGL10
-            val display: EGLDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)
-            egl.eglInitialize(display, null)
-
             val configs = arrayOfNulls<EGLConfig>(1)
             val numConfigs = IntArray(1)
-            val configSpec = intArrayOf(
-                0x3040, 4, // EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT
-                EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-                EGL10.EGL_RED_SIZE, 8,
-                EGL10.EGL_GREEN_SIZE, 8,
-                EGL10.EGL_BLUE_SIZE, 8,
-                EGL10.EGL_ALPHA_SIZE, 8,
-                EGL10.EGL_NONE
+            if (!egl.eglChooseConfig(display, CONFIG_SPEC, configs, 1, numConfigs) || numConfigs[0] == 0) {
+                return null
+            }
+            val config = configs[0] ?: return null
+            surface = egl.eglCreatePbufferSurface(display, config, SURFACE_ATTRIBS)
+            glContext = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, CONTEXT_ATTRIBS)
+            if (surface == EGL10.EGL_NO_SURFACE || glContext == EGL10.EGL_NO_CONTEXT) return null
+            if (!egl.eglMakeCurrent(display, surface, surface, glContext)) return null
+
+            GlStrings(
+                renderer = GLES20.glGetString(GLES20.GL_RENDERER)?.takeIf { it.isNotBlank() },
+                vendor = GLES20.glGetString(GLES20.GL_VENDOR)?.takeIf { it.isNotBlank() },
+                extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS)?.trim()?.takeIf { it.isNotEmpty() }
             )
-            egl.eglChooseConfig(display, configSpec, configs, 1, numConfigs)
-            val surfaceAttribs = intArrayOf(EGL10.EGL_WIDTH, 64, EGL10.EGL_HEIGHT, 64, EGL10.EGL_NONE)
-            val surface: EGLSurface = egl.eglCreatePbufferSurface(display, configs[0], surfaceAttribs)
-            val contextAttribs = intArrayOf(0x3098, 2, EGL10.EGL_NONE) // EGL_CONTEXT_CLIENT_VERSION
-            val context: EGLContext = egl.eglCreateContext(display, configs[0], EGL10.EGL_NO_CONTEXT, contextAttribs)
-            egl.eglMakeCurrent(display, surface, surface, context)
-
-            info["renderer"] = GLES20.glGetString(GLES20.GL_RENDERER)
-            info["vendor"] = GLES20.glGetString(GLES20.GL_VENDOR)
-            info["extensions"] = GLES20.glGetString(GLES20.GL_EXTENSIONS)
-
+        } catch (e: RuntimeException) {
+            null
+        } finally {
             egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT)
-            egl.eglDestroySurface(display, surface)
-            egl.eglDestroyContext(display, context)
+            if (surface != EGL10.EGL_NO_SURFACE) egl.eglDestroySurface(display, surface)
+            if (glContext != EGL10.EGL_NO_CONTEXT) egl.eglDestroyContext(display, glContext)
             egl.eglTerminate(display)
-
-            info
-        } catch (e: Exception) {
-            emptyMap()
         }
     }
 
-
-    private fun getVulkanSupport(): String {
+    private fun vulkanHardwareLevel(): Int? {
         val pm = context.packageManager
         return when {
-            pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL, 1) -> "Level 1"
-            pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL) -> "Level 0"
-            else -> "Not Supported"
+            pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL, 1) -> 1
+            pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL) -> 0
+            else -> null
         }
     }
 
-    private fun getGpuFrequency(type: String): String {
-        val paths = when (type) {
-            "current" -> listOf(
-                "/sys/class/kgsl/kgsl-3d0/gpuclk",
-                "/sys/class/devfreq/fde60000.gpu/cur_freq",
-                "/sys/kernel/gpu/gpu_clock",
-                "/sys/class/mali-km/mali0/clock",
-                "/sys/class/pvr/devices/pvr/gpu_clock",
-                "/sys/class/devfreq/18000000.qcom,kgsl-3d0/cur_freq",
-                "/sys/class/devfreq/1c50000.mali/cur_freq",
-                "/sys/class/mali/dvfs/gpufreq"
-            )
-            "max" -> listOf(
-                "/sys/class/kgsl/kgsl-3d0/max_gpuclk",
-                "/sys/class/devfreq/fde60000.gpu/max_freq",
-                "/sys/kernel/gpu/gpu_max_clock",
-                "/sys/class/mali-km/mali0/max_clock",
-                "/sys/class/pvr/devices/pvr/gpu_max_clock",
-                "/sys/class/devfreq/18000000.qcom,kgsl-3d0/max_freq",
-                "/sys/class/devfreq/1c50000.mali/max_freq",
-                "/sys/class/mali/dvfs/gpufreq_max"
-            )
-            else -> return "- - -"
-        }
+    private fun firstPositiveLong(paths: List<String>): Long? = paths.firstNotNullOfOrNull { readPositiveLong(it) }
 
-        for (path in paths) {
-            try {
-                val freq = File(path).readText().trim().toLong()
-                return "${freq / 1000000} MHz"
-            } catch (e: Exception) {
-                // Continue to the next path
-            }
-        }
-        return "- - -"
+    private fun readPositiveLong(path: String): Long? = readTrimmed(path)?.toLongOrNull()?.takeIf { it > 0L }
+
+    private fun readTrimmed(path: String): String? = readText(path)?.trim()?.takeIf { it.isNotEmpty() }
+
+    /** Null when the file is missing or unreadable (SELinux denies many sysfs nodes to apps). */
+    private fun readText(path: String): String? = try {
+        File(path).readText()
+    } catch (e: Exception) {
+        null
     }
 
-
-    private fun getCpuFreq(path: String): String {
-        return try {
-            val freq = File(path).readText().trim().toLong()
-            "${freq / 1000} MHz"
-        } catch (e: Exception) {
-            "- - -"
-        }
-    }
-
-    private fun getCpuInfoMap(): Map<String, String> {
-        val map = mutableMapOf<String, String>()
+    /** Raw `getprop` output, or null when the property is unset or cannot be read. */
+    private fun readSystemProperty(key: String): String? = try {
+        val process = ProcessBuilder("getprop", key).start()
         try {
-            File("/proc/cpuinfo").forEachLine { line ->
-                if (line.contains(":")) {
-                    val parts = line.split(":")
-                    if (parts.size == 2) {
-                        map[parts[0].trim()] = parts[1].trim()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-        }
-        return map
-    }
-
-    private fun getSystemProperty(key: String): String {
-        return try {
-            val process = Runtime.getRuntime().exec("getprop $key")
-            val reader = java.io.BufferedReader(java.io.InputStreamReader(process.inputStream))
-            val result = reader.readLine()?.trim()
-            reader.close()
+            process.inputStream.bufferedReader().use { it.readLine() }?.trim()?.takeIf { it.isNotEmpty() }
+        } finally {
             process.destroy()
-            if (result.isNullOrBlank()) "" else if (result == "1" || result == "true") "Yes" else if (result == "0" || result == "false") "No" else result
-        } catch (e: Exception) {
-            ""
         }
+    } catch (e: Exception) {
+        null
     }
 
-    private fun getOpenGlEsVersion(): String {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        return activityManager.deviceConfigurationInfo.glEsVersion ?: "- - -"
+    private data class StaticCpu(
+        val socName: String?,
+        val hardware: String?,
+        val fabricationNm: Int?,
+        val architecture: String?,
+        val supportedAbis: List<String>,
+        val cpuinfoGovernor: String?,
+        val features: List<String>,
+        val cores: List<CpuCore>,
+        val glRenderer: String?,
+        val glVendor: String?,
+        val glExtensions: String?,
+        val openGlEsVersion: String?,
+        val vulkanHardwareLevel: Int?
+    )
+
+    private data class GlStrings(val renderer: String?, val vendor: String?, val extensions: String?)
+
+    private data class KnownSoc(val name: String, val fabricationNm: Int?)
+
+    private companion object {
+        const val CPU0_FREQ_DIR = "/sys/devices/system/cpu/cpu0/cpufreq/"
+
+        const val EGL_OPENGL_ES2_BIT = 4
+        const val EGL_RENDERABLE_TYPE = 0x3040
+        const val EGL_CONTEXT_CLIENT_VERSION = 0x3098
+
+        val WHITESPACE = Regex("\\s+")
+        val BLANK_LINE = Regex("\\n\\s*\\n")
+
+        /** Platform id -> marketed product name. Product data, not UI copy. */
+        val KNOWN_SOCS = mapOf(
+            "mt6897" to KnownSoc(name = "MediaTek Dimensity 8300", fabricationNm = 4)
+        )
+
+        val CONFIG_SPEC = intArrayOf(
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+            EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
+            EGL10.EGL_RED_SIZE, 8,
+            EGL10.EGL_GREEN_SIZE, 8,
+            EGL10.EGL_BLUE_SIZE, 8,
+            EGL10.EGL_ALPHA_SIZE, 8,
+            EGL10.EGL_NONE
+        )
+        val SURFACE_ATTRIBS = intArrayOf(EGL10.EGL_WIDTH, 1, EGL10.EGL_HEIGHT, 1, EGL10.EGL_NONE)
+        val CONTEXT_ATTRIBS = intArrayOf(EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE)
+
+        /** Current GPU clock in Hz, by vendor driver. */
+        val GPU_CUR_FREQ_PATHS = listOf(
+            "/sys/class/kgsl/kgsl-3d0/gpuclk",
+            "/sys/class/devfreq/fde60000.gpu/cur_freq",
+            "/sys/kernel/gpu/gpu_clock",
+            "/sys/class/mali-km/mali0/clock",
+            "/sys/class/pvr/devices/pvr/gpu_clock",
+            "/sys/class/devfreq/18000000.qcom,kgsl-3d0/cur_freq",
+            "/sys/class/devfreq/1c50000.mali/cur_freq",
+            "/sys/class/mali/dvfs/gpufreq"
+        )
+
+        /** Maximum GPU clock in Hz, by vendor driver. */
+        val GPU_MAX_FREQ_PATHS = listOf(
+            "/sys/class/kgsl/kgsl-3d0/max_gpuclk",
+            "/sys/class/devfreq/fde60000.gpu/max_freq",
+            "/sys/kernel/gpu/gpu_max_clock",
+            "/sys/class/mali-km/mali0/max_clock",
+            "/sys/class/pvr/devices/pvr/gpu_max_clock",
+            "/sys/class/devfreq/18000000.qcom,kgsl-3d0/max_freq",
+            "/sys/class/devfreq/1c50000.mali/max_freq",
+            "/sys/class/mali/dvfs/gpufreq_max"
+        )
     }
 }

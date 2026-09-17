@@ -1,5 +1,7 @@
 package com.ashes.dev.works.system.core.internals.antar.core.ui
 
+import android.annotation.SuppressLint
+import android.hardware.Sensor
 import androidx.compose.foundation.Canvas
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Sensors
@@ -35,24 +37,40 @@ enum class SensorGlyph {
     Rotation, Steps, Heart, Temperature, Humidity, Motion, Node
 }
 
-fun sensorGlyphFor(type: String): SensorGlyph {
-    val t = type.lowercase()
-    return when {
-        "acceler" in t -> SensorGlyph.Accelerometer
-        "gyroscope" in t -> SensorGlyph.Gyroscope
-        "magnetic" in t -> SensorGlyph.Magnetic
-        "light" in t -> SensorGlyph.Light
-        "proximity" in t -> SensorGlyph.Proximity
-        "pressure" in t -> SensorGlyph.Pressure
-        "gravity" in t -> SensorGlyph.Gravity
-        "rotation" in t || "orientation" in t -> SensorGlyph.Rotation
-        "step" in t -> SensorGlyph.Steps
-        "heart" in t -> SensorGlyph.Heart
-        "temperature" in t -> SensorGlyph.Temperature
-        "humidity" in t -> SensorGlyph.Humidity
-        "motion" in t || "stationary" in t -> SensorGlyph.Motion
-        else -> SensorGlyph.Node
-    }
+/** Glyph for an Android sensor type constant (`Sensor.TYPE_*`); unknown and vendor types get [SensorGlyph.Node]. */
+@SuppressLint("InlinedApi") // Compile-time constants: safe to reference below their API level.
+@Suppress("DEPRECATION") // TYPE_ORIENTATION and TYPE_TEMPERATURE are still reported by old devices.
+fun sensorGlyphFor(type: Int): SensorGlyph = when (type) {
+    Sensor.TYPE_ACCELEROMETER,
+    Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
+    Sensor.TYPE_ACCELEROMETER_LIMITED_AXES,
+    Sensor.TYPE_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED,
+    Sensor.TYPE_LINEAR_ACCELERATION -> SensorGlyph.Accelerometer
+    Sensor.TYPE_GYROSCOPE,
+    Sensor.TYPE_GYROSCOPE_UNCALIBRATED,
+    Sensor.TYPE_GYROSCOPE_LIMITED_AXES,
+    Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED -> SensorGlyph.Gyroscope
+    Sensor.TYPE_MAGNETIC_FIELD,
+    Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED,
+    Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> SensorGlyph.Magnetic
+    Sensor.TYPE_LIGHT -> SensorGlyph.Light
+    Sensor.TYPE_PROXIMITY -> SensorGlyph.Proximity
+    Sensor.TYPE_PRESSURE -> SensorGlyph.Pressure
+    Sensor.TYPE_GRAVITY -> SensorGlyph.Gravity
+    Sensor.TYPE_ROTATION_VECTOR,
+    Sensor.TYPE_GAME_ROTATION_VECTOR,
+    Sensor.TYPE_ORIENTATION -> SensorGlyph.Rotation
+    Sensor.TYPE_STEP_COUNTER,
+    Sensor.TYPE_STEP_DETECTOR -> SensorGlyph.Steps
+    Sensor.TYPE_HEART_RATE,
+    Sensor.TYPE_HEART_BEAT -> SensorGlyph.Heart
+    Sensor.TYPE_AMBIENT_TEMPERATURE,
+    Sensor.TYPE_TEMPERATURE -> SensorGlyph.Temperature
+    Sensor.TYPE_RELATIVE_HUMIDITY -> SensorGlyph.Humidity
+    Sensor.TYPE_SIGNIFICANT_MOTION,
+    Sensor.TYPE_STATIONARY_DETECT,
+    Sensor.TYPE_MOTION_DETECT -> SensorGlyph.Motion
+    else -> SensorGlyph.Node
 }
 
 /** Brand accent per sensor family so the list reads grouped, not recolored. */

@@ -2,120 +2,186 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.battery
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ashes.dev.works.system.core.internals.antar.data.local.db.BatteryLog
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
-import com.ashes.dev.works.system.core.internals.antar.domain.repository.BatteryRepository
+import com.ashes.dev.works.system.core.internals.antar.domain.model.BatteryRecord
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.LogBatteryReadingUseCase
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.ObserveBatteryHistoryUseCase
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.ObserveBatteryUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
-enum class BatteryMetric {
-    CURRENT, POWER, TEMPERATURE
-}
+@OptIn(ExperimentalCoroutinesApi::class)
+class BatteryViewModel(
+    private val observeBattery: ObserveBatteryUseCase,
+    private val observeBatteryHistory: ObserveBatteryHistoryUseCase,
+    private val logBatteryReading: LogBatteryReadingUseCase
+) : ViewModel() {
 
-enum class HistoryRange {
-    HOURS_24, DAYS_7
-}
+    private data class HistoryWindow(val nowMillis: Long, val records: List<BatteryRecord>)
 
-data class ChargingSession(
-    val startTime: Long,
-    val endTime: Long,
-    val startLevel: Int,
-    val endLevel: Int
-)
+    private data class Selections(val metric: BatteryMetric, val isMetricGraphVisible: Boolean)
 
-class BatteryViewModel(private val batteryRepository: BatteryRepository) : ViewModel() {
+    private val retryTrigger = MutableStateFlow(0)
+    private val selectedMetric = MutableStateFlow(BatteryMetric.CURRENT)
+    private val metricGraphVisible = MutableStateFlow(false) // Hidden by default
+    private val historyRange = MutableStateFlow(HistoryRange.HOURS_24)
 
-    private val _currentHistory = MutableStateFlow<List<Int>>(emptyList())
-    val currentHistory = _currentHistory.asStateFlow()
+    // The rolling live histories live in the ViewModel and survive a pause; they just don't grow
+    // while nobody is watching. Only touched from the collecting coroutine (main thread).
+    private var samples = LiveSamples()
 
-    private val _powerHistory = MutableStateFlow<List<Double>>(emptyList())
-    val powerHistory = _powerHistory.asStateFlow()
+    /** Re-anchors the 24 h / 7 day windows so a screen left open keeps sliding with the clock. */
+    private val clock: Flow<Long> = flow {
+        while (true) {
+            emit(System.currentTimeMillis())
+            delay(HISTORY_REFRESH_MS)
+        }
+    }
 
-    private val _tempHistory = MutableStateFlow<List<Int>>(emptyList())
-    val tempHistory = _tempHistory.asStateFlow()
+    private val weekWindow: Flow<HistoryWindow> = clock.flatMapLatest { now ->
+        observeBatteryHistory(now - WEEK_MS)
+            .map { records -> HistoryWindow(now, records) }
+            .catch { e ->
+                if (e is CancellationException) throw e
+                emit(HistoryWindow(now, emptyList()))
+            }
+    }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(), replay = 1)
 
-    private val _capacityHistory = MutableStateFlow<List<Int>>(emptyList())
-    val capacityHistory = _capacityHistory.asStateFlow()
+    private val history: Flow<BatteryHistory> =
+        combine(weekWindow, historyRange) { window, range -> buildHistory(window, range) }
+            .distinctUntilChanged()
 
-    private val _selectedMetric = MutableStateFlow(BatteryMetric.CURRENT)
-    val selectedMetric = _selectedMetric.asStateFlow()
+    private val chargingSessions: Flow<List<ChargingSession>> =
+        weekWindow.map { extractChargingSessions(it.records) }.distinctUntilChanged()
 
-    private val _showMetricGraph = MutableStateFlow(false) // Hidden by default
-    val showMetricGraph = _showMetricGraph.asStateFlow()
+    private val live: Flow<Pair<AppResult<Battery>, LiveSamples>> =
+        retryTrigger.flatMapLatest { observeBattery() }
+            .map { result ->
+                if (result is AppResult.Success) samples = samples.append(result.data)
+                result to samples
+            }
 
-    private val _selectedHistoryRange = MutableStateFlow(HistoryRange.HOURS_24)
-    val selectedHistoryRange = _selectedHistoryRange.asStateFlow()
-
-    // 24-hour history from DB
-    val history24h = batteryRepository.getBatteryHistory(
-        System.currentTimeMillis() - TimeUnit.HOURS.toMillis(24)
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    // 7-day history from DB
-    val history7d = batteryRepository.getBatteryHistory(
-        System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    // Charging sessions derived from 7-day history
-    val chargingSessions = history7d.map { logs -> extractChargingSessions(logs) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val selections: Flow<Selections> =
+        combine(selectedMetric, metricGraphVisible) { metric, visible -> Selections(metric, visible) }
 
     // Live readings only flow while the Battery screen is collecting (WhileSubscribed), so the
-    // receiver + 2s poll stop in the background. The rolling histories live in the ViewModel and
-    // survive a pause; they just don't grow while nobody is watching.
-    val batteryInfo: StateFlow<Battery?> = batteryRepository.getBatteryInfo()
-        .onEach { battery ->
-            _currentHistory.value = (_currentHistory.value + battery.current).takeLast(100)
-            _powerHistory.value = (_powerHistory.value + battery.power).takeLast(100)
-            _tempHistory.value = (_tempHistory.value + battery.temperature).takeLast(100)
-            _capacityHistory.value = (_capacityHistory.value + battery.remainingCapacity).takeLast(100)
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    // receiver + 2s poll stop in the background.
+    val uiState: StateFlow<BatteryUiState> =
+        combine(live, history, chargingSessions, selections) { (result, liveSamples), historyState, sessions, selection ->
+            when (result) {
+                is AppResult.Success -> BatteryUiState.Content(
+                    battery = result.data,
+                    live = liveSamples,
+                    history = historyState,
+                    chargingSessions = sessions,
+                    selectedMetric = selection.metric,
+                    isMetricGraphVisible = selection.isMetricGraphVisible
+                )
+                is AppResult.Failure -> BatteryUiState.Error(result.error.messageRes())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BatteryUiState.Loading)
 
     init {
         // Log battery on app open so we get an immediate data point
         viewModelScope.launch {
-            batteryRepository.logCurrentBattery()
+            try {
+                logBatteryReading()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Best effort: the background worker logs again on its next run.
+            }
         }
     }
 
-    fun setMetric(metric: BatteryMetric) {
-        _selectedMetric.value = metric
+    fun selectMetric(metric: BatteryMetric) {
+        selectedMetric.value = metric
     }
 
     fun toggleMetricGraph() {
-        _showMetricGraph.value = !_showMetricGraph.value
+        metricGraphVisible.value = !metricGraphVisible.value
     }
 
-    fun setHistoryRange(range: HistoryRange) {
-        _selectedHistoryRange.value = range
+    fun selectHistoryRange(range: HistoryRange) {
+        historyRange.value = range
     }
 
-    private fun extractChargingSessions(logs: List<BatteryLog>): List<ChargingSession> {
-        if (logs.size < 2) return emptyList()
+    fun retry() {
+        retryTrigger.value += 1
+    }
+
+    private fun LiveSamples.append(battery: Battery): LiveSamples = LiveSamples(
+        currentMicroAmps = currentMicroAmps.appendCapped(battery.currentMicroAmps),
+        powerWatts = powerWatts.appendCapped(battery.powerWatts),
+        temperatureDeciCelsius = temperatureDeciCelsius.appendCapped(battery.temperatureDeciCelsius),
+        remainingCapacityMah = remainingCapacityMah.appendCapped(battery.remainingCapacityMah)
+    )
+
+    private fun <T> List<T>.appendCapped(value: T?): List<T> =
+        if (value == null) this else (this + value).takeLast(LIVE_SAMPLE_LIMIT)
+
+    private fun buildHistory(window: HistoryWindow, range: HistoryRange): BatteryHistory {
+        val since = when (range) {
+            HistoryRange.HOURS_24 -> window.nowMillis - DAY_MS
+            HistoryRange.DAYS_7 -> window.nowMillis - WEEK_MS
+        }
+        val records = window.records.filter { it.timestampMillis >= since }
+        if (records.isEmpty()) return BatteryHistory.empty(range)
+
+        val discharging = records.filter { !it.isCharging }
+        val drainPerHour = if (discharging.size >= 2) {
+            val hours = (discharging.last().timestampMillis - discharging.first().timestampMillis) / MILLIS_PER_HOUR
+            if (hours > 0) (discharging.first().levelPercent - discharging.last().levelPercent) / hours else null
+        } else {
+            null
+        }
+
+        return BatteryHistory(
+            range = range,
+            points = records.map { HistoryPoint(it.timestampMillis, it.levelPercent, it.isCharging) },
+            averageLevelPercent = records.map { it.levelPercent }.average(),
+            minLevelPercent = records.minOf { it.levelPercent },
+            maxLevelPercent = records.maxOf { it.levelPercent },
+            drainPercentPerHour = drainPerHour?.takeIf { it > 0 }
+        )
+    }
+
+    private fun extractChargingSessions(records: List<BatteryRecord>): List<ChargingSession> {
+        if (records.size < 2) return emptyList()
 
         val sessions = mutableListOf<ChargingSession>()
-        var sessionStart: BatteryLog? = null
+        var sessionStart: BatteryRecord? = null
 
-        for (i in logs.indices) {
-            val log = logs[i]
-            if (log.isCharging && sessionStart == null) {
-                sessionStart = log
-            } else if (!log.isCharging && sessionStart != null) {
-                val prev = logs[i - 1]
+        for (i in records.indices) {
+            val record = records[i]
+            val start = sessionStart
+            if (record.isCharging && start == null) {
+                sessionStart = record
+            } else if (!record.isCharging && start != null) {
+                val prev = records[i - 1]
                 sessions.add(
                     ChargingSession(
-                        startTime = sessionStart.timestamp,
-                        endTime = prev.timestamp,
-                        startLevel = sessionStart.batteryLevel,
-                        endLevel = prev.batteryLevel
+                        startTimeMillis = start.timestampMillis,
+                        endTimeMillis = prev.timestampMillis,
+                        startLevelPercent = start.levelPercent,
+                        endLevelPercent = prev.levelPercent
                     )
                 )
                 sessionStart = null
@@ -123,18 +189,28 @@ class BatteryViewModel(private val batteryRepository: BatteryRepository) : ViewM
         }
 
         // If still charging at the end
-        if (sessionStart != null) {
-            val last = logs.last()
+        val openStart = sessionStart
+        if (openStart != null) {
+            val last = records.last()
             sessions.add(
                 ChargingSession(
-                    startTime = sessionStart.timestamp,
-                    endTime = last.timestamp,
-                    startLevel = sessionStart.batteryLevel,
-                    endLevel = last.batteryLevel
+                    startTimeMillis = openStart.timestampMillis,
+                    endTimeMillis = last.timestampMillis,
+                    startLevelPercent = openStart.levelPercent,
+                    endLevelPercent = last.levelPercent
                 )
             )
         }
 
-        return sessions.takeLast(10) // Show last 10 sessions
+        return sessions.takeLast(MAX_SESSIONS).asReversed().toList()
+    }
+
+    companion object {
+        const val LIVE_SAMPLE_LIMIT = 100
+        const val MAX_SESSIONS = 10
+        private val DAY_MS = TimeUnit.HOURS.toMillis(24)
+        private val WEEK_MS = TimeUnit.DAYS.toMillis(7)
+        private val HISTORY_REFRESH_MS = TimeUnit.MINUTES.toMillis(15)
+        private const val MILLIS_PER_HOUR = 3_600_000.0
     }
 }

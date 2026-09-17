@@ -1,91 +1,124 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.apps
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ashes.dev.works.system.core.internals.antar.data.local.preferences.ThemePreferences
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.model.AppDetail
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Apps
-import com.ashes.dev.works.system.core.internals.antar.domain.repository.AppsRepository
-import kotlinx.coroutines.Dispatchers
+import com.ashes.dev.works.system.core.internals.antar.domain.model.AppFilter
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.GiveAppsConsentUseCase
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.LoadInstalledAppsUseCase
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.ObserveSettingsUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 class AppsViewModel(
-    private val appsRepository: AppsRepository,
-    private val prefs: ThemePreferences
+    private val loadInstalledApps: LoadInstalledAppsUseCase,
+    private val observeSettings: ObserveSettingsUseCase,
+    private val giveAppsConsent: GiveAppsConsentUseCase,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val _appsState = MutableStateFlow<Apps?>(null)
-    val appsState = _appsState.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
+    private sealed interface Load {
+        data object Idle : Load
+        data object Loading : Load
+        data class Loaded(val apps: List<AppDetail>) : Load
+        data class Failed(val message: Int) : Load
+    }
+
+    private val load = MutableStateFlow<Load>(Load.Idle)
+    private var loadJob: Job? = null
+
+    // Filter, search and the expanded row survive rotation and process death.
+    private val filter = savedStateHandle.getStateFlow(KEY_FILTER, AppFilter.ALL)
+    private val query = savedStateHandle.getStateFlow(KEY_QUERY, "")
+    private val searchOpen = savedStateHandle.getStateFlow(KEY_SEARCH_OPEN, false)
+    private val expanded = savedStateHandle.getStateFlow<String?>(KEY_EXPANDED, null)
+
+    val uiState: StateFlow<AppsUiState> = combine(
+        observeSettings(), load, filter, query, combine(searchOpen, expanded, ::Pair)
+    ) { settings, load, filter, query, (searchOpen, expanded) ->
+        when {
+            !settings.appsConsentGiven -> AppsUiState.ConsentRequired
+            load is Load.Loaded -> AppsUiState.Content(
+                allApps = load.apps,
+                visibleApps = load.apps.filter { app ->
+                    val matchesFilter = when (filter) {
+                        AppFilter.ALL -> true
+                        AppFilter.SYSTEM -> app.isSystemApp
+                        AppFilter.USER -> !app.isSystemApp
+                    }
+                    matchesFilter && (query.isBlank() ||
+                        app.appName.contains(query, ignoreCase = true) ||
+                        app.packageName.contains(query, ignoreCase = true))
+                },
+                filter = filter,
+                query = query,
+                isSearchOpen = searchOpen,
+                expandedPackage = expanded
+            )
+            load is Load.Failed -> AppsUiState.Error(load.message)
+            else -> AppsUiState.Loading
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppsUiState.Loading)
 
     init {
-        // After the user has consented once, never show the disclosure again — load the cached
-        // list instantly (if any) and re-scan in the background to pick up new/removed apps.
-        if (prefs.appsConsentGiven) loadApps()
+        // After the user has consented once, never show the disclosure again: load straight away.
+        viewModelScope.launch {
+            if (observeSettings().first().appsConsentGiven) loadApps()
+        }
     }
 
     /** Called from the one-time disclosure. Records consent, then loads. */
     fun giveConsent() {
-        prefs.appsConsentGiven = true
-        loadApps()
+        viewModelScope.launch {
+            giveAppsConsent()
+            loadApps()
+        }
     }
 
     fun loadApps() {
-        if (_appsState.value != null || _isLoading.value) return
-        viewModelScope.launch(Dispatchers.IO) {
-            // 1) Show the cached list immediately (no spinner) for an instant open.
-            val cached = decodeApps(prefs.cachedAppsRaw)
-            if (cached.isNotEmpty()) {
-                _appsState.value = Apps("${cached.size} apps installed", cached)
-            }
-            // 2) Re-scan and sync. Spinner only if we had nothing cached to show.
-            if (_appsState.value == null) _isLoading.value = true
-            try {
-                val fresh = appsRepository.getApps()
-                _appsState.value = fresh
-                prefs.cachedAppsRaw = encodeApps(fresh.appList)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: RuntimeException) {
-                // PackageManager can die mid-scan ("Package manager has died") on devices with very
-                // many packages. Keep the cached list if we have one instead of crashing the app.
-            } finally {
-                _isLoading.value = false
+        if (loadJob?.isActive == true) return
+        loadJob = viewModelScope.launch {
+            if (load.value !is Load.Loaded) load.value = Load.Loading
+            loadInstalledApps().collect { result ->
+                load.value = when (result) {
+                    is AppResult.Success -> Load.Loaded(result.data)
+                    is AppResult.Failure -> Load.Failed(result.error.messageRes())
+                }
             }
         }
     }
 
-    // ── Lightweight cache (metadata only; icons are loaded per-row in the UI) ──
-    private fun encodeApps(list: List<AppDetail>): String =
-        list.joinToString(REC) { a ->
-            listOf(a.appName, a.packageName, a.version, a.apiLevelTag, a.architectureTag, a.isSystemApp.toString())
-                .joinToString(FIELD)
-        }
+    fun setFilter(value: AppFilter) {
+        savedStateHandle[KEY_FILTER] = value
+    }
 
-    private fun decodeApps(raw: String): List<AppDetail> {
-        if (raw.isEmpty()) return emptyList()
-        return raw.split(REC).mapNotNull { row ->
-            val p = row.split(FIELD)
-            if (p.size < 6) return@mapNotNull null
-            AppDetail(
-                appName = p[0],
-                packageName = p[1],
-                version = p[2],
-                apiLevelTag = p[3],
-                architectureTag = p[4],
-                isSystemApp = p[5].toBoolean(),
-                icon = null
-            )
-        }
+    fun setQuery(value: String) {
+        savedStateHandle[KEY_QUERY] = value
+    }
+
+    fun toggleSearch() {
+        val open = !searchOpen.value
+        savedStateHandle[KEY_SEARCH_OPEN] = open
+        if (!open) savedStateHandle[KEY_QUERY] = ""
+    }
+
+    fun toggleExpanded(packageName: String) {
+        savedStateHandle[KEY_EXPANDED] = if (expanded.value == packageName) null else packageName
     }
 
     private companion object {
-        // Printable separators unlikely to occur in app names / package ids.
-        const val FIELD = "|@F@|"
-        const val REC = "|@R@|"
+        const val KEY_FILTER = "apps_filter"
+        const val KEY_QUERY = "apps_query"
+        const val KEY_SEARCH_OPEN = "apps_search_open"
+        const val KEY_EXPANDED = "apps_expanded"
     }
 }

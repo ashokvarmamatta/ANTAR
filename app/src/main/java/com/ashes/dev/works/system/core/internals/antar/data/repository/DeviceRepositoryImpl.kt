@@ -2,97 +2,98 @@ package com.ashes.dev.works.system.core.internals.antar.data.repository
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import android.telephony.TelephonyManager
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Device
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.common.appResultOf
+import com.ashes.dev.works.system.core.internals.antar.domain.model.DeviceInfo
+import com.ashes.dev.works.system.core.internals.antar.domain.model.DeviceType
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.DeviceRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
-class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
+/**
+ * Device facts. Everything here is a cheap in-memory read, and several values (device name,
+ * operator, data state, USB debugging) can change while the app runs, so nothing is cached.
+ */
+class DeviceRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : DeviceRepository {
 
-    private var cachedDevice: Device? = null
+    override suspend fun getDeviceInfo(): AppResult<DeviceInfo> = withContext(io) {
+        appResultOf {
+            val telephony = telephonyManagerOrNull()
 
-    override fun getDevice(): Device {
-        cachedDevice?.let { return it }
-
-        val adbEnabled = try {
-            Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0)
-        } catch (e: Exception) {
-            0
+            DeviceInfo(
+                deviceName = friendlyDeviceName() ?: Build.MODEL,
+                model = Build.MODEL,
+                manufacturer = Build.MANUFACTURER,
+                device = Build.DEVICE,
+                board = Build.BOARD,
+                hardware = Build.HARDWARE,
+                brand = Build.BRAND,
+                androidId = readAndroidId(),
+                hardwareSerial = legacySerial(),
+                isHardwareSerialRestricted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
+                buildFingerprint = Build.FINGERPRINT,
+                deviceType = if (context.resources.configuration.smallestScreenWidthDp >= TABLET_MIN_WIDTH_DP) {
+                    DeviceType.TABLET
+                } else {
+                    DeviceType.PHONE
+                },
+                networkOperator = telephony?.let { tm ->
+                    runCatching { tm.networkOperatorName }.getOrNull()?.takeIf { it.isNotBlank() }
+                },
+                // dataNetworkType needs READ_PHONE_STATE on API 30+; the data state is unprivileged.
+                isMobileDataConnected = telephony?.let { tm ->
+                    runCatching { tm.dataState == TelephonyManager.DATA_CONNECTED }.getOrNull()
+                },
+                isUsbDebuggingEnabled = runCatching {
+                    Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
+                }.getOrNull()
+            )
         }
+    }
 
-        val friendlyName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+    private fun friendlyDeviceName(): String? {
+        val globalName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            runCatching { Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME) }.getOrNull()
         } else {
             null
-        } ?: Settings.Secure.getString(context.contentResolver, "bluetooth_name")
-          ?: Build.MODEL
-
-        val device = Device(
-            deviceName = friendlyName,
-            model = Build.MODEL,
-            manufacturer = Build.MANUFACTURER,
-            device = Build.DEVICE,
-            board = Build.BOARD,
-            hardware = Build.HARDWARE,
-            brand = Build.BRAND,
-            androidDeviceId = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ANDROID_ID
-            ) ?: "- - -",
-            hardwareSerial = getHardwareSerial(),
-            buildFingerprint = Build.FINGERPRINT,
-            deviceType = if (context.resources.configuration.smallestScreenWidthDp >= 600) "Tablet" else "Phone",
-            networkOperator = (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).networkOperatorName
-                ?: "- - -",
-            networkType = getNetworkType(),
-            wifiMacAddress = getWifiMacAddress(),
-            bluetoothMacAddress = getBluetoothMacAddress(),
-            usbDebugging = if (adbEnabled == 1) "Enabled" else "Disabled",
-            supports6G = get6GSupport()
-        )
-        cachedDevice = device
-        return device
-    }
-
-    private fun get6GSupport(): String {
-        return "No"
-    }
-
-    @SuppressLint("HardwareIds")
-    private fun getHardwareSerial(): String {
-        // Build.SERIAL was deprecated in API 26 and Build.getSerial() requires READ_PHONE_STATE
-        // (Phone permission group). ANTAR no longer holds that permission, so we expose only the
-        // legacy value (which itself returns "unknown" on most modern devices).
-        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            @Suppress("DEPRECATION")
-            Build.SERIAL ?: "Unknown"
-        } else {
-            "Restricted by Android"
         }
+        return globalName?.takeIf { it.isNotBlank() }
+            ?: runCatching { Settings.Secure.getString(context.contentResolver, BLUETOOTH_NAME_SETTING) }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
     }
 
     @SuppressLint("HardwareIds")
-    private fun getWifiMacAddress(): String {
-        return "Not available"
+    private fun readAndroidId(): String? = runCatching {
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+
+    /**
+     * Build.SERIAL was deprecated in API 26 and Build.getSerial() needs READ_PHONE_STATE, which ANTAR
+     * does not hold, so only the legacy value below Android 8.0 is exposed.
+     */
+    private fun legacySerial(): String? =
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            @Suppress("DEPRECATION")
+            Build.SERIAL?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+
+    private fun telephonyManagerOrNull(): TelephonyManager? {
+        if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return null
+        return context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
     }
 
-    @SuppressLint("HardwareIds")
-    private fun getBluetoothMacAddress(): String {
-        return "Not available"
-    }
-
-    override fun getDeviceFlow(): Flow<Device> = flow {
-        emit(getDevice())
-    }
-
-    private fun getNetworkType(): String {
-        // TelephonyManager.dataNetworkType requires READ_PHONE_STATE on API 30+. Without that
-        // permission we fall back to the data-connection state, which is unprivileged.
-        val telephonyManager =
-            context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        return if (telephonyManager.dataState == TelephonyManager.DATA_CONNECTED) "Connected" else "Disconnected"
+    private companion object {
+        const val TABLET_MIN_WIDTH_DP = 600
+        const val BLUETOOTH_NAME_SETTING = "bluetooth_name"
     }
 }

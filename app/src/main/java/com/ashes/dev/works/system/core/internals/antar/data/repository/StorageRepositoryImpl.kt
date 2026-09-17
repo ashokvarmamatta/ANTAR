@@ -4,167 +4,154 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Storage
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.common.appResultOf
+import com.ashes.dev.works.system.core.internals.antar.domain.model.MemoryUsage
+import com.ashes.dev.works.system.core.internals.antar.domain.model.RamType
+import com.ashes.dev.works.system.core.internals.antar.domain.model.StorageInfo
+import com.ashes.dev.works.system.core.internals.antar.domain.model.VolumeUsage
 import com.ashes.dev.works.system.core.internals.antar.domain.repository.StorageRepository
-import java.io.BufferedReader
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileReader
-import java.io.InputStreamReader
-import java.util.Locale
 
-class StorageRepositoryImpl(private val context: Context) : StorageRepository {
+class StorageRepositoryImpl(
+    private val context: Context,
+    private val io: CoroutineDispatcher
+) : StorageRepository {
 
-    // RAM type is fixed hardware; resolving it forks up to 6 `getprop` processes, so do it once.
-    private val cachedRamType: String by lazy { getRamType() }
+    /**
+     * RAM type is fixed hardware and resolving it forks several `getprop` processes, so it is read
+     * once. SYNCHRONIZED (the default) makes concurrent first reads safe; it is only touched on [io].
+     */
+    private val ramType: RamType? by lazy { readRamType() }
 
-    override fun getStorage(): Storage {
-        // RAM Info
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val memoryInfo = ActivityManager.MemoryInfo()
-        activityManager.getMemoryInfo(memoryInfo)
-        val totalRam = memoryInfo.totalMem
-        val freeRam = memoryInfo.availMem
-        val usedRam = totalRam - freeRam
+    override suspend fun getStorageInfo(): AppResult<StorageInfo> = withContext(io) {
+        appResultOf {
+            val activityManager = context.getSystemService(ActivityManager::class.java)
+            val memoryInfo = ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memoryInfo)
 
-        // Internal Storage (Data partition - usually what user sees as internal storage)
-        val dataDir = Environment.getDataDirectory()
-        val internalStatFs = StatFs(dataDir.path)
-        val totalInternal = internalStatFs.blockCountLong * internalStatFs.blockSizeLong
-        val freeInternal = internalStatFs.availableBlocksLong * internalStatFs.blockSizeLong
-        val usedInternal = totalInternal - freeInternal
+            val mounts = readMounts()
+            val sharedDir = sharedStorageDirectory()
+            val dataDir = Environment.getDataDirectory()
 
-        // System Storage (/system partition)
-        val systemDir = File("/system")
-        val systemStatFs = StatFs(systemDir.path)
-        val totalSystem = systemStatFs.blockCountLong * systemStatFs.blockSizeLong
-        val freeSystem = systemStatFs.availableBlocksLong * systemStatFs.blockSizeLong
-        val usedSystem = totalSystem - freeSystem
+            StorageInfo(
+                ram = MemoryUsage(totalBytes = memoryInfo.totalMem, availableBytes = memoryInfo.availMem),
+                ramType = ramType,
+                internalStorage = volumeUsage(sharedDir, mounts),
+                systemPartition = try {
+                    volumeUsage(File(SYSTEM_PATH), mounts)
+                } catch (e: IllegalArgumentException) {
+                    // StatFs throws IllegalArgumentException when the path cannot be stat-ed.
+                    null
+                },
+                dataPartition = volumeUsage(dataDir, mounts)
+            )
+        }
+    }
 
-        // External Storage (Public directory)
-        val externalDir = Environment.getExternalStorageDirectory()
-        val externalStatFs = StatFs(externalDir.path)
-        val totalExternal = externalStatFs.blockCountLong * externalStatFs.blockSizeLong
-        val freeExternal = externalStatFs.availableBlocksLong * externalStatFs.blockSizeLong
-        val usedExternal = totalExternal - freeExternal
+    @Suppress("DEPRECATION") // The public shared-storage root; only its size is read, never its files.
+    private fun sharedStorageDirectory(): File = Environment.getExternalStorageDirectory()
 
-        return Storage(
-            freeMemory = formatSize(freeRam),
-            usedTotalMemory = "${formatSize(usedRam)} / ${formatSize(totalRam)}",
-            usagePercentageRam = "${(usedRam.toDouble() / totalRam.toDouble() * 100).toInt()}%",
-            ramType = cachedRamType,
-            
-            internalStoragePath = externalDir.absolutePath, // Usually /storage/emulated/0
-            usedTotalFreeInternal = "${formatSize(usedExternal)} / ${formatSize(totalExternal)} / ${formatSize(freeExternal)}",
-            usagePercentageInternal = "${(usedExternal.toDouble() / totalExternal.toDouble() * 100).toInt()}%",
-            
-            systemStorageFileSystemType = getFsType(systemDir),
-            systemStoragePath = systemDir.absolutePath,
-            systemStorageUsageProgress = "${(usedSystem.toDouble() / totalSystem.toDouble() * 100).toInt()}%",
-            usedTotalFreeSystem = "${formatSize(usedSystem)} / ${formatSize(totalSystem)} / ${formatSize(freeSystem)}",
-            
-            internalStorageDataFileSystemType = getFsType(dataDir),
-            internalStorageDataPath = dataDir.absolutePath,
-            internalStorageDataUsageProgress = "${(usedInternal.toDouble() / totalInternal.toDouble() * 100).toInt()}%",
-            usedTotalFreeInternalData = "${formatSize(usedInternal)} / ${formatSize(totalInternal)} / ${formatSize(freeInternal)}"
+    private fun volumeUsage(dir: File, mounts: List<MountEntry>): VolumeUsage {
+        val statFs = StatFs(dir.path)
+        return VolumeUsage(
+            path = dir.absolutePath,
+            totalBytes = statFs.blockCountLong * statFs.blockSizeLong,
+            freeBytes = statFs.availableBlocksLong * statFs.blockSizeLong,
+            fileSystemType = fileSystemType(dir.absolutePath, mounts)
         )
     }
 
-    private fun getRamType(): String {
-        val properties = listOf(
+    /** Filesystem of the deepest mount point containing [path]; the last mount wins on overmounts. */
+    private fun fileSystemType(path: String, mounts: List<MountEntry>): String? {
+        val containing = mounts.filter { entry ->
+            val prefix = entry.mountPoint.trimEnd('/') + "/"
+            path == entry.mountPoint || path.startsWith(prefix)
+        }
+        val deepest = containing.maxOfOrNull { it.mountPoint.length } ?: return null
+        return containing.lastOrNull { it.mountPoint.length == deepest }?.fileSystemType
+    }
+
+    /** Mount table of this process's namespace: `device mountPoint fsType options dump pass`. */
+    private fun readMounts(): List<MountEntry> {
+        val text = try {
+            File(MOUNTS_PATH).readText()
+        } catch (e: Exception) {
+            return emptyList()
+        }
+        return text.lineSequence().mapNotNull { line ->
+            val parts = line.trim().split(WHITESPACE)
+            if (parts.size < 3) {
+                null
+            } else {
+                // The kernel escapes spaces in mount points as \040.
+                MountEntry(mountPoint = parts[1].replace("\\040", " "), fileSystemType = parts[2])
+            }
+        }.toList()
+    }
+
+    /**
+     * Only an explicit module name reported by the device counts (e.g. "LPDDR4X"). Numeric codes are
+     * vendor specific and are not decoded, because a guessed type would be invented hardware.
+     */
+    private fun readRamType(): RamType? {
+        val fromProperties = RAM_TYPE_PROPERTIES.firstNotNullOfOrNull { key ->
+            readSystemProperty(key)?.let { parseRamType(it) }
+        }
+        if (fromProperties != null) return fromProperties
+
+        return RAM_TYPE_FILES.firstNotNullOfOrNull { path ->
+            val content = try {
+                File(path).readText()
+            } catch (e: Exception) {
+                null
+            }
+            content?.let { parseRamType(it) }
+        }
+    }
+
+    private fun parseRamType(raw: String): RamType? {
+        val match = RAM_TYPE_TOKEN.find(raw) ?: return null
+        val token = match.value.uppercase().replace(WHITESPACE, "").replace("-", "")
+        return RamType.entries.firstOrNull { it.token == token }
+    }
+
+    private fun readSystemProperty(key: String): String? = try {
+        val process = ProcessBuilder("getprop", key).start()
+        try {
+            process.inputStream.bufferedReader().use { it.readLine() }?.trim()?.takeIf { it.isNotEmpty() }
+        } finally {
+            process.destroy()
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private data class MountEntry(val mountPoint: String, val fileSystemType: String)
+
+    private companion object {
+        const val SYSTEM_PATH = "/system"
+        const val MOUNTS_PATH = "/proc/self/mounts"
+
+        val WHITESPACE = Regex("\\s+")
+
+        /** LPDDR4X, lpddr5, LP-DDR5X, DDR4 ... The optional suffix is X or T. */
+        val RAM_TYPE_TOKEN = Regex("(LP[- ]?)?DDR\\s?\\d[XT]?(?![A-Z])", RegexOption.IGNORE_CASE)
+
+        val RAM_TYPE_PROPERTIES = listOf(
             "ro.boot.ddr_type",
             "ro.boot.ddr_info",
             "ro.vendor.mtk_ram_type",
             "ro.ram_type",
-            "ro.boot.cpuid",
             "persist.sys.memory_type"
         )
 
-        for (prop in properties) {
-            val value = getSystemProperty(prop)
-            if (value.isNotBlank()) {
-                val decoded = decodeDdrType(prop, value)
-                if (decoded != "Unknown" && decoded != value) return decoded
-                if (decoded.contains("LPDDR", ignoreCase = true)) return decoded
-            }
-        }
-
-        // Check common sysfs paths
-        val sysfsPaths = listOf(
+        val RAM_TYPE_FILES = listOf(
             "/sys/class/memory/lpddr_type",
             "/sys/kernel/debug/clk/ddr_type",
             "/proc/device-tree/memory/lpddr_type"
         )
-        
-        for (path in sysfsPaths) {
-            try {
-                val file = File(path)
-                if (file.exists()) {
-                    val content = file.readText().trim()
-                    if (content.isNotBlank()) {
-                        if (content.all { it.isDigit() }) {
-                             val decoded = decodeDdrType("ro.boot.ddr_type", content)
-                             if (decoded != content) return decoded
-                        }
-                        return if (content.startsWith("LPDDR")) content else "LPDDR$content"
-                    }
-                }
-            } catch (e: Exception) {}
-        }
-
-        return "Unknown" // Never guess a type — a device-info app must not report invented hardware
-    }
-
-    private fun getSystemProperty(key: String): String {
-        return try {
-            val process = Runtime.getRuntime().exec("getprop $key")
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val value = reader.readLine()
-            reader.close()
-            process.destroy()
-            value?.trim() ?: ""
-        } catch (e: Exception) {
-            ""
-        }
-    }
-
-    private fun decodeDdrType(key: String, value: String): String {
-        if (key == "ro.boot.ddr_type" || value.all { it.isDigit() }) {
-            return when (value) {
-                "0" -> "LPDDR3"
-                "1" -> "LPDDR4"
-                "2" -> "LPDDR4X"
-                "3" -> "LPDDR5"
-                "4" -> "LPDDR5X"
-                "5" -> "LPDDR5T"
-                "6" -> "LPDDR6"
-                else -> value
-            }
-        }
-        if (value.contains("LPDDR", ignoreCase = true)) return value
-        return value
-    }
-
-    private fun getFsType(file: File): String {
-        return try {
-            val statFs = StatFs(file.path)
-            // Note: Modern Android doesn't easily expose FS type via StatFs, 
-            // but we can try to detect or just return a placeholder if restricted.
-            // For now, let's just return "Ext4/F2FS" as they are most common.
-            "F2FS/Ext4" 
-        } catch (e: Exception) {
-            "Unknown"
-        }
-    }
-
-    private fun formatSize(size: Long): String {
-        if (size <= 0) return "0 B"
-        val suffix = arrayOf("B", "KB", "MB", "GB", "TB")
-        var fSize = size.toDouble()
-        var i = 0
-        while (fSize >= 1024 && i < suffix.size - 1) {
-            fSize /= 1024
-            i++
-        }
-        return String.format(Locale.getDefault(), "%.2f %s", fSize, suffix[i])
     }
 }

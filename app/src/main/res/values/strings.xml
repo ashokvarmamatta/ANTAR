@@ -1,3 +1,934 @@
 <resources>
     <string name="app_name">Antar - Device info</string>
+
+    <!-- Shared -->
+    <!-- Toast after a value was copied; %1$s is the label of the copied row, e.g. "Android device ID" -->
+    <string name="common_copied">Copied %1$s</string>
+    <!-- Accessibility label of the copy button; %1$s is the row label -->
+    <string name="common_copy_value">Copy %1$s</string>
+    <!-- Inline "Label:" prefix; %1$s is the label -->
+    <string name="common_label_value_prefix">%1$s:\u0020</string>
+    <string name="common_retry">Try again</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_no">No</string>
+    <string name="common_enabled">Enabled</string>
+    <string name="common_disabled">Disabled</string>
+    <string name="common_supported">Supported</string>
+    <string name="common_not_supported">Not supported</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_error_generic">Couldn\'t read this information. Try again.</string>
+    <string name="common_error_unavailable">This device doesn\'t share this information.</string>
+    <string name="common_error_permission">ANTAR needs permission to show this information.</string>
+
+    <!-- Permissions (shared gate) -->
+    <string name="permission_grant">Grant permission</string>
+    <string name="permission_allow">Allow</string>
+    <string name="permission_not_now">Not now</string>
+    <string name="permission_open_settings">Open settings</string>
+    <string name="permission_denied_body">Android won\'t ask again. Turn the permission on in ANTAR\'s app settings.</string>
+
+    <string name="common_back">Back</string>
+
+    <!-- Splash -->
+    <string name="splash_brand" translatable="false">ANTAR</string>
+    <string name="splash_tagline">SYSTEM · INTERNALS</string>
+
+    <!-- Exit dialog -->
+    <string name="exit_title">Leave ANTAR?</string>
+    <string name="exit_body">Your device stats will be right here when you come back.</string>
+    <string name="exit_stay">Stay</string>
+    <string name="exit_confirm">Exit</string>
+
+    <!-- Privacy summary sheet -->
+    <string name="privacy_title">Nothing leaves your device</string>
+    <string name="privacy_subtitle">ANTAR has no servers, no analytics, no ads and no accounts.</string>
+    <string name="privacy_reads_title">What ANTAR reads</string>
+    <string name="privacy_reads_body">Device specs, CPU, battery, storage, display, network, sensors, camera capabilities and, if you allow it, your installed apps. Read live from the hardware and shown only to you.</string>
+    <string name="privacy_shared_title">What is collected or shared</string>
+    <string name="privacy_shared_body">Nothing. The app has no internet access, so no reading can be uploaded, logged remotely or sold.</string>
+    <string name="privacy_stored_title">What stays stored</string>
+    <string name="privacy_stored_body">Your preferences, a 30-day battery history and a cached list of installed apps, all on this device. Uninstalling the app removes them from this phone.</string>
+    <string name="privacy_read_policy">Read the full privacy policy</string>
+
+    <!-- Intro -->
+    <string name="intro_device_title">Know your device</string>
+    <string name="intro_device_body">Every spec on one live dashboard: CPU, battery, display, storage, network and more.</string>
+    <string name="intro_chip_title">Straight from the silicon</string>
+    <string name="intro_chip_body">ANTAR reads the hardware directly: cores, clocks, thermals and chipset details.</string>
+    <string name="intro_sensors_title">Sensors, live</string>
+    <string name="intro_sensors_body">Watch every sensor stream in real time: motion, light, pressure and position.</string>
+    <string name="intro_privacy_title">Private by design</string>
+    <string name="intro_privacy_body">Everything is read on your device and stays on your device. No accounts, no uploads.</string>
+    <string name="intro_skip">Skip</string>
+    <string name="intro_get_started">Get started</string>
+    <string name="intro_next_page">Next page</string>
+
+    <!-- Main tabs -->
+    <string name="tab_dashboard">Dashboard</string>
+    <string name="tab_device">Device</string>
+    <string name="tab_system">System</string>
+    <string name="tab_cpu">CPU</string>
+    <string name="tab_battery">Battery</string>
+    <string name="tab_location">Location</string>
+    <string name="tab_network">Network</string>
+    <string name="tab_storage">Storage</string>
+    <string name="tab_display">Display</string>
+    <string name="tab_sensors">Sensors</string>
+    <string name="tab_apps">Apps</string>
+    <string name="tab_camera">Camera</string>
+    <string name="main_open_settings">Open settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_brand" translatable="false">ANTAR</string>
+    <!-- %1$s app version name, e.g. 1.5.0 -->
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_apply">Apply</string>
+    <string name="settings_section_theme">App theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_colors">Dynamic colors</string>
+    <string name="settings_dynamic_colors_summary">Match your wallpaper (Material You)</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_accent_hint">Tap a color, then Apply</string>
+    <string name="settings_accent_disabled_hint">Turn off dynamic colors to use a custom accent</string>
+    <string name="settings_accent_selected">Selected accent color</string>
+    <string name="settings_section_motion">Motion</string>
+    <string name="settings_motion_summary">How lively transitions and press feedback feel. Lower it for a calmer UI or older devices.</string>
+    <string name="settings_motion_low">Low</string>
+    <string name="settings_motion_medium">Medium</string>
+    <string name="settings_motion_high">High</string>
+    <string name="settings_section_privacy">Privacy &amp; data</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_data_deletion">Request data deletion</string>
+    <string name="settings_data_deletion_summary">ANTAR stores nothing off-device. Open app info to clear local data.</string>
+    <string name="settings_what_collected">What ANTAR collects</string>
+    <string name="settings_what_collected_summary">Nothing leaves your device. See the summary.</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_label_app_name">App name</string>
+    <string name="settings_label_version">Version</string>
+    <string name="settings_rate_app">Rate the app</string>
+    <string name="settings_rate_app_summary">Support us on the Play Store</string>
+    <string name="settings_developer">Developer</string>
+    <string name="settings_no_browser">No browser found.</string>
+    <string name="settings_cannot_open_app_settings">Can\'t open app settings.</string>
+
+    <!-- Dashboard -->
+    <!-- %1$s Android version number, e.g. 16 -->
+    <string name="dashboard_android_version">Android %1$s</string>
+    <string name="dashboard_ram">RAM</string>
+    <!-- %1$s formatted size, e.g. 7.15 GB -->
+    <string name="dashboard_total">%1$s total</string>
+    <!-- %1$s formatted size -->
+    <string name="dashboard_used">%1$s used</string>
+    <!-- %1$s formatted size -->
+    <string name="dashboard_free">%1$s free</string>
+    <string name="dashboard_internal_storage">INTERNAL STORAGE</string>
+    <!-- %1$s formatted percentage, e.g. 96% -->
+    <string name="dashboard_percent_used">%1$s used</string>
+    <string name="dashboard_power_source">POWER SOURCE</string>
+    <!-- %1$d battery level in percent -->
+    <string name="dashboard_percent_charged">%1$d%% charged</string>
+    <string name="dashboard_charging">Charging</string>
+    <string name="dashboard_discharging">Discharging</string>
+    <!-- %1$f battery temperature in degrees Celsius -->
+    <string name="dashboard_temperature">%1$.1f °C</string>
+    <!-- %1$f battery voltage in volts -->
+    <string name="dashboard_voltage">%1$.3f V</string>
+    <!-- Separator between short facts on one line -->
+    <string name="dashboard_separator"> • </string>
+    <string name="dashboard_processor">PROCESSOR</string>
+    <!-- %1$s core count text (e.g. "8 Cores"), %2$d current frequency in MHz -->
+    <string name="dashboard_cores_and_frequency">%1$s · %2$d MHz</string>
+    <string name="dashboard_sensors">SENSORS</string>
+    <string name="dashboard_applications">APPLICATIONS</string>
+    <string name="dashboard_apps_tap_to_allow">Open Apps to allow</string>
+    <string name="dashboard_uptime">UPTIME</string>
+
+    <!-- Apps tab -->
+    <string name="apps_filter_all">All</string>
+    <string name="apps_filter_system">System</string>
+    <string name="apps_filter_user">User</string>
+    <string name="apps_search_open">Search apps</string>
+    <string name="apps_search_close">Close search</string>
+    <string name="apps_search_hint">Search apps…</string>
+    <string name="apps_empty_search">No apps match your search.</string>
+    <plurals name="apps_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+    <string name="apps_disclosure_title">Installed apps inventory</string>
+    <string name="apps_disclosure_what">ANTAR reads the list of installed apps only when you open this screen, so it can show app names, package names, versions, target SDK levels, architecture and system-app status.</string>
+    <string name="apps_disclosure_storage">A copy of the list is kept on this device only, so the screen opens instantly. It is never uploaded, shared or used for advertising or analytics.</string>
+    <string name="apps_disclosure_continue">Continue</string>
+    <!-- Short label before the app version in a list row -->
+    <string name="apps_label_version">Ver</string>
+    <!-- Short label before the app\'s target Android API level -->
+    <string name="apps_label_api">API</string>
+    <string name="apps_action_app_info">App info</string>
+    <string name="apps_action_open">Open</string>
+    <string name="apps_cannot_open">This app can\'t be opened.</string>
+
+    <!-- Display tab -->
+    <string name="display_section_screen">Screen</string>
+    <string name="display_section_metrics">Metrics</string>
+    <string name="display_chip_refresh">Refresh</string>
+    <string name="display_chip_hdr">HDR</string>
+    <string name="display_chip_dpi">DPI</string>
+    <string name="display_label_name">Name</string>
+    <string name="display_label_height">Screen height</string>
+    <string name="display_label_width">Screen width</string>
+    <string name="display_label_size">Screen size</string>
+    <string name="display_label_physical_size">Physical size</string>
+    <string name="display_label_orientation">Orientation</string>
+    <string name="display_label_refresh_rate">Refresh rate</string>
+    <string name="display_label_hdr">HDR</string>
+    <string name="display_label_brightness_mode">Brightness mode</string>
+    <string name="display_label_screen_timeout">Screen timeout</string>
+    <string name="display_label_density_bucket">Display bucket</string>
+    <string name="display_label_density_dpi">Display dpi</string>
+    <string name="display_label_xdpi">xdpi</string>
+    <string name="display_label_ydpi">ydpi</string>
+    <string name="display_label_logical_density">Logical density</string>
+    <string name="display_label_scaled_density">Scaled density</string>
+    <string name="display_label_font_scale">Font scale</string>
+    <string name="display_orientation_portrait">Portrait</string>
+    <string name="display_orientation_landscape">Landscape</string>
+    <string name="display_brightness_automatic">Automatic</string>
+    <string name="display_brightness_manual">Manual</string>
+    <!-- %1$d width in pixels, %2$d height in pixels -->
+    <string name="display_value_resolution">%1$d × %2$d</string>
+    <!-- %1$f refresh rate in hertz -->
+    <string name="display_value_refresh_rate">%1$.2f Hz</string>
+    <!-- %1$f screen diagonal in inches -->
+    <string name="display_value_diagonal">%1$.2f″</string>
+    <!-- %1$s screen diagonal, %2$s refresh rate -->
+    <string name="display_value_size_and_refresh">%1$s • %2$s</string>
+    <!-- %1$f width in millimetres, %2$f height in millimetres -->
+    <string name="display_value_physical_size">%1$.1f × %2$.1f mm</string>
+    <!-- %1$d number of seconds -->
+    <string name="display_value_seconds">%1$d s</string>
+    <!-- %1$f dots per inch -->
+    <string name="display_value_dpi_decimal">%1$.3f</string>
+
+    <!-- battery -->
+    <!-- Battery tab -->
+
+    <!-- Level ring -->
+    <!-- Large number in the middle of the level ring; %1$.1f is the battery level, e.g. "87.4" -->
+    <string name="battery_value_level_number">%1$.1f</string>
+    <!-- Small percent sign drawn next to the level number in the ring -->
+    <string name="battery_unit_percent" formatted="false">%</string>
+    <!-- Badge under the level ring; %1$d is the battery charge cycle count -->
+    <plurals name="battery_cycles_count">
+        <item quantity="one">%1$d cycle</item>
+        <item quantity="other">%1$d cycles</item>
+    </plurals>
+    <!-- Accessibility description of the level ring; %1$d is the battery level in percent -->
+    <string name="battery_cd_level_ring">Battery level %1$d%%</string>
+
+    <!-- Live capacity card -->
+    <string name="battery_state_charging">Charging</string>
+    <string name="battery_state_discharging">Discharging</string>
+    <string name="battery_cd_battery">Battery</string>
+    <!-- Shown while the first live readings arrive -->
+    <string name="battery_collecting_data">Collecting data…</string>
+
+    <!-- Stored history card -->
+    <string name="battery_history_title">Battery history</string>
+    <!-- Number of stored readings shown in the chart; %1$d is the count -->
+    <plurals name="battery_history_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <!-- Range toggle: last 24 hours -->
+    <string name="battery_range_24h">Last 24h</string>
+    <!-- Range toggle: last 7 days -->
+    <string name="battery_range_7d">Last 7 days</string>
+    <!-- Short label under the average battery level of the range -->
+    <string name="battery_stat_average">Avg</string>
+    <!-- Short label under the lowest battery level of the range -->
+    <string name="battery_stat_min">Min</string>
+    <!-- Short label under the highest battery level of the range -->
+    <string name="battery_stat_max">Max</string>
+    <!-- Short label under the average drain per hour while not charging -->
+    <string name="battery_stat_drain_per_hour">Drain/hr</string>
+    <string name="battery_history_empty_title">App just installed!</string>
+    <string name="battery_history_empty_body">Need more data to show (at least 30 min)</string>
+    <string name="battery_history_empty_hint">Battery is tracked in the background automatically</string>
+
+    <!-- Charging sessions -->
+    <string name="battery_sessions_title">Charging sessions</string>
+    <!-- Count next to the charging sessions title; %1$d is the number of sessions -->
+    <plurals name="battery_sessions_count">
+        <item quantity="one">%1$d session</item>
+        <item quantity="other">%1$d sessions</item>
+    </plurals>
+    <!-- Accessibility label of the button that expands a collapsed section -->
+    <string name="battery_cd_expand">Show details</string>
+    <!-- Accessibility label of the button that collapses an expanded section -->
+    <string name="battery_cd_collapse">Hide details</string>
+    <!-- Level at the start and end of a charging session; %1$d start percent, %2$d end percent -->
+    <string name="battery_session_levels">%1$d%% → %2$d%%</string>
+    <!-- Charge gained in a session; %1$d is the percentage points gained -->
+    <string name="battery_session_gained">+%1$d%%</string>
+    <!-- Session length; %1$d hours, %2$d minutes -->
+    <string name="battery_duration_hours_minutes">%1$dh %2$dm</string>
+    <!-- Session length under an hour; %1$d minutes -->
+    <string name="battery_duration_minutes">%1$dm</string>
+
+    <!-- Live metrics card -->
+    <string name="battery_metrics_title">Battery metrics</string>
+    <string name="battery_metric_current">Current</string>
+    <string name="battery_metric_power">Power</string>
+    <string name="battery_metric_temperature">Temperature</string>
+    <!-- Shown in a live chart that has no readings yet -->
+    <string name="battery_no_data">No data</string>
+
+    <!-- Battery info card -->
+    <string name="battery_section_info">Battery info</string>
+    <string name="battery_label_health">Health</string>
+    <!-- Estimated max capacity compared with design capacity -->
+    <string name="battery_label_capacity_health">Battery health</string>
+    <string name="battery_label_temperature">Temperature</string>
+    <string name="battery_label_charger_type">Charger type</string>
+    <!-- Battery chemistry, e.g. Li-ion -->
+    <string name="battery_label_technology">Technology</string>
+    <string name="battery_label_voltage">Voltage</string>
+    <string name="battery_label_design_capacity">Design capacity</string>
+    <string name="battery_label_estimated_max_capacity">Estimated max capacity</string>
+    <string name="battery_label_remaining_capacity">Remaining capacity</string>
+    <string name="battery_label_charge_cycles">Charge cycles</string>
+    <string name="battery_label_current">Current</string>
+    <string name="battery_label_power">Power</string>
+
+    <!-- Values with units -->
+    <!-- %1$d is a charge in milliampere-hours -->
+    <string name="battery_value_mah">%1$d mAh</string>
+    <!-- %1$d is a current in milliamperes -->
+    <string name="battery_value_milliamps">%1$d mA</string>
+    <!-- %1$.2f is a power in watts -->
+    <string name="battery_value_watts">%1$.2f W</string>
+    <!-- %1$.3f is a voltage in volts -->
+    <string name="battery_value_volts">%1$.3f V</string>
+    <!-- %1$.1f is a temperature in degrees Celsius -->
+    <string name="battery_value_celsius">%1$.1f°C</string>
+    <!-- %1$d is a whole percentage -->
+    <string name="battery_value_percent">%1$d%%</string>
+    <!-- %1$.0f is a percentage rounded to a whole number -->
+    <string name="battery_value_percent_rounded">%1$.0f%%</string>
+    <!-- %1$.1f is a percentage with one decimal -->
+    <string name="battery_value_percent_decimal">%1$.1f%%</string>
+
+    <!-- Health reported by Android -->
+    <string name="battery_health_good">Good</string>
+    <string name="battery_health_overheat">Overheat</string>
+    <string name="battery_health_dead">Dead</string>
+    <string name="battery_health_over_voltage">Over voltage</string>
+    <string name="battery_health_unspecified_failure">Unspecified failure</string>
+    <string name="battery_health_cold">Cold</string>
+
+    <!-- What the device is plugged into -->
+    <string name="battery_charger_ac">AC charger (wall)</string>
+    <string name="battery_charger_usb">USB port (slow)</string>
+    <string name="battery_charger_wireless">Wireless</string>
+    <string name="battery_charger_dock">Dock</string>
+    <!-- Not plugged in: running on battery -->
+    <string name="battery_charger_none">Not plugged in</string>
+
+    <!-- Capacity health grade; shown as "<grade> (<percent>)" -->
+    <string name="battery_capacity_excellent">Excellent</string>
+    <string name="battery_capacity_very_good">Very good</string>
+    <string name="battery_capacity_good">Good</string>
+    <string name="battery_capacity_fair">Fair</string>
+    <!-- %1$s is the capacity grade (e.g. "Excellent"), %2$d is the capacity in percent of design -->
+    <string name="battery_value_capacity_health">%1$s (%2$d%%)</string>
+    <!-- camera -->
+    <!-- Camera tab: states -->
+    <string name="camera_empty">No cameras were found on this device.</string>
+
+    <!-- Camera selector -->
+    <!-- Selector card title when megapixels are unknown; %1$s is the Camera2 camera id, e.g. "0" -->
+    <string name="camera_card_camera_id">Camera %1$s</string>
+    <!-- Content description of the check mark on the selected camera card -->
+    <string name="camera_cd_selected">Selected</string>
+    <string name="camera_facing_front">Front</string>
+    <string name="camera_facing_back">Back</string>
+    <string name="camera_facing_external">External</string>
+
+    <!-- Pixel binning notice -->
+    <string name="camera_binning_notice_title">Pixel binning notice</string>
+    <string name="camera_binning_notice_body">These are not the real camera values since they are binned values.</string>
+    <string name="camera_binning_note">Note: the OS is reporting the \'binned\' resolution as the maximum.</string>
+
+    <!-- Section titles -->
+    <string name="camera_section_forensics">Sensor forensics</string>
+    <string name="camera_section_modes">Modes &amp; effects</string>
+    <string name="camera_section_control">Control &amp; hardware</string>
+    <string name="camera_section_lens">Lens &amp; sensor</string>
+    <string name="camera_section_resolution">Resolution &amp; format</string>
+
+    <!-- Sensor forensics labels -->
+    <string name="camera_label_active_array">OS reported active array</string>
+    <!-- RAW_SENSOR is the Camera2 image format name; keep it untranslated -->
+    <string name="camera_label_raw_sensor">RAW_SENSOR support</string>
+    <string name="camera_label_binning">Pixel binning status</string>
+    <string name="camera_label_physical_ids">Physical camera IDs</string>
+    <string name="camera_label_ultra_high_res">Ultra high-res mode (API 31+)</string>
+
+    <!-- Modes & effects labels -->
+    <string name="camera_label_lens_placement">Lens placement</string>
+    <string name="camera_label_megapixels">Megapixels (output)</string>
+    <string name="camera_label_hardware_level">Hardware level</string>
+    <string name="camera_label_aberration_modes">Aberration modes</string>
+    <string name="camera_label_antibanding_modes">Antibanding modes</string>
+    <string name="camera_label_ae_modes">Auto exposure modes</string>
+    <string name="camera_label_fps_ranges">Target FPS ranges</string>
+    <string name="camera_label_compensation_range">Compensation range</string>
+    <string name="camera_label_compensation_step">Compensation step</string>
+    <string name="camera_label_af_modes">Autofocus modes</string>
+    <string name="camera_label_effects">Effects</string>
+    <string name="camera_label_scene_modes">Scene modes</string>
+    <string name="camera_label_video_stabilization">Video stabilization</string>
+    <string name="camera_label_awb_modes">Auto white balance</string>
+
+    <!-- Control & hardware labels -->
+    <string name="camera_label_max_ae_regions">Max AE regions</string>
+    <string name="camera_label_max_af_regions">Max AF regions</string>
+    <string name="camera_label_max_awb_regions">Max AWB regions</string>
+    <string name="camera_label_edge_modes">Edge modes</string>
+    <string name="camera_label_flash_available">Flash available</string>
+    <string name="camera_label_hot_pixel_modes">Hot pixel modes</string>
+
+    <!-- Lens & sensor labels -->
+    <string name="camera_label_thumbnail_sizes">Thumbnail sizes</string>
+    <string name="camera_label_apertures">Apertures</string>
+    <string name="camera_label_filter_densities">Filter densities</string>
+    <string name="camera_label_focal_lengths">Focal lengths</string>
+    <string name="camera_label_optical_stabilization">Optical stabilization</string>
+    <string name="camera_label_focus_calibration">Focus distance calibration</string>
+    <string name="camera_label_capabilities">Camera capabilities</string>
+    <string name="camera_label_max_output_streams">Max output streams</string>
+    <string name="camera_label_max_stalling_streams">Max stalling streams</string>
+    <string name="camera_label_max_raw_streams">Max RAW streams</string>
+    <string name="camera_label_partial_results">Partial results</string>
+    <string name="camera_label_max_digital_zoom">Max digital zoom</string>
+    <string name="camera_label_cropping_type">Cropping type</string>
+
+    <!-- Resolution & format labels -->
+    <string name="camera_label_supported_resolutions">Supported resolutions</string>
+    <string name="camera_label_test_pattern_modes">Test pattern modes</string>
+    <string name="camera_label_color_filter">Color filter</string>
+    <string name="camera_label_sensor_size">Sensor size (physical)</string>
+    <string name="camera_label_timestamp_source">Timestamp source</string>
+    <string name="camera_label_orientation">Orientation</string>
+
+    <!-- Values -->
+    <!-- %1$f megapixels of the largest JPEG output, e.g. "12.5 MP" -->
+    <string name="camera_value_megapixels">%1$.1f MP</string>
+    <!-- %1$d width in pixels, %2$d height in pixels -->
+    <string name="camera_value_size">%1$d × %2$d</string>
+    <!-- Separator between items of a list of values, e.g. "0, 1, 2" -->
+    <string name="camera_list_separator">", "</string>
+    <!-- Shown when the camera reports an empty list -->
+    <string name="camera_value_none">None</string>
+    <string name="camera_value_not_available">Not available</string>
+    <!-- Physical camera IDs: this camera is not backed by several physical cameras -->
+    <string name="camera_value_logical_only">None (logical only)</string>
+    <string name="camera_value_ultra_high_res_unsupported_os">Not supported on this Android version</string>
+    <!-- %1$s the largest high-resolution size, e.g. "8160 × 6120" -->
+    <string name="camera_value_supported_size">Supported: %1$s</string>
+    <!-- %1$d lowest frames per second, %2$d highest frames per second -->
+    <string name="camera_value_fps_range">[%1$d–%2$d]</string>
+    <!-- %1$d lowest exposure compensation step, %2$d highest exposure compensation step -->
+    <string name="camera_value_compensation_range">[%1$d, %2$d]</string>
+    <!-- %1$d numerator, %2$d denominator of an exposure value step, e.g. "1/6" -->
+    <string name="camera_value_fraction">%1$d/%2$d</string>
+    <!-- %1$f sensor width in millimetres, %2$f sensor height in millimetres -->
+    <string name="camera_value_sensor_size">%1$.2f × %2$.2f mm</string>
+    <!-- %1$d sensor orientation in degrees -->
+    <string name="camera_value_degrees">%1$d°</string>
+    <!-- %1$f maximum digital zoom factor, e.g. "8.0×" -->
+    <string name="camera_value_zoom">%1$.1f×</string>
+
+    <!-- Hardware levels (Camera2 INFO_SUPPORTED_HARDWARE_LEVEL) -->
+    <string name="camera_hw_level_legacy">Legacy</string>
+    <string name="camera_hw_level_limited">Limited</string>
+    <string name="camera_hw_level_full">Full</string>
+    <string name="camera_hw_level_3">Level 3</string>
+    <string name="camera_hw_level_external">External</string>
+
+    <!-- Pixel binning status -->
+    <string name="camera_binning_confirmed">Confirmed (array &gt; output)</string>
+    <string name="camera_binning_likely_12mp">Likely 4-in-1 (12 MP output)</string>
+    <string name="camera_binning_likely_16mp">Likely 4-in-1 (16 MP output)</string>
+    <string name="camera_binning_native">OS reporting native size</string>
+
+    <!-- Camera capabilities (Camera2 REQUEST_AVAILABLE_CAPABILITIES) -->
+    <string name="camera_capability_backward_compatible">Backward compatible</string>
+    <string name="camera_capability_manual_sensor">Manual sensor</string>
+    <string name="camera_capability_manual_post_processing">Manual post-processing</string>
+    <string name="camera_capability_raw">RAW</string>
+    <string name="camera_capability_private_reprocessing">Private reprocessing</string>
+    <string name="camera_capability_read_sensor_settings">Read sensor settings</string>
+    <string name="camera_capability_burst_capture">Burst capture</string>
+    <string name="camera_capability_yuv_reprocessing">YUV reprocessing</string>
+    <string name="camera_capability_depth_output">Depth output</string>
+    <string name="camera_capability_high_speed_video">High-speed video</string>
+    <string name="camera_capability_motion_tracking">Motion tracking</string>
+    <string name="camera_capability_logical_multi_camera">Logical multi-camera</string>
+    <string name="camera_capability_monochrome">Monochrome</string>
+    <!-- A capability without a name in this app; %1$d is its numeric Camera2 id -->
+    <string name="camera_capability_other">Capability %1$d</string>
+
+    <!-- Focus distance calibration -->
+    <string name="camera_focus_uncalibrated">Uncalibrated</string>
+    <string name="camera_focus_approximate">Approximate</string>
+    <string name="camera_focus_calibrated">Calibrated</string>
+
+    <!-- Cropping type -->
+    <string name="camera_cropping_center_only">Center only</string>
+    <string name="camera_cropping_freeform">Freeform</string>
+
+    <!-- Color filter arrangements: Bayer pattern codes are technical tokens -->
+    <string name="camera_cfa_rggb" translatable="false">RGGB</string>
+    <string name="camera_cfa_grbg" translatable="false">GRBG</string>
+    <string name="camera_cfa_gbrg" translatable="false">GBRG</string>
+    <string name="camera_cfa_bggr" translatable="false">BGGR</string>
+    <string name="camera_cfa_rgb" translatable="false">RGB</string>
+    <string name="camera_cfa_mono">Monochrome</string>
+    <string name="camera_cfa_nir">Near infrared</string>
+
+    <!-- Sensor timestamp source -->
+    <string name="camera_timestamp_realtime">Realtime</string>
+    <!-- cpu_storage_sensors -->
+
+    <!-- CPU tab -->
+    <string name="cpu_section_processor">Processor</string>
+    <string name="cpu_section_instruction_set">Instruction Set</string>
+    <string name="cpu_section_graphics">Graphics</string>
+    <!-- Title of a card grouping identical cores; %1$s is a comma-separated list of core numbers, e.g. "0, 1, 2, 3" -->
+    <string name="cpu_section_core_group">Processor %1$s</string>
+    <string name="cpu_label_cores">Cores</string>
+    <string name="cpu_label_frequency_range">Frequency Range</string>
+    <string name="cpu_label_processor">Processor</string>
+    <!-- Row showing the CPU architecture token, e.g. aarch64 -->
+    <string name="cpu_label_struct">Struct</string>
+    <string name="cpu_label_frequency">Frequency</string>
+    <string name="cpu_label_fabrication">Fabrication</string>
+    <string name="cpu_label_supported_abis">Supported ABIs</string>
+    <string name="cpu_label_hardware">CPU hardware</string>
+    <string name="cpu_label_governor">CPU governor</string>
+    <string name="cpu_label_features">Features</string>
+    <string name="cpu_label_gpu_renderer">GPU renderer</string>
+    <string name="cpu_label_gpu_vendor">GPU vendor</string>
+    <string name="cpu_label_opengl_es">OpenGL ES</string>
+    <string name="cpu_label_vulkan">Vulkan</string>
+    <!-- Maximum GPU frequency -->
+    <string name="cpu_label_gpu_frequency">Frequency</string>
+    <string name="cpu_label_gpu_current_frequency">Current frequency</string>
+    <!-- %1$d frequency in megahertz -->
+    <string name="cpu_value_frequency_mhz">%1$d MHz</string>
+    <!-- %1$s minimum frequency, %2$s maximum frequency (both already formatted, e.g. "500 MHz") -->
+    <string name="cpu_value_frequency_range">%1$s - %2$s</string>
+    <!-- %1$d manufacturing process node in nanometres -->
+    <string name="cpu_value_fabrication_nm">%1$d nm</string>
+    <!-- %1$d Vulkan hardware level reported by the device, e.g. 0 or 1 -->
+    <string name="cpu_value_vulkan_level">Level %1$d</string>
+    <!-- Header subtitle; %d is the number of CPU cores -->
+    <plurals name="cpu_core_count">
+        <item quantity="one">%d Core</item>
+        <item quantity="other">%d Cores</item>
+    </plurals>
+
+    <!-- Storage tab -->
+    <string name="storage_header_title">Memory &amp; Storage</string>
+    <!-- Header subtitle; %1$s RAM usage percent, %2$s internal storage usage percent (both formatted, e.g. "45%") -->
+    <string name="storage_header_usage">RAM: %1$s • ROM: %2$s</string>
+    <string name="storage_section_ram">RAM</string>
+    <string name="storage_section_internal">Internal Storage</string>
+    <string name="storage_section_system">System Storage</string>
+    <string name="storage_section_data">Internal Storage (Data)</string>
+    <!-- RAM module type, e.g. LPDDR4X -->
+    <string name="storage_label_type">Type</string>
+    <string name="storage_label_free_memory">Free Memory</string>
+    <string name="storage_label_used_total">Used / Total</string>
+    <string name="storage_label_used_total_free">Used / Total / Free</string>
+    <string name="storage_label_path">Path</string>
+    <string name="storage_label_file_system">File System Type</string>
+    <string name="storage_label_usage">Usage</string>
+    <!-- %1$d usage percentage (0-100) -->
+    <string name="storage_value_percent">%1$d%%</string>
+    <!-- %1$s used size, %2$s total size (both formatted, e.g. "3.20 GB") -->
+    <string name="storage_value_used_total">%1$s / %2$s</string>
+    <!-- %1$s used size, %2$s total size, %3$s free size (all formatted) -->
+    <string name="storage_value_used_total_free">%1$s / %2$s / %3$s</string>
+    <!-- %1$d size in bytes -->
+    <string name="storage_value_bytes">%1$d B</string>
+    <!-- %1$f size in kilobytes (1024 bytes) -->
+    <string name="storage_value_kb">%1$.2f KB</string>
+    <!-- %1$f size in megabytes (1024 KB) -->
+    <string name="storage_value_mb">%1$.2f MB</string>
+    <!-- %1$f size in gigabytes (1024 MB) -->
+    <string name="storage_value_gb">%1$.2f GB</string>
+    <!-- %1$f size in terabytes (1024 GB) -->
+    <string name="storage_value_tb">%1$.2f TB</string>
+
+    <!-- Sensors tab -->
+    <string name="sensors_header_title">Device Sensors</string>
+    <!-- Header subtitle; %d is the number of sensors on the device -->
+    <plurals name="sensors_count">
+        <item quantity="one">%d sensor available</item>
+        <item quantity="other">%d sensors available</item>
+    </plurals>
+    <string name="sensors_empty">This device doesn\'t report any sensors.</string>
+    <string name="sensors_label_vendor">Vendor</string>
+    <string name="sensors_label_power">Power</string>
+    <!-- %1$f current draw of the sensor in milliamperes -->
+    <string name="sensors_value_power">%1$.2f mA</string>
+    <!-- Sensor type the app has no name for; %1$d is the Android sensor type number -->
+    <string name="sensors_type_other">Other (%1$d)</string>
+    <string name="sensors_type_accelerometer">Accelerometer</string>
+    <string name="sensors_type_accelerometer_uncalibrated">Accelerometer Uncalibrated</string>
+    <string name="sensors_type_accelerometer_limited_axes">Accelerometer Limited Axes</string>
+    <string name="sensors_type_accelerometer_limited_axes_uncalibrated">Accelerometer Limited Axes Uncalibrated</string>
+    <string name="sensors_type_ambient_temperature">Ambient Temperature</string>
+    <string name="sensors_type_game_rotation_vector">Game Rotation Vector</string>
+    <string name="sensors_type_geomagnetic_rotation_vector">Geomagnetic Rotation Vector</string>
+    <string name="sensors_type_gravity">Gravity</string>
+    <string name="sensors_type_gyroscope">Gyroscope</string>
+    <string name="sensors_type_gyroscope_uncalibrated">Gyroscope Uncalibrated</string>
+    <string name="sensors_type_gyroscope_limited_axes">Gyroscope Limited Axes</string>
+    <string name="sensors_type_gyroscope_limited_axes_uncalibrated">Gyroscope Limited Axes Uncalibrated</string>
+    <string name="sensors_type_heading">Heading</string>
+    <string name="sensors_type_head_tracker">Head Tracker</string>
+    <string name="sensors_type_heart_beat">Heart Beat</string>
+    <string name="sensors_type_heart_rate">Heart Rate</string>
+    <string name="sensors_type_hinge_angle">Hinge Angle</string>
+    <string name="sensors_type_light">Light</string>
+    <string name="sensors_type_linear_acceleration">Linear Acceleration</string>
+    <string name="sensors_type_low_latency_offbody_detect">Off-Body Detect</string>
+    <string name="sensors_type_magnetic_field">Magnetic Field</string>
+    <string name="sensors_type_magnetic_field_uncalibrated">Magnetic Field Uncalibrated</string>
+    <string name="sensors_type_motion_detect">Motion Detect</string>
+    <string name="sensors_type_orientation">Orientation</string>
+    <string name="sensors_type_pose_6dof">Pose 6DOF</string>
+    <string name="sensors_type_pressure">Pressure</string>
+    <string name="sensors_type_proximity">Proximity</string>
+    <string name="sensors_type_relative_humidity">Relative Humidity</string>
+    <string name="sensors_type_rotation_vector">Rotation Vector</string>
+    <string name="sensors_type_significant_motion">Significant Motion</string>
+    <string name="sensors_type_stationary_detect">Stationary Detect</string>
+    <string name="sensors_type_step_counter">Step Counter</string>
+    <string name="sensors_type_step_detector">Step Detector</string>
+    <string name="sensors_type_temperature">Temperature</string>
+    <!-- device_system -->
+
+    <!-- Device tab -->
+    <!-- Small all-caps eyebrow above the device name in the header card -->
+    <string name="device_header_label">DEVICE</string>
+    <!-- Header subtitle; %1$s manufacturer (e.g. "Google"), %2$s model (e.g. "Pixel 9") -->
+    <string name="device_header_manufacturer_model">%1$s • %2$s</string>
+    <string name="device_section_general">General info</string>
+    <string name="device_section_identifiers">Identifiers &amp; connectivity</string>
+    <string name="device_label_device_name">Device name</string>
+    <string name="device_label_model">Model</string>
+    <string name="device_label_manufacturer">Manufacturer</string>
+    <!-- Build.DEVICE, the industrial design codename -->
+    <string name="device_label_device">Device</string>
+    <string name="device_label_board">Board</string>
+    <string name="device_label_hardware">Hardware</string>
+    <string name="device_label_brand">Brand</string>
+    <string name="device_label_android_id">Android device ID</string>
+    <string name="device_label_hardware_serial">Hardware serial</string>
+    <string name="device_label_build_fingerprint">Build fingerprint</string>
+    <string name="device_label_device_type">Device type</string>
+    <string name="device_label_network_operator">Network operator</string>
+    <!-- Whether the mobile data connection is currently up -->
+    <string name="device_label_mobile_data">Mobile data</string>
+    <string name="device_label_usb_debugging">USB debugging</string>
+    <!-- Shown instead of the serial number on Android 8.0+, where apps cannot read it -->
+    <string name="device_value_serial_restricted">Restricted by Android</string>
+    <string name="device_value_connected">Connected</string>
+    <string name="device_value_disconnected">Disconnected</string>
+    <string name="device_type_phone">Phone</string>
+    <string name="device_type_tablet">Tablet</string>
+
+    <!-- System tab -->
+    <!-- Header title; %1$s Android release version, e.g. "15" -->
+    <string name="system_header_version">Android %1$s</string>
+    <!-- Header line; %1$s localized release date, e.g. "September 3, 2024" -->
+    <string name="system_header_released">Released %1$s</string>
+    <string name="system_section_os">Operating system</string>
+    <string name="system_section_runtime">Runtime &amp; kernel</string>
+    <string name="system_section_drm">DRM</string>
+    <string name="system_label_android_version">Android version</string>
+    <string name="system_label_version_name">Version name</string>
+    <string name="system_label_api_level">API level</string>
+    <string name="system_label_build_number">Build number</string>
+    <string name="system_label_build_time">Build time</string>
+    <string name="system_label_build_id">Build ID</string>
+    <string name="system_label_security_patch">Security patch level</string>
+    <string name="system_label_baseband">Baseband</string>
+    <string name="system_label_language">Language</string>
+    <string name="system_label_time_zone">Time zone</string>
+    <string name="system_label_root_access">Root access</string>
+    <string name="system_label_uptime">System uptime</string>
+    <string name="system_label_system_as_root">System-as-root</string>
+    <string name="system_label_seamless_updates">Seamless updates</string>
+    <string name="system_label_dynamic_partitions">Dynamic partitions</string>
+    <string name="system_label_project_treble">Project Treble</string>
+    <string name="system_label_java_vm">Java VM</string>
+    <!-- Maximum heap the Java VM may use for this app -->
+    <string name="system_label_java_vm_heap">Java VM max heap</string>
+    <string name="system_label_kernel_architecture">Kernel architecture</string>
+    <string name="system_label_kernel_version">Kernel version</string>
+    <string name="system_label_opengl_es">OpenGL ES</string>
+    <string name="system_label_selinux">SELinux</string>
+    <!-- TLS library name and version, e.g. "BoringSSL" -->
+    <string name="system_label_ssl_provider">SSL provider</string>
+    <string name="system_label_drm_vendor">Vendor</string>
+    <string name="system_label_drm_version">Version</string>
+    <string name="system_label_drm_description">Description</string>
+    <string name="system_label_drm_algorithms">Algorithms</string>
+    <string name="system_label_drm_security_level">Security level</string>
+    <string name="system_label_drm_system_id">System ID</string>
+    <string name="system_label_drm_hdcp_level">HDCP level</string>
+    <string name="system_label_drm_max_hdcp_level">Max HDCP level</string>
+    <string name="system_label_drm_usage_reporting">Usage reporting support</string>
+    <string name="system_label_drm_max_sessions">Max number of sessions</string>
+    <string name="system_label_drm_open_sessions">Number of open sessions</string>
+    <!-- Java VM; %1$s VM name (e.g. "Dalvik"), %2$s VM version (e.g. "2.1.0") -->
+    <string name="system_value_vm">%1$s %2$s</string>
+    <!-- Uptime; %1$d days, %2$d hours, %3$d minutes, %4$d seconds. Keep the unit letters short. -->
+    <string name="system_value_uptime">%1$dd %2$dh %3$dm %4$ds</string>
+    <string name="system_selinux_enforcing">Enforcing</string>
+    <string name="system_selinux_permissive">Permissive</string>
+
+    <!-- Android release names: product names, not translated -->
+    <string name="system_version_name_nougat" translatable="false">Nougat</string>
+    <string name="system_version_name_oreo" translatable="false">Oreo</string>
+    <string name="system_version_name_pie" translatable="false">Pie</string>
+    <string name="system_version_name_q" translatable="false">Q</string>
+    <string name="system_version_name_r" translatable="false">R</string>
+    <string name="system_version_name_s" translatable="false">S</string>
+    <string name="system_version_name_s_v2" translatable="false">Sv2</string>
+    <string name="system_version_name_tiramisu" translatable="false">Tiramisu</string>
+    <string name="system_version_name_upside_down_cake" translatable="false">Upside Down Cake</string>
+    <string name="system_version_name_vanilla_ice_cream" translatable="false">Vanilla Ice Cream</string>
+    <string name="system_version_name_baklava" translatable="false">Baklava</string>
+    <!-- network_location -->
+    <!-- ═══════════════════════════ Network tab ═══════════════════════════ -->
+
+    <!-- Header card -->
+    <string name="network_title">Network</string>
+    <!-- Header subtitle while on Wi-Fi; %1$s is the connection type (e.g. "Wi-Fi"), %2$s the frequency (e.g. "5180 MHz") -->
+    <string name="network_value_type_and_frequency">%1$s · %2$s</string>
+
+    <!-- Section titles -->
+    <string name="network_section_connection">Connection</string>
+    <string name="network_section_wifi">Wi-Fi</string>
+    <!-- Card with the connected Wi-Fi network's name, BSSID and security type -->
+    <string name="network_section_wifi_identity">Wi-Fi network</string>
+    <string name="network_section_mobile_data">Mobile data</string>
+    <string name="network_section_sim">SIM</string>
+
+    <!-- Row labels -->
+    <string name="network_label_type">Type</string>
+    <string name="network_label_ip">IP address</string>
+    <!-- Technical term: Internet Protocol version 6 -->
+    <string name="network_label_ipv6">IPv6</string>
+    <string name="network_label_netmask">Netmask</string>
+    <string name="network_label_gateway">Gateway</string>
+    <string name="network_label_dhcp_server">DHCP server</string>
+    <string name="network_label_dhcp_lease">DHCP lease duration</string>
+    <!-- Label of one DNS server row; %1$d is its position in the list, starting at 1 -->
+    <string name="network_label_dns">DNS %1$d</string>
+    <!-- Network interface name such as wlan0 -->
+    <string name="network_label_interface">Interface</string>
+    <string name="network_label_status">Status</string>
+    <!-- Label of the row that says whether Wi-Fi is connected -->
+    <string name="network_label_wifi_connection">Connection</string>
+    <string name="network_label_signal">Signal strength</string>
+    <string name="network_label_link_speed">Link speed</string>
+    <string name="network_label_frequency">Frequency</string>
+    <string name="network_label_wifi_standard">Wi-Fi standard</string>
+    <!-- The Wi-Fi network's name (SSID) -->
+    <string name="network_label_ssid">Network name</string>
+    <!-- Technical term: the access point's hardware address -->
+    <string name="network_label_bssid">BSSID</string>
+    <string name="network_label_security">Security</string>
+    <!-- Number of SIM slots / modems in the device -->
+    <string name="network_label_sim_slots">SIM slots</string>
+    <!-- Radio technology family: GSM, CDMA, SIP or none -->
+    <string name="network_label_phone_type">Phone type</string>
+    <string name="network_label_sim_name">Name</string>
+    <!-- Two-letter country code of the SIM -->
+    <string name="network_label_country_iso">Country ISO</string>
+    <!-- Technical term: Mobile Country Code -->
+    <string name="network_label_mcc">MCC</string>
+    <!-- Technical term: Mobile Network Code -->
+    <string name="network_label_mnc">MNC</string>
+    <string name="network_label_carrier_id">Carrier ID</string>
+    <string name="network_label_carrier_name">Carrier name</string>
+    <!-- Whether the phone is currently roaming on another carrier's network -->
+    <string name="network_label_roaming">Roaming</string>
+
+    <!-- Values -->
+    <!-- Wi-Fi signal; %1$d is the strength in decibel-milliwatts, e.g. "-54 dBm" -->
+    <string name="network_value_dbm">%1$d dBm</string>
+    <!-- %1$d is the link speed in megabits per second -->
+    <string name="network_value_mbps">%1$d Mbps</string>
+    <!-- %1$d is the radio frequency in megahertz -->
+    <string name="network_value_mhz">%1$d MHz</string>
+    <!-- DHCP lease duration; %1$d is a number of seconds -->
+    <plurals name="network_value_lease_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="network_wifi_not_connected">Not connected</string>
+    <string name="network_data_connected">Connected</string>
+    <string name="network_data_disconnected">Disconnected</string>
+    <!-- Shown as the SIM name when a SIM is inserted but reports no operator name -->
+    <string name="network_sim_detected">SIM detected</string>
+
+    <!-- Connection types -->
+    <string name="network_type_wifi">Wi-Fi</string>
+    <string name="network_type_cellular">Mobile data</string>
+    <string name="network_type_ethernet">Ethernet</string>
+    <string name="network_type_vpn">VPN</string>
+    <string name="network_type_bluetooth">Bluetooth</string>
+    <string name="network_type_other">Other</string>
+    <string name="network_type_none">Not connected</string>
+
+    <!-- Phone types (technical names, usually left untranslated) -->
+    <string name="network_phone_type_none">None</string>
+    <string name="network_phone_type_gsm">GSM</string>
+    <string name="network_phone_type_cdma">CDMA</string>
+    <string name="network_phone_type_sip">SIP</string>
+
+    <!-- Wi-Fi security types (Wi-Fi Alliance names, usually left untranslated) -->
+    <string name="network_security_open">Open</string>
+    <string name="network_security_wep">WEP</string>
+    <string name="network_security_wpa_personal">WPA-Personal</string>
+    <string name="network_security_wpa2_personal">WPA2-Personal</string>
+    <!-- Android 12+ cannot tell WPA and WPA2 pre-shared key networks apart -->
+    <string name="network_security_wpa_wpa2_personal">WPA/WPA2-Personal</string>
+    <string name="network_security_wpa3_personal">WPA3-Personal</string>
+    <string name="network_security_enhanced_open">Enhanced Open (OWE)</string>
+    <string name="network_security_enterprise">WPA/WPA2-Enterprise</string>
+    <string name="network_security_wpa3_enterprise">WPA3-Enterprise</string>
+    <string name="network_security_wpa3_enterprise_192">WPA3-Enterprise 192-bit</string>
+    <string name="network_security_wapi_personal">WAPI-PSK</string>
+    <string name="network_security_wapi_enterprise">WAPI-CERT</string>
+    <string name="network_security_passpoint">Passpoint</string>
+    <string name="network_security_osen">OSEN</string>
+    <string name="network_security_other">Other</string>
+
+    <!-- Wi-Fi generations (Wi-Fi Alliance names plus IEEE standard) -->
+    <string name="network_wifi_standard_legacy">Legacy (802.11a/b/g)</string>
+    <string name="network_wifi_standard_4">Wi-Fi 4 (802.11n)</string>
+    <string name="network_wifi_standard_5">Wi-Fi 5 (802.11ac)</string>
+    <string name="network_wifi_standard_6">Wi-Fi 6 (802.11ax)</string>
+    <string name="network_wifi_standard_wigig">WiGig (802.11ad)</string>
+    <string name="network_wifi_standard_7">Wi-Fi 7 (802.11be)</string>
+
+    <!-- Wi-Fi network card without location access -->
+    <string name="network_wifi_access_body">Android shares the Wi-Fi network\'s name, BSSID and security type only with apps that have location access. Everything else on this screen works without it.</string>
+    <!-- Shown when access is granted but Android still hides the network name, usually because location services are off -->
+    <string name="network_wifi_access_location_off">Turn on location services to see the network name and BSSID.</string>
+    <!-- Priming dialog shown before the system permission dialog -->
+    <string name="network_wifi_priming_title">Show your Wi-Fi network details</string>
+    <string name="network_wifi_priming_point_purpose">Used only to show the name, BSSID and security type of the Wi-Fi you\'re connected to</string>
+    <string name="network_wifi_priming_point_local">Read on demand and shown only inside the app</string>
+    <string name="network_wifi_priming_point_private">ANTAR never sends your location anywhere, stores it, uses it for ads or shares it. The app has no internet permission.</string>
+    <string name="network_wifi_priming_point_optional">Optional: IP address, DNS, signal and mobile data work without it</string>
+
+    <!-- ═══════════════════════════ Location tab ═══════════════════════════ -->
+
+    <!-- Permission gate and priming dialog -->
+    <string name="location_permission_title">Location access needed</string>
+    <string name="location_permission_body">Allow location access to see your coordinates, accuracy and satellite (GNSS) status.</string>
+    <string name="location_priming_title">Allow location access</string>
+    <string name="location_priming_point_purpose">Used only to show your coordinates, accuracy, satellites and street address (looked up by Android\'s built-in geocoder)</string>
+    <string name="location_priming_point_local">Read on demand while this tab is open and shown only inside the app</string>
+    <string name="location_priming_point_private">ANTAR never sends your location anywhere, stores it, uses it for ads or shares it. The app has no internet permission.</string>
+    <string name="location_priming_point_revoke">You can turn it off anytime in Android Settings</string>
+
+    <!-- Approximate-only access: shown in the satellites card -->
+    <string name="location_precise_needed_title">Satellite data needs precise location</string>
+    <string name="location_precise_needed_body">With approximate location, coordinates and accuracy are shown. Satellite (GNSS) status is only available with precise location.</string>
+    <string name="location_precise_action">Allow precise location</string>
+
+    <!-- Banner above the cards -->
+    <string name="location_gps_disabled">GPS is off. Turn it on to get location data.</string>
+    <!-- Header while no position is known yet -->
+    <string name="location_waiting_for_fix">Waiting for a location fix…</string>
+
+    <!-- Section titles -->
+    <string name="location_section_satellites">Satellites</string>
+    <string name="location_section_satellites_in_view">Satellites in view</string>
+    <string name="location_section_position">Position details</string>
+    <string name="location_section_address">Address</string>
+
+    <!-- Row labels -->
+    <string name="location_label_latitude">Latitude</string>
+    <string name="location_label_longitude">Longitude</string>
+    <string name="location_label_altitude">Altitude</string>
+    <string name="location_label_sea_level_altitude">Sea level altitude</string>
+    <string name="location_label_speed">Speed</string>
+    <string name="location_label_speed_accuracy">Speed accuracy</string>
+    <!-- Technical term: position dilution of precision -->
+    <string name="location_label_pdop">PDOP</string>
+    <!-- Technical term: horizontal and vertical dilution of precision -->
+    <string name="location_label_hv_dop">H/V DOP</string>
+    <!-- Horizontal and vertical accuracy of the position -->
+    <string name="location_label_hv_accuracy">H/V accuracy</string>
+    <string name="location_label_satellites_used">Satellites used in fix</string>
+    <string name="location_label_bearing">Bearing</string>
+    <string name="location_label_bearing_accuracy">Bearing accuracy</string>
+
+    <!-- Values -->
+    <!-- Header coordinates; %1$.6f is latitude, %2$.6f is longitude in degrees -->
+    <string name="location_value_coordinates">%1$.6f, %2$.6f</string>
+    <!-- One coordinate in degrees -->
+    <string name="location_value_coordinate">%1$.6f</string>
+    <!-- %1$.2f is a distance in meters -->
+    <string name="location_value_meters">%1$.2f m</string>
+    <!-- %1$.2f is a speed in meters per second -->
+    <string name="location_value_speed">%1$.2f m/s</string>
+    <!-- %1$.2f is an angle in degrees -->
+    <string name="location_value_degrees">%1$.2f°</string>
+    <!-- A dilution-of-precision value, unitless -->
+    <string name="location_value_dop">%1$.1f</string>
+    <!-- %1$s is the horizontal value, %2$s the vertical value (already formatted) -->
+    <string name="location_value_horizontal_vertical">H: %1$s, V: %2$s</string>
+    <!-- %1$d is satellites used in the fix, %2$d is satellites in view -->
+    <string name="location_value_used_of_total">%1$d / %2$d</string>
+    <!-- Header line; %d is the number of satellites the receiver can see -->
+    <plurals name="location_satellites_in_view_count">
+        <item quantity="one">%1$d satellite in view</item>
+        <item quantity="other">%1$d satellites in view</item>
+    </plurals>
+
+    <!-- Satellite list rows -->
+    <!-- %1$s is the constellation name (e.g. "Galileo"), %2$d is the satellite vehicle id -->
+    <string name="location_satellite_title">%1$s · SV %2$d</string>
+    <!-- %1$.0f is elevation, %2$.0f is azimuth, both in degrees -->
+    <string name="location_satellite_sky_position">Elevation %1$.0f° · Azimuth %2$.0f°</string>
+    <!-- Signal-to-noise density; %1$.1f is in decibel-hertz -->
+    <string name="location_value_cn0">%1$.1f dB-Hz</string>
+    <string name="location_satellite_used_in_fix">Used in fix</string>
+    <string name="location_satellite_not_used">Not used</string>
+
+    <!-- GNSS constellation names (proper names, usually left untranslated) -->
+    <string name="location_constellation_gps">Navstar GPS</string>
+    <string name="location_constellation_glonass">GLONASS</string>
+    <string name="location_constellation_galileo">Galileo</string>
+    <string name="location_constellation_beidou">BeiDou</string>
+    <string name="location_constellation_qzss">QZSS</string>
+    <string name="location_constellation_irnss">IRNSS (NavIC)</string>
+    <string name="location_constellation_sbas">SBAS</string>
 </resources>
+

@@ -1,14 +1,17 @@
 package com.ashes.dev.works.system.core.internals.antar.core.ui
 
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.bounceClick
+import androidx.compose.ui.res.stringResource
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.ambientFloat
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarMotion
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,9 +61,9 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.A
 @Composable
 private fun PrivacyIllustration(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
-    val pulse by rememberInfiniteTransition(label = "privacy").animateFloat(
+    val pulse by rememberInfiniteTransition(label = "privacy").ambientFloat(
         0.08f, 0.18f,
-        infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "halo"
     )
 
@@ -150,13 +153,13 @@ fun PrivacySheet(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Nothing leaves your device",
+                text = stringResource(R.string.privacy_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = cs.onSurface
             )
             Text(
-                text = "ANTAR has no servers, no analytics, no ads and no accounts.",
+                text = stringResource(R.string.privacy_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = cs.onSurfaceVariant
             )
@@ -166,24 +169,20 @@ fun PrivacySheet(
             PrivacyPoint(
                 icon = Icons.Outlined.Visibility,
                 accent = cs.primary,
-                title = "What ANTAR reads",
-                body = "Device specs, CPU, battery, storage, display, network, sensors, " +
-                    "camera capabilities and your installed apps — live from the hardware, " +
-                    "shown only to you."
+                title = stringResource(R.string.privacy_reads_title),
+                body = stringResource(R.string.privacy_reads_body)
             )
             PrivacyPoint(
                 icon = Icons.Outlined.CloudOff,
                 accent = AntarGreen,
-                title = "What is collected or shared",
-                body = "Nothing. No reading is uploaded, logged remotely or sold. " +
-                    "The app works fully offline."
+                title = stringResource(R.string.privacy_shared_title),
+                body = stringResource(R.string.privacy_shared_body)
             )
             PrivacyPoint(
                 icon = Icons.Outlined.Storage,
                 accent = AntarPurple,
-                title = "What stays stored",
-                body = "Only your preferences and battery history, saved locally. " +
-                    "Uninstalling the app deletes everything."
+                title = stringResource(R.string.privacy_stored_title),
+                body = stringResource(R.string.privacy_stored_body)
             )
 
             Spacer(Modifier.height(20.dp))
@@ -194,11 +193,11 @@ fun PrivacySheet(
                     .height(48.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(Brush.linearGradient(listOf(cs.primary, cs.secondary)))
-                    .clickable(onClick = onReadPolicy),
+                    .bounceClick(onClick = onReadPolicy),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Read full privacy policy",
+                    text = stringResource(R.string.privacy_read_policy),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = cs.onPrimary

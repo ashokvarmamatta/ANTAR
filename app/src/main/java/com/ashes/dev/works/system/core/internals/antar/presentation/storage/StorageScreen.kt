@@ -1,58 +1,89 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.storage
 
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientProgressBar
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
-
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import com.ashes.dev.works.system.core.internals.antar.core.ui.formatPercent
+import com.ashes.dev.works.system.core.internals.antar.core.ui.formatBytes
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Storage
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientProgressBar
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGreen
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPink
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.effectsSpec
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
+import com.ashes.dev.works.system.core.internals.antar.core.ui.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.domain.model.StorageInfo
+import com.ashes.dev.works.system.core.internals.antar.domain.model.VolumeUsage
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
-    val storageState by viewModel.storageState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    if (storageState == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = AntarCyan)
+    AnimatedContent(
+        targetState = uiState,
+        contentKey = { it::class },
+        transitionSpec = LocalAnimationIntensity.current.contentSwap(),
+        label = "storageState"
+    ) { state ->
+        when (state) {
+            StorageUiState.Loading -> LoadingSkeleton()
+            is StorageUiState.Error -> ErrorState(message = state.message, onRetry = viewModel::load)
+            is StorageUiState.Content -> StorageContent(state.storage)
         }
-        return
     }
+}
 
-    val storage = storageState!!
+@Composable
+private fun StorageContent(storage: StorageInfo) {
+    val ram = storage.ram
+    val internal = storage.internalStorage
+    val ramPercent = formatPercent(ram.usedFraction)
+    val internalPercent = formatPercent(internal.usedFraction)
 
-    // Parse usage percentage from string like "45%"
-    val ramPct = storage.usagePercentageRam.replace("%", "").trim().toFloatOrNull() ?: 0f
-    val internalPct = storage.usagePercentageInternal.replace("%", "").trim().toFloatOrNull() ?: 0f
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item {
-            GradientHeaderCard {
+    AdaptiveCardGrid {
+        item(key = "header", span = StaggeredGridItemSpan.FullLine) {
+            GradientHeaderCard(modifier = Modifier.staggeredEntry(0)) {
                 Row(
                     modifier = Modifier.padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -66,12 +97,12 @@ fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "Memory & Storage",
+                            text = stringResource(R.string.storage_header_title),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "RAM: ${storage.usagePercentageRam} \u2022 ROM: ${storage.usagePercentageInternal}",
+                            text = stringResource(R.string.storage_header_usage, ramPercent, internalPercent),
                             style = MaterialTheme.typography.bodySmall,
                             color = AntarGray
                         )
@@ -80,85 +111,103 @@ fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
             }
         }
 
-        item {
-            PremiumCard {
-                SectionTitle(title = "RAM", icon = Icons.Outlined.Memory)
-                InfoRow("Type", storage.ramType)
-                InfoRow("Free Memory", storage.freeMemory)
-                InfoRow("Used / Total", storage.usedTotalMemory)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val animatedRam by animateFloatAsState(
-                    targetValue = ramPct / 100f,
-                    animationSpec = tween(1200, easing = FastOutSlowInEasing),
-                    label = "ram"
+        item(key = "ram") {
+            PremiumCard(modifier = Modifier.staggeredEntry(1)) {
+                SectionTitle(title = R.string.storage_section_ram, icon = Icons.Outlined.Memory)
+                InfoRow(R.string.storage_label_type, storage.ramType?.token)
+                InfoRow(R.string.storage_label_free_memory, formatBytes(ram.availableBytes))
+                InfoRow(
+                    R.string.storage_label_used_total,
+                    stringResource(R.string.storage_value_used_total, formatBytes(ram.usedBytes), formatBytes(ram.totalBytes))
                 )
-                GradientProgressBar(
-                    progress = animatedRam,
-                    height = 8.dp,
-                    colors = listOf(AntarCyan, AntarBlue)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = storage.usagePercentageRam,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AntarCyan,
-                    fontWeight = FontWeight.Bold
+                UsageBar(
+                    fraction = ram.usedFraction,
+                    percentText = ramPercent,
+                    colors = listOf(AntarCyan, AntarBlue),
+                    accent = AntarCyan
                 )
             }
         }
 
-        item {
-            PremiumCard {
-                SectionTitle(title = "Internal Storage", icon = Icons.Outlined.Folder, accentColor = AntarPurple)
-                InfoRow("Path", storage.internalStoragePath, singleLine = false)
-                InfoRow("Used / Total / Free", storage.usedTotalFreeInternal, singleLine = false)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val animatedInternal by animateFloatAsState(
-                    targetValue = internalPct / 100f,
-                    animationSpec = tween(1200, easing = FastOutSlowInEasing),
-                    label = "internal"
-                )
-                GradientProgressBar(
-                    progress = animatedInternal,
-                    height = 8.dp,
-                    colors = listOf(AntarPurple, AntarPink)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = storage.usagePercentageInternal,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AntarPurple,
-                    fontWeight = FontWeight.Bold
+        item(key = "internal") {
+            PremiumCard(modifier = Modifier.staggeredEntry(2)) {
+                SectionTitle(title = R.string.storage_section_internal, icon = Icons.Outlined.Folder, accentColor = AntarPurple)
+                InfoRow(R.string.storage_label_path, internal.path, singleLine = false)
+                InfoRow(R.string.storage_label_used_total_free, usedTotalFree(internal), singleLine = false)
+                UsageBar(
+                    fraction = internal.usedFraction,
+                    percentText = internalPercent,
+                    colors = listOf(AntarPurple, AntarPink),
+                    accent = AntarPurple
                 )
             }
         }
 
-        item {
-            PremiumCard {
-                SectionTitle(title = "System Storage", icon = Icons.Outlined.Dns, accentColor = AntarBlue)
-                InfoRow("File System Type", storage.systemStorageFileSystemType)
-                InfoRow("Path", storage.systemStoragePath, singleLine = false)
-                InfoRow("Usage", storage.systemStorageUsageProgress)
-                InfoRow("Used / Total / Free", storage.usedTotalFreeSystem, singleLine = false)
+        storage.systemPartition?.let { system ->
+            item(key = "system") {
+                PartitionCard(
+                    title = R.string.storage_section_system,
+                    icon = Icons.Outlined.Dns,
+                    accent = AntarBlue,
+                    volume = system,
+                    modifier = Modifier.staggeredEntry(3)
+                )
             }
         }
 
-        item {
-            PremiumCard {
-                SectionTitle(title = "Internal Storage (Data)", icon = Icons.Outlined.Storage, accentColor = AntarGreen)
-                InfoRow("File System Type", storage.internalStorageDataFileSystemType)
-                InfoRow("Path", storage.internalStorageDataPath, singleLine = false)
-                InfoRow("Usage", storage.internalStorageDataUsageProgress)
-                InfoRow("Used / Total / Free", storage.usedTotalFreeInternalData, singleLine = false)
-            }
+        item(key = "data") {
+            PartitionCard(
+                title = R.string.storage_section_data,
+                icon = Icons.Outlined.Storage,
+                accent = AntarGreen,
+                volume = storage.dataPartition,
+                modifier = Modifier.staggeredEntry(4)
+            )
         }
     }
 }
+
+@Composable
+private fun PartitionCard(
+    @StringRes title: Int,
+    icon: ImageVector,
+    accent: Color,
+    volume: VolumeUsage,
+    modifier: Modifier = Modifier
+) {
+    PremiumCard(modifier = modifier) {
+        SectionTitle(title = title, icon = icon, accentColor = accent)
+        InfoRow(R.string.storage_label_file_system, volume.fileSystemType)
+        InfoRow(R.string.storage_label_path, volume.path, singleLine = false)
+        InfoRow(R.string.storage_label_usage, formatPercent(volume.usedFraction))
+        InfoRow(R.string.storage_label_used_total_free, usedTotalFree(volume), singleLine = false)
+    }
+}
+
+/** Fills from empty to [fraction] when first shown; instant on low animation intensity. */
+@Composable
+private fun UsageBar(fraction: Float, percentText: String, colors: List<Color>, accent: Color) {
+    val intensity = LocalAnimationIntensity.current
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(fraction, intensity) {
+        progress.animateTo(fraction.coerceIn(0f, 1f), intensity.effectsSpec())
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    GradientProgressBar(progress = progress.value, height = 8.dp, colors = colors)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        text = percentText,
+        style = MaterialTheme.typography.labelSmall,
+        color = accent,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
+private fun usedTotalFree(volume: VolumeUsage): String = stringResource(
+    R.string.storage_value_used_total_free,
+    formatBytes(volume.usedBytes),
+    formatBytes(volume.totalBytes),
+    formatBytes(volume.freeBytes)
+)

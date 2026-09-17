@@ -1,10 +1,13 @@
 package com.ashes.dev.works.system.core.internals.antar.core.ui
 
+import androidx.compose.ui.res.stringResource
+import com.ashes.dev.works.system.core.internals.antar.R
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.ambientFloat
+import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarMotion
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -49,19 +52,19 @@ import androidx.compose.ui.unit.sp
 private fun SplashMark(modifier: Modifier = Modifier) {
     val cs = MaterialTheme.colorScheme
     val anim = rememberInfiniteTransition(label = "mark")
-    val scan by anim.animateFloat(
+    val scan by anim.ambientFloat(
         0f, 1f,
-        infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing)),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_SLOW_MS, easing = FastOutSlowInEasing)),
         label = "scan"
     )
-    val travel by anim.animateFloat(
+    val travel by anim.ambientFloat(
         0f, 1f,
-        infiniteRepeatable(tween(1300, easing = LinearEasing)),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = LinearEasing)),
         label = "travel"
     )
-    val pulse by anim.animateFloat(
+    val pulse by anim.ambientFloat(
         0.18f, 0.42f,
-        infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "pulse"
     )
 
@@ -174,16 +177,16 @@ fun AnimatedSplash() {
     val appear = remember { Animatable(0f) }
     val subAppear = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
-        appear.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
+        appear.animateTo(1f, tween(AntarMotion.ENTRANCE_MS, easing = FastOutSlowInEasing))
     }
     LaunchedEffect(Unit) {
-        subAppear.animateTo(1f, tween(900, delayMillis = 300, easing = FastOutSlowInEasing))
+        subAppear.animateTo(1f, tween(AntarMotion.AMBIENT_QUICK_MS, delayMillis = 300, easing = FastOutSlowInEasing))
     }
 
     // shimmer on the loading bar
-    val shimmer by rememberInfiniteTransition(label = "shimmer").animateFloat(
+    val shimmer by rememberInfiniteTransition(label = "shimmer").ambientFloat(
         -0.35f, 1f,
-        infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing)),
+        infiniteRepeatable(tween(AntarMotion.AMBIENT_FAST_MS, easing = FastOutSlowInEasing)),
         label = "bar"
     )
 
@@ -217,7 +220,7 @@ fun AnimatedSplash() {
             Spacer(Modifier.height(30.dp))
 
             Text(
-                text = "ANTAR",
+                text = stringResource(R.string.splash_brand),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 8.sp,
@@ -231,7 +234,7 @@ fun AnimatedSplash() {
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "SYSTEM · INTERNALS",
+                text = stringResource(R.string.splash_tagline),
                 style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 4.sp,
                 color = cs.onSurfaceVariant,

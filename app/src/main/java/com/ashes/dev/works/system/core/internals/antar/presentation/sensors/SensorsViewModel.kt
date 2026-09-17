@@ -2,25 +2,33 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.sensors
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Sensors
-import com.ashes.dev.works.system.core.internals.antar.domain.repository.SensorsRepository
-import kotlinx.coroutines.Dispatchers
+import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
+import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
+import com.ashes.dev.works.system.core.internals.antar.domain.usecase.GetSensorsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class SensorsViewModel(private val sensorsRepository: SensorsRepository) : ViewModel() {
-    private val _sensorsState = MutableStateFlow<Sensors?>(null)
-    val sensorsState = _sensorsState.asStateFlow()
+class SensorsViewModel(
+    private val getSensors: GetSensorsUseCase
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<SensorsUiState>(SensorsUiState.Loading)
+    val uiState: StateFlow<SensorsUiState> = _uiState.asStateFlow()
 
     init {
-        loadSensors()
+        load()
     }
 
-    private fun loadSensors() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val sensors = sensorsRepository.getSensors()
-            _sensorsState.value = sensors
+    fun load() {
+        _uiState.value = SensorsUiState.Loading
+        viewModelScope.launch {
+            _uiState.value = when (val result = getSensors()) {
+                is AppResult.Success ->
+                    if (result.data.isEmpty()) SensorsUiState.Empty else SensorsUiState.Content(result.data)
+                is AppResult.Failure -> SensorsUiState.Error(result.error.messageRes())
+            }
         }
     }
 }
