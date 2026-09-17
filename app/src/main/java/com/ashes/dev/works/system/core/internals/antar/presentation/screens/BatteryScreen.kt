@@ -130,7 +130,7 @@ fun BatteryScreen(viewModel: BatteryViewModel = koinViewModel()) {
                     InfoRow("Remaining Capacity", "${it.remainingCapacity} mAh")
                     InfoRow("Charge Cycles", "${it.chargeCycles}")
                     InfoRow("Current", "${it.current / 1000} mA")
-                    InfoRow("Power", String.format("%.2f W", it.power))
+                    InfoRow("Power", String.format(Locale.US, "%.2f W", it.power))
             }
         }
 
@@ -258,11 +258,11 @@ fun BatteryHistoryCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    HistoryStatItem("Avg", "${String.format("%.0f", avgLevel)}%")
+                    HistoryStatItem("Avg", "${String.format(Locale.US, "%.0f", avgLevel)}%")
                     HistoryStatItem("Min", "$minLevel%")
                     HistoryStatItem("Max", "$maxLevel%")
                     if (drainPerHour != null && drainPerHour > 0) {
-                        HistoryStatItem("Drain/hr", "${String.format("%.1f", drainPerHour)}%")
+                        HistoryStatItem("Drain/hr", "${String.format(Locale.US, "%.1f", drainPerHour)}%")
                     }
                 }
             } else {
@@ -548,16 +548,20 @@ fun BatteryVisualization(level: Double, cycles: Int) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = String.format("%.1f", animatedLevel),
+                    text = String.format(Locale.US, "%.1f", animatedLevel),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    softWrap = false
                 )
                 Text(
                     text = "%",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp, start = 2.dp)
+                    modifier = Modifier.padding(bottom = 8.dp, start = 2.dp),
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }

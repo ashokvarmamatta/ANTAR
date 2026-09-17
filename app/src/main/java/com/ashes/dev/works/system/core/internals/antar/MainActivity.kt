@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
             ANTARTheme(darkTheme = darkTheme, dynamicColor = dynamicColors, accentColor = accentColor) {
                 val navController = rememberNavController()
                 var showExitDialog by rememberSaveable { mutableStateOf(false) }
-                var introSeen by remember { mutableStateOf(themePreferences.introSeen) }
+                val introSeen by themePreferences.introSeenFlow.collectAsStateWithLifecycle()
                 val dashboardData by dashboardViewModel.dashboardInfo.collectAsStateWithLifecycle()
 
                 // Keep the splash visible for at least 3s once it appears (after the
@@ -107,7 +107,6 @@ class MainActivity : ComponentActivity() {
                             RootState.Intro -> IntroScreen(
                                 onFinish = {
                                     themePreferences.introSeen = true
-                                    introSeen = true
                                 }
                             )
                             RootState.Splash -> AnimatedSplash()

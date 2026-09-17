@@ -302,19 +302,24 @@ fun StatChip(
 // ── Label Value pair (inline) ────────────────────────────────────────
 
 @Composable
-fun LabelValue(label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+fun LabelValue(label: String, value: String, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
         Text(
             text = "$label: ",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1
         )
         Text(
             text = value,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
