@@ -41,7 +41,7 @@ Settings: theme (system/light/dark), dynamic colours, accent colour, animation i
 
 ## Install
 
-1. **[Download ANTAR.apk](https://github.com/ashokvarmamatta/ANTAR/releases/latest/download/ANTAR.apk)** (latest release).
+1. **[Download ANTAR.apk](https://github.com/ashokvarmamatta/ANTAR/releases/latest/download/ANTAR.apk)** (latest release) · see what changed in the **[release notes](https://github.com/ashokvarmamatta/ANTAR/releases/latest)** · **[all releases](https://github.com/ashokvarmamatta/ANTAR/releases)**.
 2. Open it on your phone and allow installing from this source when Android asks.
 
 Requires Android 7.0 (API 24) or newer. No account needed; works fully offline. Every release is signed with the
