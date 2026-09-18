@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
-import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,31 +28,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGreen
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.domain.model.CalendarDate
 import com.ashes.dev.works.system.core.internals.antar.domain.model.SelinuxMode
 import com.ashes.dev.works.system.core.internals.antar.domain.model.SystemInfo
-import com.ashes.dev.works.system.core.internals.antar.domain.model.WidevineInfo
-import kotlinx.coroutines.flow.StateFlow
-import org.koin.androidx.compose.koinViewModel
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.LoadingSkeleton
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.system.components.DrmCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.system.components.UptimeRow
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.flow.StateFlow
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SystemScreen(viewModel: SystemViewModel = koinViewModel()) {
@@ -201,41 +203,6 @@ private fun SystemContent(info: SystemInfo, liveUptimeMillis: StateFlow<Long?>) 
 }
 
 @Composable
-private fun DrmCard(drm: WidevineInfo, yes: String, no: String, modifier: Modifier = Modifier) {
-    PremiumCard(modifier = modifier) {
-        SectionTitle(title = R.string.system_section_drm, icon = Icons.Outlined.Security, accentColor = AntarPurple)
-        InfoRow(R.string.system_label_drm_vendor, drm.vendor)
-        InfoRow(R.string.system_label_drm_version, drm.version)
-        InfoRow(R.string.system_label_drm_description, drm.description, singleLine = false)
-        InfoRow(R.string.system_label_drm_algorithms, drm.algorithms)
-        InfoRow(R.string.system_label_drm_security_level, drm.securityLevel)
-        InfoRow(R.string.system_label_drm_system_id, drm.systemId)
-        InfoRow(R.string.system_label_drm_hdcp_level, drm.hdcpLevel)
-        InfoRow(R.string.system_label_drm_max_hdcp_level, drm.maxHdcpLevel)
-        InfoRow(R.string.system_label_drm_usage_reporting, drm.usageReportingSupported?.let { if (it) yes else no })
-        InfoRow(R.string.system_label_drm_max_sessions, drm.maxSessionCount?.toString())
-        InfoRow(R.string.system_label_drm_open_sessions, drm.openSessionCount?.toString())
-    }
-}
-
-/** Collects the ticking uptime here so only this row recomposes every second. */
-@Composable
-private fun UptimeRow(liveUptimeMillis: StateFlow<Long?>, fallbackMillis: Long) {
-    val live by liveUptimeMillis.collectAsStateWithLifecycle()
-    val totalSeconds = (live ?: fallbackMillis) / MILLIS_PER_SECOND
-    InfoRow(
-        R.string.system_label_uptime,
-        stringResource(
-            R.string.system_value_uptime,
-            totalSeconds / SECONDS_PER_DAY,
-            (totalSeconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR,
-            (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE,
-            totalSeconds % SECONDS_PER_MINUTE
-        )
-    )
-}
-
-@Composable
 private fun currentLocale(): Locale {
     val locales = LocalConfiguration.current.locales
     return if (locales.size() == 0) Locale.getDefault() else locales[0]
@@ -268,8 +235,3 @@ private fun formatDate(date: CalendarDate, locale: Locale): String {
 
 private fun formatDateTime(millis: Long, locale: Locale): String =
     DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale).format(Date(millis))
-
-private const val MILLIS_PER_SECOND = 1_000L
-private const val SECONDS_PER_MINUTE = 60L
-private const val SECONDS_PER_HOUR = 3_600L
-private const val SECONDS_PER_DAY = 86_400L

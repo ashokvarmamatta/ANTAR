@@ -3,7 +3,7 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.sensors
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
-import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.usecase.GetSensorsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

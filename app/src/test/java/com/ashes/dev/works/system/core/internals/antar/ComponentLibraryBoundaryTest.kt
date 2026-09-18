@@ -1,14 +1,14 @@
 package com.ashes.dev.works.system.core.internals.antar
 
 import com.ashes.dev.works.system.core.internals.antar.core.common.NO_VALUE
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRowDefaults
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.InfoRowDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * core/designsystem/component is ANTAR's shared component library: it must stay copyable into
+ * presentation/components is ANTAR's shared component library: it must stay copyable into
  * another app. It may use Compose, Material, Accompanist and the design system's motion helpers,
  * but never ANTAR's resources, brand colours or any feature, data, domain or DI code.
  */
@@ -16,10 +16,10 @@ class ComponentLibraryBoundaryTest {
 
     private val appPackage = "com.ashes.dev.works.system.core.internals.antar"
     private val componentDir =
-        File("src/main/java/${appPackage.replace('.', '/')}/core/designsystem/component")
+        File("src/main/java/${appPackage.replace('.', '/')}/presentation/components")
 
     private val allowedAppImports = setOf(
-        "$appPackage.core.designsystem.component.",
+        "$appPackage.presentation.components.",
         "$appPackage.core.designsystem.theme.pressScale",
         "$appPackage.core.designsystem.theme.shimmer",
         "$appPackage.core.designsystem.theme.spatialSpec",

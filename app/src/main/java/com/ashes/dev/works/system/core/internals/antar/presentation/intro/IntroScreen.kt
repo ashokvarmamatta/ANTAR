@@ -24,8 +24,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -58,21 +58,12 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.A
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.bounceClick
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.pressScale
-import kotlinx.coroutines.launch
+import com.ashes.dev.works.system.core.internals.antar.presentation.intro.components.ChipIllustration
+import com.ashes.dev.works.system.core.internals.antar.presentation.intro.components.DeviceIllustration
+import com.ashes.dev.works.system.core.internals.antar.presentation.intro.components.PrivacyIllustration
+import com.ashes.dev.works.system.core.internals.antar.presentation.intro.components.SensorsIllustration
 import kotlin.math.absoluteValue
-
-private data class IntroPage(
-    @param:StringRes val title: Int,
-    @param:StringRes val description: Int,
-    val illustration: @Composable (Modifier) -> Unit
-)
-
-private val introPages = listOf(
-    IntroPage(R.string.intro_device_title, R.string.intro_device_body) { DeviceIllustration(it) },
-    IntroPage(R.string.intro_chip_title, R.string.intro_chip_body) { ChipIllustration(it) },
-    IntroPage(R.string.intro_sensors_title, R.string.intro_sensors_body) { SensorsIllustration(it) },
-    IntroPage(R.string.intro_privacy_title, R.string.intro_privacy_body) { PrivacyIllustration(it) }
-)
+import kotlinx.coroutines.launch
 
 @Composable
 fun IntroScreen(onFinish: () -> Unit) {
@@ -233,3 +224,16 @@ fun IntroScreen(onFinish: () -> Unit) {
         }
     }
 }
+
+private data class IntroPage(
+    @param:StringRes val title: Int,
+    @param:StringRes val description: Int,
+    val illustration: @Composable (Modifier) -> Unit
+)
+
+private val introPages = listOf(
+    IntroPage(R.string.intro_device_title, R.string.intro_device_body) { DeviceIllustration(it) },
+    IntroPage(R.string.intro_chip_title, R.string.intro_chip_body) { ChipIllustration(it) },
+    IntroPage(R.string.intro_sensors_title, R.string.intro_sensors_body) { SensorsIllustration(it) },
+    IntroPage(R.string.intro_privacy_title, R.string.intro_privacy_body) { PrivacyIllustration(it) }
+)

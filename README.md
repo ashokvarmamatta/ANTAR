@@ -261,7 +261,7 @@ Android 16) over wireless debugging.
 
 | Check | Result |
 |---|---|
-| Unit tests (`testDebugUnitTest`) | 9 of 9 pass, including the Koin graph check and the component-library boundary check |
+| Unit tests (`testDebugUnitTest`) | 13 of 13 pass, including the Koin graph, component-library boundary and presentation layout checks |
 | Lint (`lintDebug`) | pass |
 | Instrumented UI tests on the phone | 3 of 3 pass: app context, dashboard loads then System tab opens, shared UI components |
 | Baseline Profile generation | pass: 27,602 rules each in `baseline-prof.txt` and `startup-prof.txt` |
@@ -283,22 +283,27 @@ Run the on-device tests yourself (connect one device and allow the install promp
 
 ## Structure
 
-148 Kotlin files, 14,296 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
+195 Kotlin files, 15,177 lines, in `app/src/main/java/com/ashes/dev/works/system/core/internals/antar/`:
 
 | Package | Owns |
 |---|---|
+| `MainActivity.kt`, `AntarApp.kt` | the activity only hosts `AntarRoot` (system splash, edge-to-edge, bar colours); the application class starts Koin and schedules the battery logger |
 | `core/common/` | `AppResult` / `AppError` error model, `UiText` |
-| `core/designsystem/` | theme, colours, typography, motion tokens and helpers; `component/` is a reusable component library (rows, cards, chips, loading and error states, permission gate, adaptive grid) that takes plain strings and theme colours, so it can be copied into another app |
-| `core/ui/` | ANTAR's string-resource bindings for the components, splash, dialogs, formatters |
+| `core/designsystem/theme/` | theme, colours, typography, motion tokens and helpers |
 | `domain/model/`, `domain/repository/`, `domain/usecase/` | typed models, repository interfaces, one use case per action |
 | `data/repository/` | Android API readers (BatteryManager, LocationManager, ConnectivityManager, Camera2, PackageManager, `/proc`, sysfs) |
 | `data/local/` | Room battery log, DataStore settings, installed-apps cache |
 | `data/worker/`, `data/mapper/` | WorkManager battery logger, entity to domain mapping |
-| `presentation/<screen>/` | one Compose screen, ViewModel and sealed `UiState` per tab, plus Settings and onboarding |
+| `presentation/app/` | `AntarRoot`: theme, onboarding → splash → tabs, back button and exit dialog |
+| `presentation/<screen>/` | one screen, its ViewModel and sealed `UiState`; `components/` holds the cards, rows and charts only that screen uses |
+| `presentation/components/` | shared component library (rows, cards, chips, loading and error states, permission gate, adaptive grid): plain strings and theme colours, so it can be copied into another app |
+| `presentation/common/` | ANTAR's string-resource versions of the shared components, error messages, size formatting |
+| `presentation/navigation/`, `presentation/splash/` | navigation graph and routes, animated splash |
 | `di/` | Koin modules: dispatchers, database, DataStore, repositories, use cases, ViewModels, workers |
 
-The `:baselineprofile` module holds the profile generator and the startup benchmark. Tests: 9 unit tests
-(including the Koin graph check and a component-library boundary check) and 3 instrumented Compose tests.
+The `:baselineprofile` module holds the profile generator and the startup benchmark. Tests: 13 unit tests
+(including the Koin graph check, a component-library boundary check and a layout check that keeps screen
+components in their screen's folder and UI out of the activity) and 3 instrumented Compose tests.
 
 ---
 

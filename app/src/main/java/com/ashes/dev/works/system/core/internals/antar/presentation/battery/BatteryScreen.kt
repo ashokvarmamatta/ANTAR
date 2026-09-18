@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,20 +13,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
-import com.ashes.dev.works.system.core.internals.antar.domain.model.Battery
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.BatteryHistoryCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.BatteryInfoCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.BatteryVisualization
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.CapacityHistoryCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.ChargingSessionItem
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.ChargingSessionsHeader
+import com.ashes.dev.works.system.core.internals.antar.presentation.battery.components.MetricsCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.LoadingSkeleton
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -133,54 +133,5 @@ private fun BatteryContent(
         item(key = "info") {
             BatteryInfoCard(battery = battery, modifier = Modifier.animateItem().staggeredEntry(5))
         }
-    }
-}
-
-@Composable
-private fun BatteryInfoCard(battery: Battery, modifier: Modifier = Modifier) {
-    PremiumCard(modifier = modifier) {
-        SectionTitle(title = R.string.battery_section_info, icon = Icons.Outlined.Info)
-        InfoRow(R.string.battery_label_health, stringResource(battery.health.labelRes()))
-        InfoRow(
-            R.string.battery_label_capacity_health,
-            battery.capacityHealthPercent?.let { percent ->
-                stringResource(
-                    R.string.battery_value_capacity_health,
-                    stringResource(capacityGradeRes(percent)),
-                    percent
-                )
-            }
-        )
-        InfoRow(
-            R.string.battery_label_temperature,
-            battery.temperatureDeciCelsius?.let { stringResource(R.string.battery_value_celsius, it / 10.0) }
-        )
-        InfoRow(R.string.battery_label_charger_type, stringResource(battery.chargerType.labelRes()))
-        InfoRow(R.string.battery_label_technology, battery.technology)
-        InfoRow(
-            R.string.battery_label_voltage,
-            battery.voltageVolts?.let { stringResource(R.string.battery_value_volts, it) }
-        )
-        InfoRow(
-            R.string.battery_label_design_capacity,
-            battery.designCapacityMah?.let { stringResource(R.string.battery_value_mah, it) }
-        )
-        InfoRow(
-            R.string.battery_label_estimated_max_capacity,
-            battery.estimatedMaxCapacityMah?.let { stringResource(R.string.battery_value_mah, it) }
-        )
-        InfoRow(
-            R.string.battery_label_remaining_capacity,
-            battery.remainingCapacityMah?.let { stringResource(R.string.battery_value_mah, it) }
-        )
-        InfoRow(R.string.battery_label_charge_cycles, battery.chargeCycles?.toString())
-        InfoRow(
-            R.string.battery_label_current,
-            battery.currentMicroAmps?.let { stringResource(R.string.battery_value_milliamps, it / 1000) }
-        )
-        InfoRow(
-            R.string.battery_label_power,
-            battery.powerWatts?.let { stringResource(R.string.battery_value_watts, it) }
-        )
     }
 }

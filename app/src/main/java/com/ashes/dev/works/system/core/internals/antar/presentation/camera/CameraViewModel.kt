@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
-import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.usecase.GetCameraIdsUseCase
 import com.ashes.dev.works.system.core.internals.antar.domain.usecase.GetCameraInfoUseCase
 import kotlinx.coroutines.Job

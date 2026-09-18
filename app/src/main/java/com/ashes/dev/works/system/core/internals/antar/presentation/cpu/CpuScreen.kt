@@ -4,16 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DeveloperBoard
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
@@ -21,38 +17,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.SectionTitle
-import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGreen
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.domain.model.CpuInfo
-import com.ashes.dev.works.system.core.internals.antar.domain.model.GpuInfo
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.LoadingSkeleton
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.cpu.components.GraphicsCard
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -178,51 +169,9 @@ private fun CpuContent(cpu: CpuInfo, coreGroups: List<CpuCoreGroup>) {
 }
 
 @Composable
-private fun GraphicsCard(gpu: GpuInfo, modifier: Modifier = Modifier) {
-    // The extension list scrolls inside the card; whatever it does not use stays here instead of
-    // dragging the whole page, so reaching the end of the list does not scroll the screen.
-    val keepScrollInside = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                if (source == NestedScrollSource.UserInput) available else Offset.Zero
-        }
-    }
-
-    PremiumCard(modifier = modifier) {
-        SectionTitle(title = R.string.cpu_section_graphics, icon = Icons.Outlined.DeveloperBoard, accentColor = AntarGreen)
-        InfoRow(R.string.cpu_label_gpu_renderer, gpu.renderer)
-        InfoRow(R.string.cpu_label_gpu_vendor, gpu.vendor)
-        InfoRow(R.string.cpu_label_opengl_es, gpu.openGlEsVersion)
-        gpu.openGlExtensions?.let { extensions ->
-            Column(
-                modifier = Modifier
-                    .height(200.dp)
-                    .nestedScroll(keepScrollInside)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text(
-                    text = extensions,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AntarGray
-                )
-            }
-        }
-        InfoRow(
-            R.string.cpu_label_vulkan,
-            gpu.vulkanHardwareLevel
-                ?.let { stringResource(R.string.cpu_value_vulkan_level, it) }
-                ?: stringResource(R.string.common_not_supported)
-        )
-        InfoRow(R.string.cpu_label_gpu_frequency, gpu.maxFrequencyHz?.let { mhzText(it / HZ_PER_MHZ) })
-        InfoRow(R.string.cpu_label_gpu_current_frequency, gpu.currentFrequencyHz?.let { mhzText(it / HZ_PER_MHZ) })
-    }
-}
-
-@Composable
-private fun mhzText(mhz: Long): String = stringResource(R.string.cpu_value_frequency_mhz, mhz)
+internal fun mhzText(mhz: Long): String = stringResource(R.string.cpu_value_frequency_mhz, mhz)
 
 private const val KHZ_PER_MHZ = 1_000L
-private const val HZ_PER_MHZ = 1_000_000L
 
 /** Header, processor and instruction-set cards come first. */
 private const val FIRST_CORE_ENTRY_INDEX = 3

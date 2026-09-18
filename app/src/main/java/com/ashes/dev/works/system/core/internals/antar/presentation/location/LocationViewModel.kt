@@ -3,7 +3,7 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
-import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.model.Location
 import com.ashes.dev.works.system.core.internals.antar.domain.usecase.ObserveGpsEnabledUseCase
 import com.ashes.dev.works.system.core.internals.antar.domain.usecase.ObserveLocationUseCase

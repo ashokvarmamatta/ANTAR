@@ -3,7 +3,7 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.network
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ashes.dev.works.system.core.internals.antar.core.common.AppResult
-import com.ashes.dev.works.system.core.internals.antar.core.ui.messageRes
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.messageRes
 import com.ashes.dev.works.system.core.internals.antar.domain.model.ActiveConnection
 import com.ashes.dev.works.system.core.internals.antar.domain.model.TelephonyInfo
 import com.ashes.dev.works.system.core.internals.antar.domain.model.WifiState

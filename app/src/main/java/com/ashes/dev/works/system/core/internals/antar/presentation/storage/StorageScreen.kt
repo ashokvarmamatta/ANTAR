@@ -1,14 +1,9 @@
 package com.ashes.dev.works.system.core.internals.antar.presentation.storage
 
-import com.ashes.dev.works.system.core.internals.antar.core.ui.formatPercent
-import com.ashes.dev.works.system.core.internals.antar.core.ui.formatBytes
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,25 +17,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ashes.dev.works.system.core.internals.antar.R
-import com.ashes.dev.works.system.core.internals.antar.core.ui.ErrorState
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientHeaderCard
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.GradientProgressBar
-import com.ashes.dev.works.system.core.internals.antar.core.ui.InfoRow
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.LoadingSkeleton
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.PremiumCard
-import com.ashes.dev.works.system.core.internals.antar.core.ui.SectionTitle
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarBlue
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarCyan
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarGray
@@ -49,11 +33,23 @@ import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.A
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.AntarPurple
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.contentSwap
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.effectsSpec
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.staggeredEntry
-import com.ashes.dev.works.system.core.internals.antar.core.designsystem.component.AdaptiveCardGrid
 import com.ashes.dev.works.system.core.internals.antar.domain.model.StorageInfo
 import com.ashes.dev.works.system.core.internals.antar.domain.model.VolumeUsage
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.formatBytes
+import com.ashes.dev.works.system.core.internals.antar.presentation.common.formatPercent
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.AdaptiveCardGrid
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.ErrorState
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.GradientHeaderCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.InfoRow
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.LoadingSkeleton
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.PremiumCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.components.SectionTitle
+import com.ashes.dev.works.system.core.internals.antar.presentation.storage.components.PartitionCard
+import com.ashes.dev.works.system.core.internals.antar.presentation.storage.components.UsageBar
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -168,44 +164,7 @@ private fun StorageContent(storage: StorageInfo) {
 }
 
 @Composable
-private fun PartitionCard(
-    @StringRes title: Int,
-    icon: ImageVector,
-    accent: Color,
-    volume: VolumeUsage,
-    modifier: Modifier = Modifier
-) {
-    PremiumCard(modifier = modifier) {
-        SectionTitle(title = title, icon = icon, accentColor = accent)
-        InfoRow(R.string.storage_label_file_system, volume.fileSystemType)
-        InfoRow(R.string.storage_label_path, volume.path, singleLine = false)
-        InfoRow(R.string.storage_label_usage, formatPercent(volume.usedFraction))
-        InfoRow(R.string.storage_label_used_total_free, usedTotalFree(volume), singleLine = false)
-    }
-}
-
-/** Fills from empty to [fraction] when first shown; instant on low animation intensity. */
-@Composable
-private fun UsageBar(fraction: Float, percentText: String, colors: List<Color>, accent: Color) {
-    val intensity = LocalAnimationIntensity.current
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(fraction, intensity) {
-        progress.animateTo(fraction.coerceIn(0f, 1f), intensity.effectsSpec())
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-    GradientProgressBar(progress = progress.value, height = 8.dp, colors = colors)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        text = percentText,
-        style = MaterialTheme.typography.labelSmall,
-        color = accent,
-        fontWeight = FontWeight.Bold
-    )
-}
-
-@Composable
-private fun usedTotalFree(volume: VolumeUsage): String = stringResource(
+internal fun usedTotalFree(volume: VolumeUsage): String = stringResource(
     R.string.storage_value_used_total_free,
     formatBytes(volume.usedBytes),
     formatBytes(volume.totalBytes),
