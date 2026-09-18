@@ -2,7 +2,6 @@ package com.ashes.dev.works.system.core.internals.antar.presentation.settings
 
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -96,83 +95,83 @@ fun SettingsScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Fixed header owns the top inset; only the grid below scrolls.
-        Surface(color = MaterialTheme.colorScheme.background) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val backSource = remember { MutableInteractionSource() }
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    interactionSource = backSource,
-                    modifier = Modifier.pressScale(backSource)
+    // A Surface, not Modifier.background: it also sets the default text colour (onBackground), so
+    // text without an explicit colour stays readable in both themes.
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Fixed header owns the top inset; only the grid below scrolls.
+            Surface(color = MaterialTheme.colorScheme.background) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = stringResource(R.string.common_back),
-                        tint = MaterialTheme.colorScheme.primary
+                    val backSource = remember { MutableInteractionSource() }
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        interactionSource = backSource,
+                        modifier = Modifier.pressScale(backSource)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = stringResource(R.string.common_back),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 2.sp,
+                        modifier = Modifier.padding(start = 4.dp)
                     )
                 }
+            }
+
+            AnimatedContent(
+                targetState = uiState,
+                contentKey = { it::class },
+                transitionSpec = LocalAnimationIntensity.current.contentSwap(),
+                modifier = Modifier.weight(1f),
+                label = "settingsState"
+            ) { state ->
+                when (state) {
+                    SettingsUiState.Loading -> LoadingSkeleton()
+                    is SettingsUiState.Content -> SettingsContent(
+                        state = state,
+                        viewModel = viewModel,
+                        onShowPrivacy = { showPrivacySheet = true }
+                    )
+                }
+            }
+
+            // Pinned outside the scrollable so it can never scroll out of reach.
+            val content = uiState as? SettingsUiState.Content
+            val applySource = remember { MutableInteractionSource() }
+            Button(
+                onClick = viewModel::apply,
+                enabled = content?.hasChanges == true,
+                interactionSource = applySource,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .pressScale(applySource),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
                 Text(
-                    text = stringResource(R.string.settings_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 2.sp,
-                    modifier = Modifier.padding(start = 4.dp)
+                    text = stringResource(R.string.settings_apply),
+                    fontWeight = FontWeight.Bold,
+                    color = if (content?.hasChanges == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-
-        AnimatedContent(
-            targetState = uiState,
-            contentKey = { it::class },
-            transitionSpec = LocalAnimationIntensity.current.contentSwap(),
-            modifier = Modifier.weight(1f),
-            label = "settingsState"
-        ) { state ->
-            when (state) {
-                SettingsUiState.Loading -> LoadingSkeleton()
-                is SettingsUiState.Content -> SettingsContent(
-                    state = state,
-                    viewModel = viewModel,
-                    onShowPrivacy = { showPrivacySheet = true }
-                )
-            }
-        }
-
-        // Pinned outside the scrollable so it can never scroll out of reach.
-        val content = uiState as? SettingsUiState.Content
-        val applySource = remember { MutableInteractionSource() }
-        Button(
-            onClick = viewModel::apply,
-            enabled = content?.hasChanges == true,
-            interactionSource = applySource,
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .pressScale(applySource),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = stringResource(R.string.settings_apply),
-                fontWeight = FontWeight.Bold,
-                color = if (content?.hasChanges == true) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

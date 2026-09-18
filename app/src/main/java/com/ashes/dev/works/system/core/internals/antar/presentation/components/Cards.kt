@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,9 +26,12 @@ import androidx.compose.ui.unit.dp
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.LocalAnimationIntensity
 import com.ashes.dev.works.system.core.internals.antar.core.designsystem.theme.spatialSpec
 
-/** Colours of a [GradientHeaderCard]: a soft background wash and a fading border. */
+/**
+ * Colours of a [GradientHeaderCard]: a soft background wash, a fading border, and the default colour
+ * for content that sets none of its own.
+ */
 @Immutable
-data class GradientHeaderColors(val background: List<Color>, val border: List<Color>)
+data class GradientHeaderColors(val background: List<Color>, val border: List<Color>, val content: Color)
 
 object GradientHeaderCardDefaults {
     val Shape: Shape = RoundedCornerShape(20.dp)
@@ -37,14 +42,19 @@ object GradientHeaderCardDefaults {
     fun colors(
         start: Color = MaterialTheme.colorScheme.primary,
         middle: Color = MaterialTheme.colorScheme.secondary,
-        end: Color = MaterialTheme.colorScheme.tertiary
+        end: Color = MaterialTheme.colorScheme.tertiary,
+        content: Color = MaterialTheme.colorScheme.onSurface
     ): GradientHeaderColors = GradientHeaderColors(
         background = listOf(start.copy(alpha = 0.15f), middle.copy(alpha = 0.10f), end.copy(alpha = 0.08f)),
-        border = listOf(start.copy(alpha = 0.4f), end.copy(alpha = 0.1f))
+        border = listOf(start.copy(alpha = 0.4f), end.copy(alpha = 0.1f)),
+        content = content
     )
 }
 
-/** A full-width card with a gradient wash, for the hero block at the top of a screen. */
+/**
+ * A full-width card with a gradient wash, for the hero block at the top of a screen. It paints its own
+ * background, so it also sets [LocalContentColor]: text inside stays readable on any screen root.
+ */
 @Composable
 fun GradientHeaderCard(
     modifier: Modifier = Modifier,
@@ -63,7 +73,9 @@ fun GradientHeaderCard(
                 shape = shape
             )
     ) {
-        content()
+        CompositionLocalProvider(LocalContentColor provides colors.content) {
+            content()
+        }
     }
 }
 
