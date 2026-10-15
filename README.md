@@ -266,5 +266,5 @@ Tests: 5 unit tests (including a Koin module check) and 3 instrumented Compose t
   &nbsp;
   <a href="https://linkedin.com/in/ashokvarmamatta"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
   &nbsp;
-  <a href="https://ashokvarmamatta.github.io/portfolio/"><img alt="Portfolio" src="https://img.shields.io/badge/Portfolio-00D4AA?style=for-the-badge&logo=googlechrome&logoColor=white" /></a>
+  <a href="https://ashokvarma.dev/"><img alt="Portfolio" src="https://img.shields.io/badge/Portfolio-00D4AA?style=for-the-badge&logo=googlechrome&logoColor=white" /></a>
 </p>
